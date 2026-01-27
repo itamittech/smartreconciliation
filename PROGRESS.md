@@ -1,8 +1,8 @@
 # Development Progress
 
-## Current Phase: Phase 1 - Backend Core Implementation
-## Status: COMPLETE
-## Last Updated: 2025-01-27 19:33 IST
+## Current Phase: Phase 2 - Frontend-Backend Integration
+## Status: NOT STARTED
+## Last Updated: 2025-01-27 19:45 IST
 
 ---
 
@@ -96,18 +96,41 @@ _Nothing currently in progress_
 
 ---
 
-## Next Up (Phase 2)
+## Next Up (Phase 2 - Frontend-Backend Integration) - PRIORITY
 
-- [ ] Add unit tests for services
-- [ ] Add integration tests for controllers
-- [ ] Add security (Spring Security + JWT)
-- [ ] Add user authentication flow
+### Step 1: Connect Frontend to Live Backend APIs
+- [ ] Update frontend API service to call backend endpoints
+- [ ] Replace mock data with real API calls
+- [ ] Configure CORS if needed
+- [ ] Test Dashboard with live metrics from `/api/v1/dashboard/metrics`
+
+### Step 2: File Upload Integration
+- [ ] Connect file upload UI to `/api/v1/files/upload`
+- [ ] Display uploaded files from `/api/v1/files`
+- [ ] Show file preview and schema detection
+
+### Step 3: Reconciliation Flow
+- [ ] Create reconciliation via `/api/v1/reconciliations`
+- [ ] Display reconciliation status and progress
+- [ ] Show exceptions from `/api/v1/exceptions`
+
+### Step 4: AI Chat Integration
+- [ ] Connect chat UI to `/api/v1/chat/sessions` and `/api/v1/chat/message`
+- [ ] Implement streaming responses
+- [ ] Test AI suggestions
+
+### Step 5: Rules Management
+- [ ] CRUD operations for rules via `/api/v1/rules`
+- [ ] AI-powered rule suggestions
 
 ---
 
 ## Phase 3 (Planned)
 
-- [ ] Frontend React integration testing
+- [ ] Add unit tests for services
+- [ ] Add integration tests for controllers
+- [ ] Add security (Spring Security + JWT)
+- [ ] Add user authentication flow
 - [ ] End-to-end reconciliation flow testing
 - [ ] Performance optimization
 - [ ] Documentation
@@ -138,6 +161,27 @@ _Nothing currently in progress_
 - CSV via Apache Commons CSV
 - Excel via Apache POI
 - Auto-detects column types: STRING, INTEGER, DECIMAL, DATE, BOOLEAN
+
+---
+
+## How to Run the Application
+
+### Start Backend (Terminal 1)
+```bash
+cd smartreconciliation
+docker-compose up -d          # Start PostgreSQL
+mvnw.cmd spring-boot:run      # Start backend on http://localhost:8080
+```
+
+### Start Frontend (Terminal 2)
+```bash
+cd smartreconciliation/frontend
+npm run dev                   # Start frontend on http://localhost:5173
+```
+
+### API Endpoints
+- Backend API: http://localhost:8080/api/v1/
+- Frontend UI: http://localhost:5173/
 
 ---
 

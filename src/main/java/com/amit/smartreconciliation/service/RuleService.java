@@ -12,8 +12,8 @@ import com.amit.smartreconciliation.exception.ResourceNotFoundException;
 import com.amit.smartreconciliation.repository.FieldMappingRepository;
 import com.amit.smartreconciliation.repository.MatchingRuleRepository;
 import com.amit.smartreconciliation.repository.RuleSetRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,14 +22,24 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class RuleService {
+
+    private static final Logger log = LoggerFactory.getLogger(RuleService.class);
 
     private final RuleSetRepository ruleSetRepository;
     private final FieldMappingRepository fieldMappingRepository;
     private final MatchingRuleRepository matchingRuleRepository;
     private final OrganizationService organizationService;
+
+    public RuleService(RuleSetRepository ruleSetRepository,
+                       FieldMappingRepository fieldMappingRepository,
+                       MatchingRuleRepository matchingRuleRepository,
+                       OrganizationService organizationService) {
+        this.ruleSetRepository = ruleSetRepository;
+        this.fieldMappingRepository = fieldMappingRepository;
+        this.matchingRuleRepository = matchingRuleRepository;
+        this.organizationService = organizationService;
+    }
 
     @Transactional
     public RuleSetResponse create(RuleSetRequest request) {

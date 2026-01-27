@@ -9,8 +9,8 @@ import com.amit.smartreconciliation.enums.ExceptionStatus;
 import com.amit.smartreconciliation.enums.ExceptionType;
 import com.amit.smartreconciliation.exception.ResourceNotFoundException;
 import com.amit.smartreconciliation.repository.ReconciliationExceptionRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -21,12 +21,17 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class ExceptionService {
+
+    private static final Logger log = LoggerFactory.getLogger(ExceptionService.class);
 
     private final ReconciliationExceptionRepository exceptionRepository;
     private final AiService aiService;
+
+    public ExceptionService(ReconciliationExceptionRepository exceptionRepository, AiService aiService) {
+        this.exceptionRepository = exceptionRepository;
+        this.aiService = aiService;
+    }
 
     public Page<ReconciliationExceptionResponse> getByReconciliationId(
             Long reconciliationId,

@@ -7,8 +7,8 @@ import com.amit.smartreconciliation.entity.Organization;
 import com.amit.smartreconciliation.enums.DataSourceType;
 import com.amit.smartreconciliation.exception.ResourceNotFoundException;
 import com.amit.smartreconciliation.repository.DataSourceRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,12 +17,17 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class DataSourceService {
+
+    private static final Logger log = LoggerFactory.getLogger(DataSourceService.class);
 
     private final DataSourceRepository dataSourceRepository;
     private final OrganizationService organizationService;
+
+    public DataSourceService(DataSourceRepository dataSourceRepository, OrganizationService organizationService) {
+        this.dataSourceRepository = dataSourceRepository;
+        this.organizationService = organizationService;
+    }
 
     @Transactional
     public DataSourceResponse create(DataSourceRequest request) {

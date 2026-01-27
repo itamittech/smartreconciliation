@@ -1,12 +1,13 @@
 package com.amit.smartreconciliation.service;
 
 import com.amit.smartreconciliation.exception.FileProcessingException;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,8 +17,9 @@ import java.nio.file.Path;
 import java.util.*;
 
 @Service
-@Slf4j
 public class FileParserService {
+
+    private static final Logger log = LoggerFactory.getLogger(FileParserService.class);
 
     public ParseResult parseFile(MultipartFile file) {
         String filename = file.getOriginalFilename();

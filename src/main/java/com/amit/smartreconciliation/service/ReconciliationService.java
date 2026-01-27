@@ -7,8 +7,8 @@ import com.amit.smartreconciliation.enums.*;
 import com.amit.smartreconciliation.exception.ResourceNotFoundException;
 import com.amit.smartreconciliation.repository.ReconciliationExceptionRepository;
 import com.amit.smartreconciliation.repository.ReconciliationRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,9 +19,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class ReconciliationService {
+
+    private static final Logger log = LoggerFactory.getLogger(ReconciliationService.class);
 
     private final ReconciliationRepository reconciliationRepository;
     private final ReconciliationExceptionRepository exceptionRepository;
@@ -29,6 +29,20 @@ public class ReconciliationService {
     private final FileUploadService fileUploadService;
     private final RuleService ruleService;
     private final FileParserService fileParserService;
+
+    public ReconciliationService(ReconciliationRepository reconciliationRepository,
+                                ReconciliationExceptionRepository exceptionRepository,
+                                OrganizationService organizationService,
+                                FileUploadService fileUploadService,
+                                RuleService ruleService,
+                                FileParserService fileParserService) {
+        this.reconciliationRepository = reconciliationRepository;
+        this.exceptionRepository = exceptionRepository;
+        this.organizationService = organizationService;
+        this.fileUploadService = fileUploadService;
+        this.ruleService = ruleService;
+        this.fileParserService = fileParserService;
+    }
 
     @Transactional
     public ReconciliationResponse create(ReconciliationRequest request) {

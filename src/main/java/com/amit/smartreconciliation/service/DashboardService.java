@@ -6,8 +6,8 @@ import com.amit.smartreconciliation.entity.Reconciliation;
 import com.amit.smartreconciliation.enums.ExceptionStatus;
 import com.amit.smartreconciliation.enums.ReconciliationStatus;
 import com.amit.smartreconciliation.repository.*;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.format.DateTimeFormatter;
@@ -17,15 +17,27 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class DashboardService {
+
+    private static final Logger log = LoggerFactory.getLogger(DashboardService.class);
 
     private final ReconciliationRepository reconciliationRepository;
     private final ReconciliationExceptionRepository exceptionRepository;
     private final UploadedFileRepository fileRepository;
     private final RuleSetRepository ruleSetRepository;
     private final OrganizationService organizationService;
+
+    public DashboardService(ReconciliationRepository reconciliationRepository,
+                           ReconciliationExceptionRepository exceptionRepository,
+                           UploadedFileRepository fileRepository,
+                           RuleSetRepository ruleSetRepository,
+                           OrganizationService organizationService) {
+        this.reconciliationRepository = reconciliationRepository;
+        this.exceptionRepository = exceptionRepository;
+        this.fileRepository = fileRepository;
+        this.ruleSetRepository = ruleSetRepository;
+        this.organizationService = organizationService;
+    }
 
     public DashboardMetricsResponse getMetrics() {
         Organization org = organizationService.getDefaultOrganization();

@@ -12,8 +12,8 @@ import com.amit.smartreconciliation.exception.ResourceNotFoundException;
 import com.amit.smartreconciliation.repository.ChatMessageRepository;
 import com.amit.smartreconciliation.repository.ChatSessionRepository;
 import com.amit.smartreconciliation.repository.ReconciliationRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
@@ -22,15 +22,27 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class ChatService {
+
+    private static final Logger log = LoggerFactory.getLogger(ChatService.class);
 
     private final ChatSessionRepository sessionRepository;
     private final ChatMessageRepository messageRepository;
     private final ReconciliationRepository reconciliationRepository;
     private final OrganizationService organizationService;
     private final AiService aiService;
+
+    public ChatService(ChatSessionRepository sessionRepository,
+                      ChatMessageRepository messageRepository,
+                      ReconciliationRepository reconciliationRepository,
+                      OrganizationService organizationService,
+                      AiService aiService) {
+        this.sessionRepository = sessionRepository;
+        this.messageRepository = messageRepository;
+        this.reconciliationRepository = reconciliationRepository;
+        this.organizationService = organizationService;
+        this.aiService = aiService;
+    }
 
     @Transactional
     public ChatSessionResponse createSession(Long reconciliationId) {

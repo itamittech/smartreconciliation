@@ -1,7 +1,8 @@
 package com.amit.smartreconciliation.service;
 
 import com.amit.smartreconciliation.dto.response.SchemaResponse;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -12,8 +13,9 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 @Service
-@Slf4j
 public class SchemaDetectionService {
+
+    private static final Logger log = LoggerFactory.getLogger(SchemaDetectionService.class);
 
     private static final Pattern NUMBER_PATTERN = Pattern.compile("^-?\\d+(\\.\\d+)?$");
     private static final Pattern INTEGER_PATTERN = Pattern.compile("^-?\\d+$");

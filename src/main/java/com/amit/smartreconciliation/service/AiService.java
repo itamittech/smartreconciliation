@@ -3,13 +3,12 @@ package com.amit.smartreconciliation.service;
 import com.amit.smartreconciliation.dto.request.AiMappingSuggestionRequest;
 import com.amit.smartreconciliation.dto.response.AiMappingSuggestionResponse;
 import com.amit.smartreconciliation.dto.response.SchemaResponse;
-import com.amit.smartreconciliation.entity.UploadedFile;
 import com.amit.smartreconciliation.exception.AiServiceException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.stereotype.Service;
@@ -17,16 +16,21 @@ import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class AiService {
+
+    private static final Logger log = LoggerFactory.getLogger(AiService.class);
 
     private final ChatModel chatModel;
     private final FileUploadService fileUploadService;
     private final ObjectMapper objectMapper;
+
+    public AiService(ChatModel chatModel, FileUploadService fileUploadService, ObjectMapper objectMapper) {
+        this.chatModel = chatModel;
+        this.fileUploadService = fileUploadService;
+        this.objectMapper = objectMapper;
+    }
 
     public AiMappingSuggestionResponse suggestMappings(AiMappingSuggestionRequest request) {
         try {

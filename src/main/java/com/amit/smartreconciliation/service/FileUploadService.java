@@ -10,8 +10,8 @@ import com.amit.smartreconciliation.enums.FileStatus;
 import com.amit.smartreconciliation.exception.FileProcessingException;
 import com.amit.smartreconciliation.exception.ResourceNotFoundException;
 import com.amit.smartreconciliation.repository.UploadedFileRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,15 +29,27 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class FileUploadService {
+
+    private static final Logger log = LoggerFactory.getLogger(FileUploadService.class);
 
     private final UploadedFileRepository uploadedFileRepository;
     private final OrganizationService organizationService;
     private final FileStorageConfig fileStorageConfig;
     private final FileParserService fileParserService;
     private final SchemaDetectionService schemaDetectionService;
+
+    public FileUploadService(UploadedFileRepository uploadedFileRepository,
+                            OrganizationService organizationService,
+                            FileStorageConfig fileStorageConfig,
+                            FileParserService fileParserService,
+                            SchemaDetectionService schemaDetectionService) {
+        this.uploadedFileRepository = uploadedFileRepository;
+        this.organizationService = organizationService;
+        this.fileStorageConfig = fileStorageConfig;
+        this.fileParserService = fileParserService;
+        this.schemaDetectionService = schemaDetectionService;
+    }
 
     @Transactional
     public UploadedFileResponse uploadFile(MultipartFile file) {

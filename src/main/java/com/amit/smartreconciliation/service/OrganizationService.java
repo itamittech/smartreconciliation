@@ -4,19 +4,23 @@ import com.amit.smartreconciliation.entity.Organization;
 import com.amit.smartreconciliation.exception.ResourceNotFoundException;
 import com.amit.smartreconciliation.repository.OrganizationRepository;
 import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class OrganizationService {
+
+    private static final Logger log = LoggerFactory.getLogger(OrganizationService.class);
 
     private final OrganizationRepository organizationRepository;
 
     private static final String DEFAULT_ORG_NAME = "Default Organization";
+
+    public OrganizationService(OrganizationRepository organizationRepository) {
+        this.organizationRepository = organizationRepository;
+    }
 
     @PostConstruct
     @Transactional

@@ -82,13 +82,21 @@ _Nothing currently in progress_
 - [x] Fixed GlobalExceptionHandler to use SLF4J Logger directly
 - [x] Fixed all 8 controllers to use constructor injection
 - [x] Changed Java target from 25 to 21 in pom.xml
+- [x] Created proper AI configuration architecture:
+  - `.env` file for API keys (not committed)
+  - `.env.example` as template for users
+  - `AiConfig.java` - conditional bean creation based on `app.ai.provider`
+  - `application.properties` - configurable AI provider selection
+  - Added spring-dotenv for automatic .env loading
+- [x] Database connectivity tested with Docker - WORKING
 
 ---
 
 ## Next Up (Phase 1 Remaining)
 
-- [ ] Test database connectivity with Docker: `docker-compose up -d`
+- [ ] Set ANTHROPIC_API_KEY in .env file
 - [ ] Run application: `mvnw.cmd spring-boot:run`
+- [ ] Test health endpoint: `curl http://localhost:8080/api/v1/health`
 - [ ] Fix any runtime issues
 
 ---
@@ -120,9 +128,16 @@ _Nothing currently in progress_
 - Fuzzy matching uses Levenshtein distance with configurable threshold
 
 ### AI Integration
-- Uses Spring AI ChatClient with ChatModel
-- Supports Anthropic, OpenAI, DeepSeek (configured in application.properties)
+- Custom `AiConfig.java` creates ChatModel bean based on `app.ai.provider` setting
+- Supports: `anthropic`, `openai`, `deepseek`
+- API keys stored in `.env` file (loaded by spring-dotenv)
+- Only the selected provider's bean is created (no wasted resources)
 - Streaming chat via Flux<String>
+
+### Configuration Files
+- `.env` - API keys (NEVER commit this file)
+- `.env.example` - Template for users to copy
+- `application.properties` - Set `app.ai.provider` to switch AI models
 
 ### File Parsing
 - CSV via Apache Commons CSV

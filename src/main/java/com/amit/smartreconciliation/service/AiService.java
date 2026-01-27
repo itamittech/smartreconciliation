@@ -26,7 +26,9 @@ public class AiService {
     private final FileUploadService fileUploadService;
     private final ObjectMapper objectMapper;
 
-    public AiService(ChatModel chatModel, FileUploadService fileUploadService, ObjectMapper objectMapper) {
+    public AiService(ChatModel chatModel,
+                     FileUploadService fileUploadService,
+                     ObjectMapper objectMapper) {
         this.chatModel = chatModel;
         this.fileUploadService = fileUploadService;
         this.objectMapper = objectMapper;

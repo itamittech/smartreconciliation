@@ -1,14 +1,17 @@
 import { useRef, useEffect, useState } from 'react'
-import { Sparkles } from 'lucide-react'
+import { Sparkles, AlertCircle } from 'lucide-react'
 import { ChatMessage } from './ChatMessage'
 import { ChatInput } from './ChatInput'
 import { useAppStore } from '@/store'
 import type { ChatMessage as ChatMessageType } from '@/types'
+import { useQuickChat } from '@/services/hooks'
 
 const ChatContainer = () => {
   const { chatMessages, addChatMessage } = useAppStore()
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const quickChat = useQuickChat()
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -18,58 +21,9 @@ const ChatContainer = () => {
     scrollToBottom()
   }, [chatMessages])
 
-  const simulateAIResponse = (userMessage: string): string => {
-    // Simulated AI responses based on user input
-    const lowerMessage = userMessage.toLowerCase()
+  const handleSendMessage = async (content: string) => {
+    setError(null)
 
-    if (lowerMessage.includes('reconcile') || lowerMessage.includes('bank')) {
-      return `I've analyzed your request. To reconcile bank statements, I'll need:
-
-1. **Bank Statement File** - CSV or Excel format
-2. **Accounting Export** - Your internal transaction records
-
-Please upload your files using the attachment button, or describe the data sources you'd like to use.
-
-I can help with:
-- Auto-detecting column types
-- Suggesting field mappings
-- Setting up matching rules
-- Identifying exceptions`
-    }
-
-    if (lowerMessage.includes('exception')) {
-      return `I found **23 pending exceptions** in your recent reconciliations:
-
-- **Critical (5)**: Amount mismatches > $1,000
-- **Warning (12)**: Missing records in source system
-- **Info (6)**: Date variances within tolerance
-
-Would you like me to show the details or suggest resolutions for the critical ones first?`
-    }
-
-    if (lowerMessage.includes('rule')) {
-      return `I can help you create matching rules. Here are some common patterns:
-
-1. **Exact Match** - Fields must match exactly
-2. **Fuzzy Match** - Allow for minor variations
-3. **Date Tolerance** - Match within ±N days
-4. **Amount Tolerance** - Match within ±$X or ±%
-
-What type of rule would you like to create?`
-    }
-
-    return `I understand you'd like help with: "${userMessage}"
-
-I'm your AI reconciliation assistant. I can help you:
-- Upload and analyze data files
-- Suggest field mappings between systems
-- Create and manage matching rules
-- Resolve exceptions automatically
-
-What would you like to do?`
-  }
-
-  const handleSendMessage = (content: string) => {
     const userMessage: ChatMessageType = {
       id: crypto.randomUUID(),
       role: 'user',
@@ -80,17 +34,31 @@ What would you like to do?`
     addChatMessage(userMessage)
     setIsLoading(true)
 
-    // Simulate AI response with delay
-    setTimeout(() => {
+    try {
+      const response = await quickChat.mutateAsync({ message: content })
+
       const aiResponse: ChatMessageType = {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: simulateAIResponse(content),
+        content: response.data?.response || 'No response received',
         timestamp: new Date().toISOString(),
       }
       addChatMessage(aiResponse)
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to get AI response'
+      setError(errorMessage)
+
+      // Add error as assistant message
+      const errorResponse: ChatMessageType = {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: `Sorry, I encountered an error: ${errorMessage}. Please make sure the backend is running.`,
+        timestamp: new Date().toISOString(),
+      }
+      addChatMessage(errorResponse)
+    } finally {
       setIsLoading(false)
-    }, 1000)
+    }
   }
 
   const handleFileUpload = (files: FileList) => {
@@ -100,6 +68,20 @@ What would you like to do?`
 
   return (
     <div className="flex h-full flex-col">
+      {/* Error Banner */}
+      {error && (
+        <div className="flex items-center gap-2 bg-destructive/10 px-4 py-2 text-sm text-destructive">
+          <AlertCircle className="h-4 w-4" />
+          <span>{error}</span>
+          <button
+            onClick={() => setError(null)}
+            className="ml-auto text-xs underline"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto">
         {chatMessages.length === 0 ? (
@@ -127,6 +109,7 @@ What would you like to do?`
                   onClick={() => handleSendMessage(prompt)}
                   className="rounded-lg border p-3 text-left text-sm transition-colors hover:bg-secondary"
                   aria-label={`Start conversation with: ${prompt}`}
+                  disabled={isLoading}
                 >
                   {prompt}
                 </button>

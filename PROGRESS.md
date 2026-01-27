@@ -1,8 +1,8 @@
 # Development Progress
 
 ## Current Phase: Phase 2 - Frontend-Backend Integration
-## Status: NOT STARTED
-## Last Updated: 2025-01-27 19:45 IST
+## Status: IN PROGRESS (Step 1 Complete)
+## Last Updated: 2026-01-28
 
 ---
 
@@ -70,23 +70,33 @@
 
 ---
 
-## Completed This Session
+## Completed This Session (Phase 2 - Step 1)
 
-- [x] Verify application compiles: `mvnw.cmd compile`
-- [x] Fixed Lombok compatibility with Java 25 by using explicit constructors
-- [x] Fixed ApiResponse to have manual builder pattern
-- [x] Fixed GlobalExceptionHandler to use SLF4J Logger directly
-- [x] Fixed all 8 controllers to use constructor injection
-- [x] Changed Java target from 25 to 21 in pom.xml
-- [x] Created proper AI configuration architecture:
-  - `.env` file for API keys (not committed)
-  - `.env.example` as template for users
-  - `AiConfig.java` - @Primary bean selection based on app.ai.provider
-  - `application.properties` - configurable AI provider selection
-  - Added spring-dotenv for automatic .env loading
-- [x] Database connectivity tested with Docker - WORKING
-- [x] Application started successfully on port 8080
-- [x] Health endpoint verified: `GET /api/v1/health` returns UP
+### Frontend API Infrastructure Created
+- [x] Created `frontend/src/services/api.ts` - Base API client with fetch wrapper
+- [x] Created `frontend/src/services/types.ts` - TypeScript types matching backend DTOs
+- [x] Created `frontend/src/services/endpoints.ts` - All API endpoint functions
+- [x] Created `frontend/src/services/hooks.ts` - React Query hooks for data fetching
+- [x] Created `frontend/src/services/index.ts` - Barrel export
+- [x] Added React Query provider to `main.tsx`
+- [x] Created `frontend/.env` with `VITE_API_BASE_URL`
+
+### Pages Updated to Use Live APIs
+- [x] **HomePage (Dashboard)** - Now fetches from `/api/v1/dashboard/metrics`
+  - Loading states with spinner
+  - Error handling with helpful messages
+  - Stats cards show live data
+- [x] **ReconciliationsPage** - Now fetches from `/api/v1/reconciliations`
+  - List view with real data
+  - Delete and Start actions wired up
+  - Status filtering works
+- [x] **ExceptionsPage** - Now fetches from `/api/v1/exceptions`
+  - Filters sent to API
+  - Resolve/Ignore actions wired up
+  - Bulk resolve functionality
+
+### Backend Configuration
+- [x] CORS already configured in `WebConfig.java` for localhost:5173
 
 ---
 
@@ -96,23 +106,17 @@ _Nothing currently in progress_
 
 ---
 
-## Next Up (Phase 2 - Frontend-Backend Integration) - PRIORITY
-
-### Step 1: Connect Frontend to Live Backend APIs
-- [ ] Update frontend API service to call backend endpoints
-- [ ] Replace mock data with real API calls
-- [ ] Configure CORS if needed
-- [ ] Test Dashboard with live metrics from `/api/v1/dashboard/metrics`
+## Next Up (Phase 2 Continued)
 
 ### Step 2: File Upload Integration
 - [ ] Connect file upload UI to `/api/v1/files/upload`
 - [ ] Display uploaded files from `/api/v1/files`
 - [ ] Show file preview and schema detection
 
-### Step 3: Reconciliation Flow
-- [ ] Create reconciliation via `/api/v1/reconciliations`
+### Step 3: Reconciliation Creation Flow
+- [ ] Create new reconciliation wizard/modal
 - [ ] Display reconciliation status and progress
-- [ ] Show exceptions from `/api/v1/exceptions`
+- [ ] Real-time progress updates for running reconciliations
 
 ### Step 4: AI Chat Integration
 - [ ] Connect chat UI to `/api/v1/chat/sessions` and `/api/v1/chat/message`
@@ -161,6 +165,12 @@ _Nothing currently in progress_
 - CSV via Apache Commons CSV
 - Excel via Apache POI
 - Auto-detects column types: STRING, INTEGER, DECIMAL, DATE, BOOLEAN
+
+### Frontend API Integration
+- Uses TanStack React Query for data fetching and caching
+- API base URL configurable via `VITE_API_BASE_URL` in `.env`
+- All API responses wrapped in `ApiResponse<T>` with success/error handling
+- React Query provides automatic caching, refetching, and loading states
 
 ---
 

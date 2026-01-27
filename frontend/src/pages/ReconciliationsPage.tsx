@@ -9,111 +9,106 @@ import {
   Eye,
   Download,
   Trash2,
+  Loader2,
+  AlertCircle,
+  PlayCircle,
 } from 'lucide-react'
 import { Button, Input, Card, Badge } from '@/components/ui'
-import type { Reconciliation, ReconciliationStatus } from '@/types'
+import type { ReconciliationStatus } from '@/types'
 import { cn } from '@/lib/utils'
-
-// Mock data
-const mockReconciliations: Reconciliation[] = [
-  {
-    id: '1',
-    name: 'January Bank Statement',
-    status: 'completed',
-    sourceAName: 'Bank Statement CSV',
-    sourceBName: 'Accounting System',
-    totalRecords: 2847,
-    matchedRecords: 2789,
-    exceptions: 58,
-    createdAt: '2026-01-20T10:30:00Z',
-    completedAt: '2026-01-20T10:35:00Z',
-  },
-  {
-    id: '2',
-    name: 'Q4 Invoice Reconciliation',
-    status: 'processing',
-    sourceAName: 'Invoice System',
-    sourceBName: 'Payment Gateway',
-    totalRecords: 5234,
-    matchedRecords: 4102,
-    exceptions: 0,
-    createdAt: '2026-01-23T14:00:00Z',
-  },
-  {
-    id: '3',
-    name: 'Payroll vs HR Records',
-    status: 'completed',
-    sourceAName: 'Payroll System',
-    sourceBName: 'HR Database',
-    totalRecords: 450,
-    matchedRecords: 448,
-    exceptions: 2,
-    createdAt: '2026-01-19T09:00:00Z',
-    completedAt: '2026-01-19T09:05:00Z',
-  },
-  {
-    id: '4',
-    name: 'Inventory Count',
-    status: 'pending',
-    sourceAName: 'Warehouse System',
-    sourceBName: 'ERP',
-    totalRecords: 12500,
-    matchedRecords: 0,
-    exceptions: 0,
-    createdAt: '2026-01-24T08:00:00Z',
-  },
-  {
-    id: '5',
-    name: 'Failed Import Test',
-    status: 'failed',
-    sourceAName: 'Test File',
-    sourceBName: 'Database',
-    totalRecords: 100,
-    matchedRecords: 0,
-    exceptions: 0,
-    createdAt: '2026-01-22T16:00:00Z',
-  },
-]
+import { useReconciliations, useDeleteReconciliation, useStartReconciliation } from '@/services/hooks'
+import type { Reconciliation as ApiReconciliation } from '@/services/types'
 
 const statusConfig: Record<
-  ReconciliationStatus,
+  string,
   { icon: typeof CheckCircle2; label: string; variant: 'default' | 'secondary' | 'success' | 'warning' | 'destructive' }
 > = {
-  completed: { icon: CheckCircle2, label: 'Completed', variant: 'success' },
-  processing: { icon: Clock, label: 'Processing', variant: 'warning' },
-  pending: { icon: Clock, label: 'Pending', variant: 'secondary' },
-  failed: { icon: XCircle, label: 'Failed', variant: 'destructive' },
+  COMPLETED: { icon: CheckCircle2, label: 'Completed', variant: 'success' },
+  IN_PROGRESS: { icon: Clock, label: 'Processing', variant: 'warning' },
+  PENDING: { icon: Clock, label: 'Pending', variant: 'secondary' },
+  FAILED: { icon: XCircle, label: 'Failed', variant: 'destructive' },
 }
 
 const ReconciliationsPage = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<ReconciliationStatus | 'all'>('all')
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useState<number | null>(null)
 
-  const filteredReconciliations = mockReconciliations.filter((recon) => {
+  const { data: reconciliationsResponse, isLoading, isError, error } = useReconciliations()
+  const deleteReconciliation = useDeleteReconciliation()
+  const startReconciliation = useStartReconciliation()
+
+  const reconciliations = reconciliationsResponse?.data || []
+
+  const filteredReconciliations = reconciliations.filter((recon) => {
     const matchesSearch = recon.name.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesStatus = statusFilter === 'all' || recon.status === statusFilter
-    return matchesSearch && matchesStatus
+    const backendStatus = recon.status?.toString().toLowerCase()
+    const filterStatus = statusFilter === 'all' ? true :
+      (statusFilter === 'processing' && backendStatus === 'in_progress') ||
+      backendStatus === statusFilter
+    return matchesSearch && filterStatus
   })
 
   const handleNewReconciliation = () => {
     console.log('Create new reconciliation')
+    // TODO: Open new reconciliation modal/page
   }
 
-  const handleRowClick = (id: string) => {
+  const handleRowClick = (id: number) => {
     setSelectedId(id === selectedId ? null : id)
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent, id: string) => {
+  const handleKeyDown = (e: React.KeyboardEvent, id: number) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
       handleRowClick(id)
     }
   }
 
-  const getMatchRate = (recon: Reconciliation) => {
-    if (recon.totalRecords === 0) return 0
-    return ((recon.matchedRecords / recon.totalRecords) * 100).toFixed(1)
+  const handleDelete = (e: React.MouseEvent, id: number) => {
+    e.stopPropagation()
+    if (confirm('Are you sure you want to delete this reconciliation?')) {
+      deleteReconciliation.mutate(id)
+    }
+  }
+
+  const handleStart = (e: React.MouseEvent, id: number) => {
+    e.stopPropagation()
+    startReconciliation.mutate(id)
+  }
+
+  const getMatchRate = (recon: ApiReconciliation) => {
+    if (recon.matchRate != null) return recon.matchRate.toFixed(1)
+    if (!recon.totalSourceRecords || recon.totalSourceRecords === 0) return '0.0'
+    if (!recon.matchedRecords) return '0.0'
+    return ((recon.matchedRecords / recon.totalSourceRecords) * 100).toFixed(1)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading reconciliations...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <AlertCircle className="h-12 w-12 text-destructive" />
+          <div>
+            <p className="font-semibold text-lg">Failed to load reconciliations</p>
+            <p className="text-muted-foreground text-sm">
+              {error instanceof Error ? error.message : 'Unable to connect to backend API'}
+            </p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -192,7 +187,7 @@ const ReconciliationsPage = () => {
               </thead>
               <tbody>
                 {filteredReconciliations.map((recon) => {
-                  const config = statusConfig[recon.status]
+                  const config = statusConfig[recon.status] || statusConfig.PENDING
                   const StatusIcon = config.icon
                   const matchRate = getMatchRate(recon)
 
@@ -214,20 +209,25 @@ const ReconciliationsPage = () => {
                           <div className="rounded-full bg-secondary p-2">
                             <FileStack className="h-4 w-4" />
                           </div>
-                          <span className="font-medium">{recon.name}</span>
+                          <div>
+                            <span className="font-medium">{recon.name}</span>
+                            {recon.description && (
+                              <p className="text-sm text-muted-foreground">{recon.description}</p>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="text-sm">
-                          <p>{recon.sourceAName}</p>
-                          <p className="text-muted-foreground">vs {recon.sourceBName}</p>
+                          <p>{recon.sourceFileName || 'Source File'}</p>
+                          <p className="text-muted-foreground">vs {recon.targetFileName || 'Target File'}</p>
                         </div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="text-sm">
-                          <p>{recon.totalRecords.toLocaleString()} total</p>
+                          <p>{(recon.totalSourceRecords || 0).toLocaleString()} total</p>
                           <p className="text-muted-foreground">
-                            {recon.exceptions} exceptions
+                            {recon.exceptionCount || 0} exceptions
                           </p>
                         </div>
                       </td>
@@ -257,6 +257,17 @@ const ReconciliationsPage = () => {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1">
+                          {recon.status === 'PENDING' && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Start reconciliation"
+                              onClick={(e) => handleStart(e, recon.id)}
+                              disabled={startReconciliation.isPending}
+                            >
+                              <PlayCircle className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
@@ -283,10 +294,8 @@ const ReconciliationsPage = () => {
                             variant="ghost"
                             size="icon"
                             aria-label="Delete"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              console.log('Delete:', recon.id)
-                            }}
+                            onClick={(e) => handleDelete(e, recon.id)}
+                            disabled={deleteReconciliation.isPending}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -301,7 +310,12 @@ const ReconciliationsPage = () => {
             {filteredReconciliations.length === 0 && (
               <div className="py-12 text-center">
                 <FileStack className="mx-auto h-12 w-12 text-muted-foreground" />
-                <p className="mt-2 text-muted-foreground">No reconciliations found</p>
+                <p className="mt-2 text-muted-foreground">
+                  {reconciliations.length === 0
+                    ? 'No reconciliations yet. Create your first one!'
+                    : 'No reconciliations found matching your filters'
+                  }
+                </p>
               </div>
             )}
           </div>

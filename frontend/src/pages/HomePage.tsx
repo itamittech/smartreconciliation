@@ -3,6 +3,8 @@ import {
   CheckCircle2,
   AlertTriangle,
   TrendingUp,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react'
 import {
   StatsCard,
@@ -10,77 +12,89 @@ import {
   MatchRateChart,
   QuickActions,
 } from '@/components/dashboard'
+import { useDashboardMetrics } from '@/services/hooks'
 import type { Reconciliation } from '@/types'
 
-// Mock data for demonstration
-const mockReconciliations: Reconciliation[] = [
-  {
-    id: '1',
-    name: 'January Bank Statement',
-    status: 'completed',
-    sourceAName: 'Bank Statement',
-    sourceBName: 'Accounting System',
-    totalRecords: 2847,
-    matchedRecords: 2789,
-    exceptions: 58,
-    createdAt: '2026-01-20T10:30:00Z',
-    completedAt: '2026-01-20T10:35:00Z',
-  },
-  {
-    id: '2',
-    name: 'Q4 Invoice Reconciliation',
-    status: 'processing',
-    sourceAName: 'Invoice System',
-    sourceBName: 'Payment Gateway',
-    totalRecords: 5234,
-    matchedRecords: 4102,
-    exceptions: 0,
-    createdAt: '2026-01-23T14:00:00Z',
-  },
-  {
-    id: '3',
-    name: 'Payroll vs HR Records',
-    status: 'completed',
-    sourceAName: 'Payroll System',
-    sourceBName: 'HR Database',
-    totalRecords: 450,
-    matchedRecords: 448,
-    exceptions: 2,
-    createdAt: '2026-01-19T09:00:00Z',
-    completedAt: '2026-01-19T09:05:00Z',
-  },
-  {
-    id: '4',
-    name: 'Inventory Count',
-    status: 'pending',
-    sourceAName: 'Warehouse System',
-    sourceBName: 'ERP',
-    totalRecords: 12500,
+// Transform backend reconciliation summary to frontend format
+function transformReconciliation(
+  summary: { id: number; name: string; status: string; matchRate: number; exceptionCount: number; createdAt: string }
+): Reconciliation {
+  return {
+    id: summary.id.toString(),
+    name: summary.name,
+    status: summary.status.toLowerCase() as 'pending' | 'processing' | 'completed' | 'failed',
+    sourceAName: 'Source',
+    sourceBName: 'Target',
+    totalRecords: 0,
     matchedRecords: 0,
-    exceptions: 0,
-    createdAt: '2026-01-24T08:00:00Z',
-  },
-]
+    exceptions: summary.exceptionCount,
+    createdAt: summary.createdAt,
+    completedAt: summary.status === 'COMPLETED' ? summary.createdAt : undefined,
+  }
+}
 
-const mockChartData = [
-  { date: 'Jan 1', matchRate: 94, exceptions: 45 },
-  { date: 'Jan 5', matchRate: 95, exceptions: 38 },
-  { date: 'Jan 10', matchRate: 96, exceptions: 32 },
-  { date: 'Jan 15', matchRate: 97, exceptions: 28 },
-  { date: 'Jan 20', matchRate: 98, exceptions: 23 },
-  { date: 'Jan 24', matchRate: 97.5, exceptions: 25 },
+// Placeholder chart data when no real data available
+const defaultChartData = [
+  { date: 'Day 1', matchRate: 0, exceptions: 0 },
+  { date: 'Day 2', matchRate: 0, exceptions: 0 },
+  { date: 'Day 3', matchRate: 0, exceptions: 0 },
 ]
 
 const HomePage = () => {
+  const { data: metricsResponse, isLoading, isError, error } = useDashboardMetrics()
+  const metrics = metricsResponse?.data
+
   const handleViewDetails = (id: string) => {
     console.log('View reconciliation:', id)
   }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <AlertCircle className="h-12 w-12 text-destructive" />
+          <div>
+            <p className="font-semibold text-lg">Failed to load dashboard</p>
+            <p className="text-muted-foreground text-sm">
+              {error instanceof Error ? error.message : 'Unable to connect to backend API'}
+            </p>
+            <p className="text-muted-foreground text-xs mt-2">
+              Make sure the backend is running on http://localhost:8080
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Transform recent reconciliations for the component
+  const recentReconciliations = metrics?.recentReconciliations?.map(transformReconciliation) || []
+
+  // Build chart data from exceptions breakdown
+  const chartData = metrics?.exceptionsByType
+    ? Object.entries(metrics.exceptionsByType).map(([type, count]) => ({
+        date: type.replace('_', ' '),
+        matchRate: metrics.overallMatchRate || 0,
+        exceptions: count,
+      }))
+    : defaultChartData
 
   return (
     <div className="space-y-6 p-6">
       {/* Welcome Message */}
       <div>
-        <h2 className="text-2xl font-bold">Welcome back, John</h2>
+        <h2 className="text-2xl font-bold">Welcome back</h2>
         <p className="text-muted-foreground">
           Here's what's happening with your reconciliations today.
         </p>
@@ -90,29 +104,26 @@ const HomePage = () => {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Total Reconciliations"
-          value={127}
-          description="This month"
+          value={metrics?.totalReconciliations ?? 0}
+          description={`${metrics?.completedReconciliations ?? 0} completed`}
           icon={FileStack}
-          trend={{ value: 12, isPositive: true }}
         />
         <StatsCard
           title="Match Rate"
-          value="97.2%"
+          value={metrics?.overallMatchRate ? `${metrics.overallMatchRate.toFixed(1)}%` : '—'}
           description="Average accuracy"
           icon={CheckCircle2}
-          trend={{ value: 2.3, isPositive: true }}
         />
         <StatsCard
-          title="Pending Exceptions"
-          value={23}
+          title="Open Exceptions"
+          value={metrics?.openExceptions ?? 0}
           description="Require attention"
           icon={AlertTriangle}
-          trend={{ value: 15, isPositive: false }}
         />
         <StatsCard
-          title="Processing"
-          value={3}
-          description="In progress"
+          title="In Progress"
+          value={metrics?.pendingReconciliations ?? 0}
+          description="Processing"
           icon={TrendingUp}
         />
       </div>
@@ -120,9 +131,9 @@ const HomePage = () => {
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
-          <MatchRateChart data={mockChartData} />
+          <MatchRateChart data={chartData.length > 0 ? chartData : defaultChartData} />
           <RecentReconciliations
-            reconciliations={mockReconciliations}
+            reconciliations={recentReconciliations}
             onViewDetails={handleViewDetails}
           />
         </div>

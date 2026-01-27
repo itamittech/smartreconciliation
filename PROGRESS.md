@@ -94,6 +94,9 @@
   - Filters sent to API
   - Resolve/Ignore actions wired up
   - Bulk resolve functionality
+- [x] **ChatContainer** - Now calls `/api/v1/chat/message`
+  - Real AI responses from backend
+  - Error handling with dismissible banner
 
 ### Backend Configuration
 - [x] CORS already configured in `WebConfig.java` for localhost:5173
@@ -118,12 +121,7 @@ _Nothing currently in progress_
 - [ ] Display reconciliation status and progress
 - [ ] Real-time progress updates for running reconciliations
 
-### Step 4: AI Chat Integration
-- [ ] Connect chat UI to `/api/v1/chat/sessions` and `/api/v1/chat/message`
-- [ ] Implement streaming responses
-- [ ] Test AI suggestions
-
-### Step 5: Rules Management
+### Step 4: Rules Management
 - [ ] CRUD operations for rules via `/api/v1/rules`
 - [ ] AI-powered rule suggestions
 

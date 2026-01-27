@@ -2,18 +2,9 @@ package com.amit.smartreconciliation.dto.response;
 
 import com.amit.smartreconciliation.entity.DataSource;
 import com.amit.smartreconciliation.enums.DataSourceType;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
 import java.util.Map;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class DataSourceResponse {
     private Long id;
     private String name;
@@ -27,19 +18,34 @@ public class DataSourceResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    public DataSourceResponse() {}
+
     public static DataSourceResponse fromEntity(DataSource entity) {
-        return DataSourceResponse.builder()
-                .id(entity.getId())
-                .name(entity.getName())
-                .description(entity.getDescription())
-                .type(entity.getType())
-                .config(entity.getConfig())
-                .active(entity.getActive())
-                .lastTestedAt(entity.getLastTestedAt())
-                .lastTestSuccessful(entity.getLastTestSuccessful())
-                .lastTestError(entity.getLastTestError())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
-                .build();
+        DataSourceResponse r = new DataSourceResponse();
+        r.id = entity.getId();
+        r.name = entity.getName();
+        r.description = entity.getDescription();
+        r.type = entity.getType();
+        r.config = entity.getConfig();
+        r.active = entity.getActive();
+        r.lastTestedAt = entity.getLastTestedAt();
+        r.lastTestSuccessful = entity.getLastTestSuccessful();
+        r.lastTestError = entity.getLastTestError();
+        r.createdAt = entity.getCreatedAt();
+        r.updatedAt = entity.getUpdatedAt();
+        return r;
     }
+
+    // Getters
+    public Long getId() { return id; }
+    public String getName() { return name; }
+    public String getDescription() { return description; }
+    public DataSourceType getType() { return type; }
+    public Map<String, Object> getConfig() { return config; }
+    public Boolean getActive() { return active; }
+    public LocalDateTime getLastTestedAt() { return lastTestedAt; }
+    public Boolean getLastTestSuccessful() { return lastTestSuccessful; }
+    public String getLastTestError() { return lastTestError; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
 }

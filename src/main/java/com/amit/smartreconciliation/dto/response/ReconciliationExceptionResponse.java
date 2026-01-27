@@ -4,18 +4,9 @@ import com.amit.smartreconciliation.entity.ReconciliationException;
 import com.amit.smartreconciliation.enums.ExceptionSeverity;
 import com.amit.smartreconciliation.enums.ExceptionStatus;
 import com.amit.smartreconciliation.enums.ExceptionType;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
 import java.util.Map;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class ReconciliationExceptionResponse {
     private Long id;
     private ExceptionType type;
@@ -35,25 +26,45 @@ public class ReconciliationExceptionResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    public ReconciliationExceptionResponse() {}
+
     public static ReconciliationExceptionResponse fromEntity(ReconciliationException entity) {
-        return ReconciliationExceptionResponse.builder()
-                .id(entity.getId())
-                .type(entity.getType())
-                .severity(entity.getSeverity())
-                .status(entity.getStatus())
-                .description(entity.getDescription())
-                .fieldName(entity.getFieldName())
-                .sourceValue(entity.getSourceValue())
-                .targetValue(entity.getTargetValue())
-                .sourceData(entity.getSourceData())
-                .targetData(entity.getTargetData())
-                .aiSuggestion(entity.getAiSuggestion())
-                .resolution(entity.getResolution())
-                .resolvedBy(entity.getResolvedBy())
-                .resolvedAt(entity.getResolvedAt())
-                .reconciliationId(entity.getReconciliation().getId())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
-                .build();
+        ReconciliationExceptionResponse r = new ReconciliationExceptionResponse();
+        r.id = entity.getId();
+        r.type = entity.getType();
+        r.severity = entity.getSeverity();
+        r.status = entity.getStatus();
+        r.description = entity.getDescription();
+        r.fieldName = entity.getFieldName();
+        r.sourceValue = entity.getSourceValue();
+        r.targetValue = entity.getTargetValue();
+        r.sourceData = entity.getSourceData();
+        r.targetData = entity.getTargetData();
+        r.aiSuggestion = entity.getAiSuggestion();
+        r.resolution = entity.getResolution();
+        r.resolvedBy = entity.getResolvedBy();
+        r.resolvedAt = entity.getResolvedAt();
+        r.reconciliationId = entity.getReconciliation().getId();
+        r.createdAt = entity.getCreatedAt();
+        r.updatedAt = entity.getUpdatedAt();
+        return r;
     }
+
+    public Long getId() { return id; }
+    public ExceptionType getType() { return type; }
+    public ExceptionSeverity getSeverity() { return severity; }
+    public ExceptionStatus getStatus() { return status; }
+    public String getDescription() { return description; }
+    public String getFieldName() { return fieldName; }
+    public String getSourceValue() { return sourceValue; }
+    public String getTargetValue() { return targetValue; }
+    public Map<String, Object> getSourceData() { return sourceData; }
+    public Map<String, Object> getTargetData() { return targetData; }
+    public String getAiSuggestion() { return aiSuggestion; }
+    public String getResolution() { return resolution; }
+    public String getResolvedBy() { return resolvedBy; }
+    public LocalDateTime getResolvedAt() { return resolvedAt; }
+    public Long getReconciliationId() { return reconciliationId; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
 }

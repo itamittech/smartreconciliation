@@ -1,19 +1,10 @@
 package com.amit.smartreconciliation.dto.response;
 
 import com.amit.smartreconciliation.entity.ChatSession;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class ChatSessionResponse {
     private Long id;
     private String title;
@@ -23,18 +14,26 @@ public class ChatSessionResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    public ChatSessionResponse() {}
+
     public static ChatSessionResponse fromEntity(ChatSession entity) {
-        return ChatSessionResponse.builder()
-                .id(entity.getId())
-                .title(entity.getTitle())
-                .reconciliationId(entity.getReconciliation() != null ? entity.getReconciliation().getId() : null)
-                .messages(entity.getMessages() != null ?
-                        entity.getMessages().stream()
-                                .map(ChatMessageResponse::fromEntity)
-                                .collect(Collectors.toList()) : null)
-                .active(entity.getActive())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
-                .build();
+        ChatSessionResponse r = new ChatSessionResponse();
+        r.id = entity.getId();
+        r.title = entity.getTitle();
+        r.reconciliationId = entity.getReconciliation() != null ? entity.getReconciliation().getId() : null;
+        r.messages = entity.getMessages() != null ?
+                entity.getMessages().stream().map(ChatMessageResponse::fromEntity).collect(Collectors.toList()) : null;
+        r.active = entity.getActive();
+        r.createdAt = entity.getCreatedAt();
+        r.updatedAt = entity.getUpdatedAt();
+        return r;
     }
+
+    public Long getId() { return id; }
+    public String getTitle() { return title; }
+    public Long getReconciliationId() { return reconciliationId; }
+    public List<ChatMessageResponse> getMessages() { return messages; }
+    public Boolean getActive() { return active; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
 }

@@ -2,19 +2,10 @@ package com.amit.smartreconciliation.dto.response;
 
 import com.amit.smartreconciliation.entity.UploadedFile;
 import com.amit.smartreconciliation.enums.FileStatus;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class UploadedFileResponse {
     private Long id;
     private String originalFilename;
@@ -28,19 +19,33 @@ public class UploadedFileResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    public UploadedFileResponse() {}
+
     public static UploadedFileResponse fromEntity(UploadedFile entity) {
-        return UploadedFileResponse.builder()
-                .id(entity.getId())
-                .originalFilename(entity.getOriginalFilename())
-                .contentType(entity.getContentType())
-                .fileSize(entity.getFileSize())
-                .status(entity.getStatus())
-                .detectedSchema(entity.getDetectedSchema())
-                .rowCount(entity.getRowCount())
-                .columnCount(entity.getColumnCount())
-                .processingError(entity.getProcessingError())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
-                .build();
+        UploadedFileResponse r = new UploadedFileResponse();
+        r.id = entity.getId();
+        r.originalFilename = entity.getOriginalFilename();
+        r.contentType = entity.getContentType();
+        r.fileSize = entity.getFileSize();
+        r.status = entity.getStatus();
+        r.detectedSchema = entity.getDetectedSchema();
+        r.rowCount = entity.getRowCount();
+        r.columnCount = entity.getColumnCount();
+        r.processingError = entity.getProcessingError();
+        r.createdAt = entity.getCreatedAt();
+        r.updatedAt = entity.getUpdatedAt();
+        return r;
     }
+
+    public Long getId() { return id; }
+    public String getOriginalFilename() { return originalFilename; }
+    public String getContentType() { return contentType; }
+    public Long getFileSize() { return fileSize; }
+    public FileStatus getStatus() { return status; }
+    public List<Map<String, Object>> getDetectedSchema() { return detectedSchema; }
+    public Integer getRowCount() { return rowCount; }
+    public Integer getColumnCount() { return columnCount; }
+    public String getProcessingError() { return processingError; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
 }

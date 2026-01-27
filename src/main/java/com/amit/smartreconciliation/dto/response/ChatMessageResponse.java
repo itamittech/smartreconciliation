@@ -1,18 +1,9 @@
 package com.amit.smartreconciliation.dto.response;
 
 import com.amit.smartreconciliation.entity.ChatMessage;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
 import java.util.Map;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class ChatMessageResponse {
     private Long id;
     private String role;
@@ -20,13 +11,21 @@ public class ChatMessageResponse {
     private Map<String, Object> metadata;
     private LocalDateTime createdAt;
 
+    public ChatMessageResponse() {}
+
     public static ChatMessageResponse fromEntity(ChatMessage entity) {
-        return ChatMessageResponse.builder()
-                .id(entity.getId())
-                .role(entity.getRole())
-                .content(entity.getContent())
-                .metadata(entity.getMetadata())
-                .createdAt(entity.getCreatedAt())
-                .build();
+        ChatMessageResponse r = new ChatMessageResponse();
+        r.id = entity.getId();
+        r.role = entity.getRole();
+        r.content = entity.getContent();
+        r.metadata = entity.getMetadata();
+        r.createdAt = entity.getCreatedAt();
+        return r;
     }
+
+    public Long getId() { return id; }
+    public String getRole() { return role; }
+    public String getContent() { return content; }
+    public Map<String, Object> getMetadata() { return metadata; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
 }

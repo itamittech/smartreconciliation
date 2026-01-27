@@ -7,7 +7,6 @@ import com.amit.smartreconciliation.dto.response.ChatResponse;
 import com.amit.smartreconciliation.dto.response.ChatSessionResponse;
 import com.amit.smartreconciliation.service.ChatService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -18,10 +17,13 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/chat")
-@RequiredArgsConstructor
 public class ChatController {
 
     private final ChatService chatService;
+
+    public ChatController(ChatService chatService) {
+        this.chatService = chatService;
+    }
 
     @PostMapping("/sessions")
     public ResponseEntity<ApiResponse<ChatSessionResponse>> createSession(

@@ -6,7 +6,6 @@ import com.amit.smartreconciliation.dto.response.DataSourceResponse;
 import com.amit.smartreconciliation.enums.DataSourceType;
 import com.amit.smartreconciliation.service.DataSourceService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,10 +14,13 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/datasources")
-@RequiredArgsConstructor
 public class DataSourceController {
 
     private final DataSourceService dataSourceService;
+
+    public DataSourceController(DataSourceService dataSourceService) {
+        this.dataSourceService = dataSourceService;
+    }
 
     @PostMapping
     public ResponseEntity<ApiResponse<DataSourceResponse>> create(

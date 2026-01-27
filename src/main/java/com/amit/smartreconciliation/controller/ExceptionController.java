@@ -9,7 +9,6 @@ import com.amit.smartreconciliation.enums.ExceptionStatus;
 import com.amit.smartreconciliation.enums.ExceptionType;
 import com.amit.smartreconciliation.service.ExceptionService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,10 +20,13 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/exceptions")
-@RequiredArgsConstructor
 public class ExceptionController {
 
     private final ExceptionService exceptionService;
+
+    public ExceptionController(ExceptionService exceptionService) {
+        this.exceptionService = exceptionService;
+    }
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<ReconciliationExceptionResponse>>> getExceptions(

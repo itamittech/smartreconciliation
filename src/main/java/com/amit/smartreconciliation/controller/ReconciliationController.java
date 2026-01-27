@@ -7,7 +7,6 @@ import com.amit.smartreconciliation.dto.response.ReconciliationResponse;
 import com.amit.smartreconciliation.service.ExceptionService;
 import com.amit.smartreconciliation.service.ReconciliationService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,11 +15,16 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/reconciliations")
-@RequiredArgsConstructor
 public class ReconciliationController {
 
     private final ReconciliationService reconciliationService;
     private final ExceptionService exceptionService;
+
+    public ReconciliationController(ReconciliationService reconciliationService,
+                                    ExceptionService exceptionService) {
+        this.reconciliationService = reconciliationService;
+        this.exceptionService = exceptionService;
+    }
 
     @PostMapping
     public ResponseEntity<ApiResponse<ReconciliationResponse>> create(

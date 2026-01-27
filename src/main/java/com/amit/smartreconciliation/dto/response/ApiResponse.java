@@ -10,40 +10,61 @@ public class ApiResponse<T> {
     private T data;
     private LocalDateTime timestamp;
 
-    public ApiResponse() {}
+    public ApiResponse() {
+        this.timestamp = LocalDateTime.now();
+    }
 
-    public ApiResponse(boolean success, String message, T data, LocalDateTime timestamp) {
+    public ApiResponse(boolean success, String message, T data) {
         this.success = success;
         this.message = message;
         this.data = data;
-        this.timestamp = timestamp;
+        this.timestamp = LocalDateTime.now();
     }
 
+    // Static factory methods
     public static <T> ApiResponse<T> success(T data) {
-        ApiResponse<T> response = new ApiResponse<>();
-        response.success = true;
-        response.data = data;
-        response.timestamp = LocalDateTime.now();
-        return response;
+        return new ApiResponse<>(true, null, data);
     }
 
     public static <T> ApiResponse<T> success(String message, T data) {
-        ApiResponse<T> response = new ApiResponse<>();
-        response.success = true;
-        response.message = message;
-        response.data = data;
-        response.timestamp = LocalDateTime.now();
-        return response;
+        return new ApiResponse<>(true, message, data);
     }
 
     public static <T> ApiResponse<T> error(String message) {
-        ApiResponse<T> response = new ApiResponse<>();
-        response.success = false;
-        response.message = message;
-        response.timestamp = LocalDateTime.now();
-        return response;
+        return new ApiResponse<>(false, message, null);
     }
 
+    // Builder pattern for complex cases
+    public static <T> Builder<T> builder() {
+        return new Builder<>();
+    }
+
+    public static class Builder<T> {
+        private boolean success;
+        private String message;
+        private T data;
+
+        public Builder<T> success(boolean success) {
+            this.success = success;
+            return this;
+        }
+
+        public Builder<T> message(String message) {
+            this.message = message;
+            return this;
+        }
+
+        public Builder<T> data(T data) {
+            this.data = data;
+            return this;
+        }
+
+        public ApiResponse<T> build() {
+            return new ApiResponse<>(success, message, data);
+        }
+    }
+
+    // Getters and Setters
     public boolean isSuccess() { return success; }
     public void setSuccess(boolean success) { this.success = success; }
     public String getMessage() { return message; }

@@ -5,7 +5,6 @@ import com.amit.smartreconciliation.dto.response.AiMappingSuggestionResponse;
 import com.amit.smartreconciliation.dto.response.ApiResponse;
 import com.amit.smartreconciliation.service.AiService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,10 +12,13 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/ai")
-@RequiredArgsConstructor
 public class AiController {
 
     private final AiService aiService;
+
+    public AiController(AiService aiService) {
+        this.aiService = aiService;
+    }
 
     @PostMapping("/suggest-mapping")
     public ResponseEntity<ApiResponse<AiMappingSuggestionResponse>> suggestMapping(

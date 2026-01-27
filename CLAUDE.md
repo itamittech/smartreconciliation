@@ -61,3 +61,13 @@ PostgreSQL with PGvector extension, configured via Docker Compose:
 - DevTools enabled for hot-reload
 - Application runs on port 8080 by default
 - Spring Boot Docker Compose support auto-starts database when running the app
+
+## Workflow Rules
+
+**IMPORTANT: Work in micro-steps to avoid losing progress in long sessions.**
+
+1. Complete one small task at a time
+2. Run build sanity check (`npm run build` for frontend, `mvnw.cmd compile` for backend)
+3. Commit with a relevant message
+4. Present next micro-step options to user
+5. Wait for user approval before proceeding to next task

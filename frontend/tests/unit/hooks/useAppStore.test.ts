@@ -7,7 +7,7 @@ describe('useAppStore', () => {
     // Reset store before each test
     const { result } = renderHook(() => useAppStore());
     act(() => {
-      result.current.clearChatMessages();
+      result.current.clearChat();
       result.current.setReconciliations([]);
       result.current.setExceptions([]);
       result.current.setUploadedFiles([]);
@@ -75,7 +75,7 @@ describe('useAppStore', () => {
           content: 'Hello',
           timestamp: new Date().toISOString(),
         });
-        result.current.clearChatMessages();
+        result.current.clearChat();
       });
 
       expect(result.current.chatMessages).toHaveLength(0);

@@ -290,13 +290,46 @@ Test data files: `frontend/tests/fixtures/reconciliation-test-data.ts`
 | FUZZY_MATCH | ~8 | - | "Vendor A" ↔ "Vendor A Inc" |
 | MANY_TO_ONE | ~1 | Critical | 3 invoices → 1 payment |
 
-### Issue List (To Be Populated After Test Execution)
+### Test Execution Results (2026-01-28)
 
-| # | Category | Test File | Test Name | Error Description | Priority |
-|---|----------|-----------|-----------|-------------------|----------|
-| | | | | | |
+**Unit Tests (Vitest):** ✅ 46 passed, 0 failed (after fixes)
+**E2E Tests (Playwright):** 35 passed, 112 failed, 2 skipped
 
-**Priority Levels:** P0 (Critical), P1 (High), P2 (Medium), P3 (Low)
+### Issue List
+
+| # | Category | Test File | Error Description | Priority | Root Cause |
+|---|----------|-----------|-------------------|----------|------------|
+| 1 | Unit | useAppStore.test.ts | ~~`clearChatMessages is not a function`~~ | ✅ Fixed | Store uses `clearChat()` |
+| 2 | Unit | HomePage.test.tsx | ~~Element type invalid~~ | ✅ Fixed | Named export `{ HomePage }` |
+| 3 | E2E-Chat | chat.spec.ts | Chat interface selectors don't match (14 tests) | P2 | Chat UI structure differs from test expectations |
+| 4 | E2E-Rules | rules.spec.ts | API timeout on `/api/v1/rules` (12 tests) | P1 | Rules page doesn't call API on load or route mismatch |
+| 5 | E2E-Navigation | navigation.spec.ts | Sidebar navigation link selectors fail (12 tests) | P2 | Navigation selectors need updating |
+| 6 | E2E-Dashboard | dashboard.spec.ts | Dashboard stats cards not found (3 tests) | P2 | Selectors for stats cards need updating |
+| 7 | E2E-Files | files.spec.ts | File upload/preview tests fail (11 tests) | P2 | File input handling and modal selectors |
+| 8 | E2E-Exceptions | exceptions.spec.ts | Exception filtering/resolution fails (18 tests) | P2 | Filter and action selectors need updating |
+| 9 | E2E-Reconciliations | reconciliations.spec.ts | Wizard steps and actions fail (14 tests) | P2 | Wizard form selectors and flow |
+| 10 | E2E-API | api-integration.spec.ts | Various API endpoint failures (7 tests) | P2 | API response format mismatches |
+| 11 | E2E-Flow | complete-reconciliation-flow.spec.ts | Full workflow fails (4 tests) | P2 | Depends on other page fixes |
+| 12 | E2E-Flow | reconciliation-scenarios.spec.ts | Scenario tests fail (10 tests) | P2 | Depends on other page fixes |
+| 13 | Config | playwright.config.ts | `__dirname` not defined in ES module | P0 | Fixed - Added fileURLToPath polyfill |
+| 14 | Config | global-setup.ts + spec files | `__dirname` not defined | P0 | Fixed - Added fileURLToPath polyfill |
+
+**Priority Levels:** P0 (Critical/Blocking), P1 (High), P2 (Medium), P3 (Low)
+
+### Fixes Applied During Test Run
+- ✅ Fixed `__dirname` ES module issue in playwright.config.ts
+- ✅ Fixed `__dirname` ES module issue in global-setup.ts
+- ✅ Fixed `__dirname` ES module issue in all spec files using path.join
+- ✅ Fixed useAppStore.test.ts: Changed `clearChatMessages()` to `clearChat()`
+- ✅ Fixed HomePage.test.tsx: Changed default import to named import `{ HomePage }`
+- ✅ Fixed HomePage.test.tsx: Updated selectors to match actual UI
+
+### Priority Fix Order
+1. **P1 - Unit Tests** (Quick wins)
+   - Fix useAppStore.test.ts: Change `clearChatMessages()` to `clearChat()`
+   - Fix HomePage.test.tsx: Change default import to named import
+2. **P1 - Rules Page API** - Investigate why rules page doesn't trigger API call
+3. **P2 - E2E Selectors** - Update selectors to match actual UI structure
 
 **Categories:** Unit, E2E-Dashboard, E2E-Files, E2E-Reconciliations, E2E-Exceptions, E2E-Rules, E2E-Chat, E2E-Navigation, E2E-API, E2E-Flow
 

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import { render, createMockDashboardMetrics } from '../../utils/test-utils';
-import HomePage from '../../../src/pages/HomePage';
+import { HomePage } from '../../../src/pages/HomePage';
 
 // Mock the hooks module
 vi.mock('../../../src/services/hooks', () => ({
@@ -48,12 +48,14 @@ describe('HomePage', () => {
     render(<HomePage />);
 
     await waitFor(() => {
-      expect(screen.getByText(/dashboard/i)).toBeInTheDocument();
+      // Page shows "Welcome back" instead of "Dashboard"
+      expect(screen.getByText(/welcome back/i)).toBeInTheDocument();
     });
 
     // Stats should be visible
     expect(screen.getByText(/total reconciliations/i)).toBeInTheDocument();
-    expect(screen.getByText(/match rate/i)).toBeInTheDocument();
+    // Use getAllByText since "Match Rate" appears in stats card and chart
+    expect(screen.getAllByText(/match rate/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/open exceptions/i)).toBeInTheDocument();
   });
 
@@ -68,12 +70,8 @@ describe('HomePage', () => {
 
     render(<HomePage />);
 
-    // Error message should be shown
-    expect(
-      screen.queryByText(/error/i) ||
-      screen.queryByText(/failed/i) ||
-      screen.queryByText(/unable/i)
-    ).toBeTruthy();
+    // Error message should be shown - use specific text to avoid multiple matches
+    expect(screen.getByText(/failed to load dashboard/i)).toBeInTheDocument();
   });
 
   it('displays correct metric values', async () => {

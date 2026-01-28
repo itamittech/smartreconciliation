@@ -27,7 +27,7 @@ interface AppState {
   setUploadedFiles: (files: UploadedFile[]) => void
 
   // UI
-  activeView: 'home' | 'chat' | 'reconciliations' | 'exceptions' | 'rules' | 'settings'
+  activeView: 'home' | 'chat' | 'reconciliations' | 'exceptions' | 'rules' | 'files' | 'settings'
   setActiveView: (view: AppState['activeView']) => void
 }
 

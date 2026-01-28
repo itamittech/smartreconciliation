@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   Settings,
   GitBranch,
+  FolderOpen,
   ChevronLeft,
   ChevronRight,
   Sparkles,
@@ -16,7 +17,7 @@ import { Button } from '@/components/ui'
 interface NavItem {
   icon: React.ElementType
   label: string
-  view: 'home' | 'chat' | 'reconciliations' | 'exceptions' | 'rules' | 'settings'
+  view: 'home' | 'chat' | 'reconciliations' | 'exceptions' | 'rules' | 'files' | 'settings'
 }
 
 const navItems: NavItem[] = [
@@ -25,6 +26,7 @@ const navItems: NavItem[] = [
   { icon: FileStack, label: 'Reconciliations', view: 'reconciliations' },
   { icon: AlertTriangle, label: 'Exceptions', view: 'exceptions' },
   { icon: GitBranch, label: 'Rules', view: 'rules' },
+  { icon: FolderOpen, label: 'Files', view: 'files' },
   { icon: Settings, label: 'Settings', view: 'settings' },
 ]
 

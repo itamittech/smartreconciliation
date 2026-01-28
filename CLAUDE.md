@@ -69,5 +69,6 @@ PostgreSQL with PGvector extension, configured via Docker Compose:
 1. Complete one small task at a time
 2. Run build sanity check (`npm run build` for frontend, `mvnw.cmd compile` for backend)
 3. Commit with a relevant message
-4. Present next micro-step options to user
-5. Wait for user approval before proceeding to next task
+4. Update PROGRESS.md to reflect completed work (then commit)
+5. Present next micro-step options to user
+6. Wait for user approval before proceeding to next task

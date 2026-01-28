@@ -97,6 +97,10 @@
 - [x] **ChatContainer** - Now calls `/api/v1/chat/message`
   - Real AI responses from backend
   - Error handling with dismissible banner
+  - File upload calls `/api/v1/files/upload`
+- [x] **RulesPage** - Now fetches from `/api/v1/rules`
+  - List view with loading/error states
+  - Delete rule functionality wired up
 
 ### Backend Configuration
 - [x] CORS already configured in `WebConfig.java` for localhost:5173
@@ -111,18 +115,15 @@ _Nothing currently in progress_
 
 ## Next Up (Phase 2 Continued)
 
-### Step 2: File Upload Integration
-- [ ] Connect file upload UI to `/api/v1/files/upload`
-- [ ] Display uploaded files from `/api/v1/files`
-- [ ] Show file preview and schema detection
-
-### Step 3: Reconciliation Creation Flow
+### Step 2: Reconciliation Creation Flow
 - [ ] Create new reconciliation wizard/modal
 - [ ] Display reconciliation status and progress
 - [ ] Real-time progress updates for running reconciliations
 
-### Step 4: Rules Management
-- [ ] CRUD operations for rules via `/api/v1/rules`
+### Step 3: Enhanced Features
+- [ ] Display uploaded files list from `/api/v1/files`
+- [ ] File preview and schema detection UI
+- [ ] Create/edit rules wizard
 - [ ] AI-powered rule suggestions
 
 ---

@@ -1,7 +1,7 @@
 # Development Progress
 
 ## Current Phase: Phase 2 - Frontend-Backend Integration
-## Status: IN PROGRESS (Step 1 Complete)
+## Status: IN PROGRESS (Steps 1-2 Complete)
 ## Last Updated: 2026-01-28
 
 ---
@@ -107,6 +107,26 @@
 
 ---
 
+## Completed This Session (Phase 2 - Step 2)
+
+### FilesPage + Reconciliation Wizard
+- [x] **FilesPage** - New page to manage uploaded files
+  - Table with Name, Size, Rows, Columns, Status, Date columns
+  - Search filter for file names
+  - Upload button with hidden file input
+  - Preview modal showing first 10 rows of data
+  - Delete file functionality
+- [x] **Navigation** - Added "Files" to sidebar with FolderOpen icon
+- [x] **CreateReconciliationWizard** - 4-step wizard for new reconciliations
+  - Step 1: Name and description input
+  - Step 2: Select source file from list
+  - Step 3: Select target file from list
+  - Step 4: Select rule set to use
+  - Wired to useCreateReconciliation mutation
+- [x] **ReconciliationsPage** - "New Reconciliation" button opens wizard
+
+---
+
 ## In Progress
 
 _Nothing currently in progress_
@@ -115,14 +135,9 @@ _Nothing currently in progress_
 
 ## Next Up (Phase 2 Continued)
 
-### Step 2: Reconciliation Creation Flow
-- [ ] Create new reconciliation wizard/modal
+### Step 3: Enhanced Features
 - [ ] Display reconciliation status and progress
 - [ ] Real-time progress updates for running reconciliations
-
-### Step 3: Enhanced Features
-- [ ] Display uploaded files list from `/api/v1/files`
-- [ ] File preview and schema detection UI
 - [ ] Create/edit rules wizard
 - [ ] AI-powered rule suggestions
 

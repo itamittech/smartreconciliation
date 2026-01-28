@@ -14,6 +14,7 @@ import {
   PlayCircle,
 } from 'lucide-react'
 import { Button, Input, Card, Badge } from '@/components/ui'
+import { CreateReconciliationWizard } from '@/components/reconciliation'
 import type { ReconciliationStatus } from '@/types'
 import { cn } from '@/lib/utils'
 import { useReconciliations, useDeleteReconciliation, useStartReconciliation } from '@/services/hooks'
@@ -33,6 +34,7 @@ const ReconciliationsPage = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<ReconciliationStatus | 'all'>('all')
   const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [showWizard, setShowWizard] = useState(false)
 
   const { data: reconciliationsResponse, isLoading, isError, error } = useReconciliations()
   const deleteReconciliation = useDeleteReconciliation()
@@ -50,8 +52,7 @@ const ReconciliationsPage = () => {
   })
 
   const handleNewReconciliation = () => {
-    console.log('Create new reconciliation')
-    // TODO: Open new reconciliation modal/page
+    setShowWizard(true)
   }
 
   const handleRowClick = (id: number) => {
@@ -321,6 +322,13 @@ const ReconciliationsPage = () => {
           </div>
         </Card>
       </div>
+
+      {/* Reconciliation Wizard */}
+      {showWizard && (
+        <CreateReconciliationWizard
+          onClose={() => setShowWizard(false)}
+        />
+      )}
     </div>
   )
 }

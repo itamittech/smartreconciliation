@@ -36,6 +36,12 @@ dist-ssr
 # Test coverage
 coverage/
 
+# Playwright test artifacts
+playwright-report/
+playwright/.cache/
+test-results/
+tests/e2e/fixtures/test-files/
+
 # Temporary files
 *.tmp
 *.temp

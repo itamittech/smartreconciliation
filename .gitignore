@@ -111,6 +111,24 @@ tmp/
 temp/
 *.tmp
 *.temp
+nul
+
+### Uploads and Test Data ###
+uploads/
+test-data/
+
+### Playwright MCP ###
+.playwright-mcp/
+
+### Playwright Test Artifacts ###
+playwright-report/
+playwright/.cache/
+test-results/
+
+### Frontend Test Artifacts ###
+frontend/coverage/
+frontend/playwright-report/
+frontend/test-results/
 
 ### AWS/Cloud Credentials ###
 .aws/

@@ -7,112 +7,79 @@ import {
   Edit2,
   Copy,
   Trash2,
-  Sparkles,
   Check,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react'
 import { Button, Input, Card, CardHeader, CardTitle, CardContent, Badge } from '@/components/ui'
 import { cn } from '@/lib/utils'
-
-interface RuleSet {
-  id: string
-  name: string
-  description: string
-  sourceFields: string[]
-  targetFields: string[]
-  mappings: { source: string; target: string; transform?: string }[]
-  matchingRules: { type: string; tolerance?: string }[]
-  isAiGenerated: boolean
-  version: number
-  lastUsed?: string
-  matchRate?: number
-}
-
-const mockRuleSets: RuleSet[] = [
-  {
-    id: '1',
-    name: 'Bank Statement Reconciliation',
-    description: 'Standard rules for matching bank transactions with accounting entries',
-    sourceFields: ['Date', 'Description', 'Amount', 'Reference'],
-    targetFields: ['Transaction_Date', 'Vendor', 'Debit', 'Credit', 'Invoice_No'],
-    mappings: [
-      { source: 'Date', target: 'Transaction_Date' },
-      { source: 'Description', target: 'Vendor', transform: 'fuzzy_match' },
-      { source: 'Amount', target: 'Debit', transform: 'absolute_value' },
-      { source: 'Reference', target: 'Invoice_No' },
-    ],
-    matchingRules: [
-      { type: 'date_tolerance', tolerance: '±1 day' },
-      { type: 'amount_tolerance', tolerance: '±$0.01' },
-    ],
-    isAiGenerated: true,
-    version: 3,
-    lastUsed: '2026-01-23',
-    matchRate: 97.2,
-  },
-  {
-    id: '2',
-    name: 'Invoice to Payment Matching',
-    description: 'Match invoices with their corresponding payments',
-    sourceFields: ['Invoice_No', 'Amount', 'Due_Date', 'Customer'],
-    targetFields: ['Payment_Ref', 'Paid_Amount', 'Payment_Date', 'Payer'],
-    mappings: [
-      { source: 'Invoice_No', target: 'Payment_Ref', transform: 'extract_digits' },
-      { source: 'Amount', target: 'Paid_Amount' },
-      { source: 'Customer', target: 'Payer', transform: 'fuzzy_match' },
-    ],
-    matchingRules: [
-      { type: 'exact_match', tolerance: 'Invoice_No' },
-      { type: 'amount_tolerance', tolerance: '±2%' },
-    ],
-    isAiGenerated: false,
-    version: 1,
-    lastUsed: '2026-01-20',
-    matchRate: 94.5,
-  },
-  {
-    id: '3',
-    name: 'Payroll Reconciliation',
-    description: 'Match payroll records with HR system data',
-    sourceFields: ['Employee_ID', 'Gross_Pay', 'Net_Pay', 'Pay_Date'],
-    targetFields: ['Staff_ID', 'Salary', 'Take_Home', 'Period_End'],
-    mappings: [
-      { source: 'Employee_ID', target: 'Staff_ID' },
-      { source: 'Gross_Pay', target: 'Salary' },
-      { source: 'Net_Pay', target: 'Take_Home' },
-      { source: 'Pay_Date', target: 'Period_End' },
-    ],
-    matchingRules: [
-      { type: 'exact_match', tolerance: 'Employee_ID' },
-      { type: 'amount_tolerance', tolerance: '±$0.00' },
-    ],
-    isAiGenerated: true,
-    version: 2,
-    lastUsed: '2026-01-19',
-    matchRate: 99.5,
-  },
-]
+import { useRuleSets, useDeleteRuleSet } from '@/services/hooks'
+import type { RuleSet as ApiRuleSet } from '@/services/types'
 
 const RulesPage = () => {
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedRule, setSelectedRule] = useState<RuleSet | null>(null)
+  const [selectedRuleId, setSelectedRuleId] = useState<number | null>(null)
 
-  const filteredRules = mockRuleSets.filter((rule) =>
+  const { data: ruleSetsResponse, isLoading, isError, error } = useRuleSets()
+  const deleteRuleSet = useDeleteRuleSet()
+
+  const ruleSets = ruleSetsResponse?.data || []
+  const selectedRule = ruleSets.find(r => r.id === selectedRuleId) || null
+
+  const filteredRules = ruleSets.filter((rule) =>
     rule.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   const handleCreateRule = () => {
     console.log('Create new rule')
+    // TODO: Open create rule modal
   }
 
-  const handleSelectRule = (rule: RuleSet) => {
-    setSelectedRule(rule.id === selectedRule?.id ? null : rule)
+  const handleSelectRule = (rule: ApiRuleSet) => {
+    setSelectedRuleId(rule.id === selectedRuleId ? null : rule.id)
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent, rule: RuleSet) => {
+  const handleDeleteRule = (id: number) => {
+    if (confirm('Are you sure you want to delete this rule set?')) {
+      deleteRuleSet.mutate(id)
+      if (selectedRuleId === id) {
+        setSelectedRuleId(null)
+      }
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent, rule: ApiRuleSet) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
       handleSelectRule(rule)
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading rules...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <AlertCircle className="h-12 w-12 text-destructive" />
+          <div>
+            <p className="font-semibold text-lg">Failed to load rules</p>
+            <p className="text-muted-foreground text-sm">
+              {error instanceof Error ? error.message : 'Unable to connect to backend API'}
+            </p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -141,48 +108,52 @@ const RulesPage = () => {
         </div>
 
         <div className="flex-1 overflow-auto p-2">
-          {filteredRules.map((rule) => (
-            <div
-              key={rule.id}
-              role="button"
-              tabIndex={0}
-              onClick={() => handleSelectRule(rule)}
-              onKeyDown={(e) => handleKeyDown(e, rule)}
-              className={cn(
-                'mb-2 cursor-pointer rounded-lg border p-3 transition-colors',
-                selectedRule?.id === rule.id
-                  ? 'border-primary bg-primary/5'
-                  : 'hover:bg-muted/50'
-              )}
-              aria-selected={selectedRule?.id === rule.id}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-2">
-                  <GitBranch className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">{rule.name}</span>
-                </div>
-                {rule.isAiGenerated && (
-                  <Badge variant="secondary" className="text-xs">
-                    <Sparkles className="mr-1 h-3 w-3" />
-                    AI
-                  </Badge>
-                )}
-              </div>
-              <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
-                {rule.description}
+          {filteredRules.length === 0 ? (
+            <div className="py-8 text-center">
+              <GitBranch className="mx-auto h-8 w-8 text-muted-foreground" />
+              <p className="mt-2 text-sm text-muted-foreground">
+                {ruleSets.length === 0 ? 'No rules yet' : 'No matching rules'}
               </p>
-              <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
-                <span>v{rule.version}</span>
-                {rule.matchRate && (
-                  <span className="flex items-center gap-1">
-                    <Check className="h-3 w-3 text-success" />
-                    {rule.matchRate}%
-                  </span>
-                )}
-                {rule.lastUsed && <span>Used {rule.lastUsed}</span>}
-              </div>
             </div>
-          ))}
+          ) : (
+            filteredRules.map((rule) => (
+              <div
+                key={rule.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => handleSelectRule(rule)}
+                onKeyDown={(e) => handleKeyDown(e, rule)}
+                className={cn(
+                  'mb-2 cursor-pointer rounded-lg border p-3 transition-colors',
+                  selectedRuleId === rule.id
+                    ? 'border-primary bg-primary/5'
+                    : 'hover:bg-muted/50'
+                )}
+                aria-selected={selectedRuleId === rule.id}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2">
+                    <GitBranch className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">{rule.name}</span>
+                  </div>
+                  {rule.isActive && (
+                    <Badge variant="secondary" className="text-xs">
+                      Active
+                    </Badge>
+                  )}
+                </div>
+                {rule.description && (
+                  <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
+                    {rule.description}
+                  </p>
+                )}
+                <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+                  <span>{rule.fieldMappings?.length || 0} mappings</span>
+                  <span>{rule.matchingRules?.length || 0} rules</span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -194,16 +165,15 @@ const RulesPage = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-xl font-semibold">{selectedRule.name}</h2>
-                  {selectedRule.isAiGenerated && (
-                    <Badge variant="secondary">
-                      <Sparkles className="mr-1 h-3 w-3" />
-                      AI Generated
-                    </Badge>
+                  {selectedRule.isActive && (
+                    <Badge variant="secondary">Active</Badge>
                   )}
                 </div>
-                <p className="mt-1 text-muted-foreground">
-                  {selectedRule.description}
-                </p>
+                {selectedRule.description && (
+                  <p className="mt-1 text-muted-foreground">
+                    {selectedRule.description}
+                  </p>
+                )}
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm">
@@ -214,71 +184,47 @@ const RulesPage = () => {
                   <Copy className="mr-1 h-4 w-4" />
                   Duplicate
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDeleteRule(selectedRule.id)}
+                  disabled={deleteRuleSet.isPending}
+                >
                   <Trash2 className="mr-1 h-4 w-4" />
                   Delete
                 </Button>
               </div>
             </div>
 
-            {/* Visual Mapping */}
+            {/* Field Mappings */}
             <Card className="mt-6">
               <CardHeader>
                 <CardTitle className="text-lg">Field Mappings</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex gap-8">
-                  {/* Source Fields */}
-                  <div className="flex-1">
-                    <h4 className="mb-3 text-sm font-medium text-muted-foreground">
-                      Source Fields
-                    </h4>
-                    <div className="space-y-2">
-                      {selectedRule.sourceFields.map((field) => (
-                        <div
-                          key={field}
-                          className="rounded-md border bg-secondary/50 px-3 py-2 text-sm"
-                        >
-                          {field}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Mapping Arrows */}
-                  <div className="flex flex-col justify-center">
-                    {selectedRule.mappings.map((mapping, idx) => (
+                {selectedRule.fieldMappings && selectedRule.fieldMappings.length > 0 ? (
+                  <div className="space-y-2">
+                    {selectedRule.fieldMappings.map((mapping) => (
                       <div
-                        key={idx}
-                        className="flex items-center gap-2 py-2"
+                        key={mapping.id}
+                        className="flex items-center gap-4 rounded-md border p-3"
                       >
+                        <div className="flex-1 rounded bg-secondary/50 px-3 py-2 text-sm">
+                          {mapping.sourceField}
+                        </div>
                         <ArrowRight className="h-4 w-4 text-primary" />
-                        {mapping.transform && (
-                          <Badge variant="outline" className="text-xs">
-                            {mapping.transform}
-                          </Badge>
+                        <div className="flex-1 rounded bg-secondary/50 px-3 py-2 text-sm">
+                          {mapping.targetField}
+                        </div>
+                        {mapping.isKeyField && (
+                          <Badge variant="outline" className="text-xs">Key</Badge>
                         )}
                       </div>
                     ))}
                   </div>
-
-                  {/* Target Fields */}
-                  <div className="flex-1">
-                    <h4 className="mb-3 text-sm font-medium text-muted-foreground">
-                      Target Fields
-                    </h4>
-                    <div className="space-y-2">
-                      {selectedRule.targetFields.map((field) => (
-                        <div
-                          key={field}
-                          className="rounded-md border bg-secondary/50 px-3 py-2 text-sm"
-                        >
-                          {field}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No field mappings defined</p>
+                )}
               </CardContent>
             </Card>
 
@@ -288,51 +234,63 @@ const RulesPage = () => {
                 <CardTitle className="text-lg">Matching Rules</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {selectedRule.matchingRules.map((rule, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-between rounded-md border p-3"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="rounded-full bg-primary/10 p-2">
-                          <Check className="h-4 w-4 text-primary" />
+                {selectedRule.matchingRules && selectedRule.matchingRules.length > 0 ? (
+                  <div className="space-y-3">
+                    {selectedRule.matchingRules.map((rule) => (
+                      <div
+                        key={rule.id}
+                        className="flex items-center justify-between rounded-md border p-3"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="rounded-full bg-primary/10 p-2">
+                            <Check className="h-4 w-4 text-primary" />
+                          </div>
+                          <div>
+                            <span className="font-medium">{rule.name}</span>
+                            <p className="text-xs text-muted-foreground">
+                              {rule.sourceField} → {rule.targetField}
+                            </p>
+                          </div>
                         </div>
-                        <span className="font-medium capitalize">
-                          {rule.type.replace(/_/g, ' ')}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary">{rule.matchType}</Badge>
+                          {rule.threshold && (
+                            <Badge variant="outline">{rule.threshold}%</Badge>
+                          )}
+                        </div>
                       </div>
-                      {rule.tolerance && (
-                        <Badge variant="secondary">{rule.tolerance}</Badge>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No matching rules defined</p>
+                )}
               </CardContent>
             </Card>
 
-            {/* Performance Stats */}
+            {/* Stats */}
             <Card className="mt-4">
               <CardHeader>
-                <CardTitle className="text-lg">Performance</CardTitle>
+                <CardTitle className="text-lg">Summary</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="text-center">
-                    <p className="text-3xl font-bold text-success">
-                      {selectedRule.matchRate}%
+                    <p className="text-3xl font-bold">
+                      {selectedRule.fieldMappings?.length || 0}
                     </p>
-                    <p className="text-sm text-muted-foreground">Match Rate</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-3xl font-bold">{selectedRule.version}</p>
-                    <p className="text-sm text-muted-foreground">Version</p>
+                    <p className="text-sm text-muted-foreground">Field Mappings</p>
                   </div>
                   <div className="text-center">
                     <p className="text-3xl font-bold">
-                      {selectedRule.mappings.length}
+                      {selectedRule.matchingRules?.length || 0}
                     </p>
-                    <p className="text-sm text-muted-foreground">Mappings</p>
+                    <p className="text-sm text-muted-foreground">Matching Rules</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-3xl font-bold">
+                      {selectedRule.fieldMappings?.filter(m => m.isKeyField).length || 0}
+                    </p>
+                    <p className="text-sm text-muted-foreground">Key Fields</p>
                   </div>
                 </div>
               </CardContent>

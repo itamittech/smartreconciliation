@@ -4,7 +4,7 @@ import { ChatMessage } from './ChatMessage'
 import { ChatInput } from './ChatInput'
 import { useAppStore } from '@/store'
 import type { ChatMessage as ChatMessageType } from '@/types'
-import { useQuickChat } from '@/services/hooks'
+import { useQuickChat, useUploadFile } from '@/services/hooks'
 
 const ChatContainer = () => {
   const { chatMessages, addChatMessage } = useAppStore()
@@ -12,6 +12,7 @@ const ChatContainer = () => {
   const [error, setError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const quickChat = useQuickChat()
+  const uploadFile = useUploadFile()
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -61,9 +62,50 @@ const ChatContainer = () => {
     }
   }
 
-  const handleFileUpload = (files: FileList) => {
-    const fileNames = Array.from(files).map((f) => f.name).join(', ')
-    handleSendMessage(`I've uploaded: ${fileNames}`)
+  const handleFileUpload = async (files: FileList) => {
+    setError(null)
+    const fileArray = Array.from(files)
+
+    for (const file of fileArray) {
+      const userMessage: ChatMessageType = {
+        id: crypto.randomUUID(),
+        role: 'user',
+        content: `Uploading file: ${file.name}`,
+        timestamp: new Date().toISOString(),
+      }
+      addChatMessage(userMessage)
+      setIsLoading(true)
+
+      try {
+        const response = await uploadFile.mutateAsync({ file })
+        const uploadedFile = response.data
+
+        const successMessage: ChatMessageType = {
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          content: `File "${uploadedFile?.originalFilename || file.name}" uploaded successfully!\n\n` +
+            `- **Rows:** ${uploadedFile?.rowCount || 'Analyzing...'}\n` +
+            `- **Columns:** ${uploadedFile?.columnCount || 'Analyzing...'}\n` +
+            `- **Size:** ${(file.size / 1024).toFixed(1)} KB\n\n` +
+            `You can now use this file for reconciliation.`,
+          timestamp: new Date().toISOString(),
+        }
+        addChatMessage(successMessage)
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to upload file'
+        setError(errorMessage)
+
+        const errorResponse: ChatMessageType = {
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          content: `Failed to upload "${file.name}": ${errorMessage}`,
+          timestamp: new Date().toISOString(),
+        }
+        addChatMessage(errorResponse)
+      } finally {
+        setIsLoading(false)
+      }
+    }
   }
 
   return (

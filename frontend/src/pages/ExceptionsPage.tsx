@@ -6,13 +6,44 @@ import type { ReconciliationException as FrontendException, ExceptionSeverity, E
 import { useExceptions, useResolveException, useIgnoreException, useBulkResolveExceptions } from '@/services/hooks'
 import type { ReconciliationException as ApiException } from '@/services/types'
 
+// Map backend severity to frontend
+function mapSeverity(backendSeverity: string): ExceptionSeverity {
+  switch (backendSeverity.toUpperCase()) {
+    case 'HIGH':
+    case 'CRITICAL':
+      return 'critical'
+    case 'MEDIUM':
+    case 'WARNING':
+      return 'warning'
+    default:
+      return 'info'
+  }
+}
+
+// Map backend type to frontend
+function mapType(backendType: string): ExceptionType {
+  switch (backendType.toUpperCase()) {
+    case 'MISSING_SOURCE':
+      return 'missing_source'
+    case 'MISSING_TARGET':
+      return 'missing_target'
+    case 'VALUE_MISMATCH':
+    case 'MISMATCH':
+      return 'mismatch'
+    case 'DUPLICATE':
+      return 'duplicate'
+    default:
+      return 'mismatch'
+  }
+}
+
 // Transform backend exception to frontend format
 function transformException(apiException: ApiException): FrontendException {
   return {
     id: apiException.id.toString(),
     reconciliationId: apiException.reconciliationId.toString(),
-    type: apiException.type.toLowerCase().replace('_', '_') as ExceptionType,
-    severity: apiException.severity.toLowerCase() as ExceptionSeverity,
+    type: mapType(apiException.type),
+    severity: mapSeverity(apiException.severity),
     status: apiException.status.toLowerCase() as ExceptionStatus,
     sourceRecordId: apiException.sourceValue || undefined,
     targetRecordId: apiException.targetValue || undefined,
@@ -42,7 +73,9 @@ const ExceptionsPage = () => {
   const ignoreException = useIgnoreException()
   const bulkResolve = useBulkResolveExceptions()
 
-  const apiExceptions = exceptionsResponse?.data || []
+  // Handle paginated response - data.content contains the array
+  const pageData = exceptionsResponse?.data as { content?: ApiException[] } | ApiException[] | undefined
+  const apiExceptions = Array.isArray(pageData) ? pageData : (pageData?.content || [])
   const exceptions = apiExceptions.map(transformException)
 
   // Client-side search filter (search query not sent to API)

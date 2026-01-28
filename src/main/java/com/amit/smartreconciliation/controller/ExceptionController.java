@@ -30,7 +30,7 @@ public class ExceptionController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<ReconciliationExceptionResponse>>> getExceptions(
-            @RequestParam Long reconciliationId,
+            @RequestParam(required = false) Long reconciliationId,
             @RequestParam(required = false) ExceptionType type,
             @RequestParam(required = false) ExceptionSeverity severity,
             @RequestParam(required = false) ExceptionStatus status,
@@ -43,8 +43,12 @@ public class ExceptionController {
                 Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        Page<ReconciliationExceptionResponse> response =
-                exceptionService.getByReconciliationId(reconciliationId, type, severity, status, pageable);
+        Page<ReconciliationExceptionResponse> response;
+        if (reconciliationId != null) {
+            response = exceptionService.getByReconciliationId(reconciliationId, type, severity, status, pageable);
+        } else {
+            response = exceptionService.getAll(type, severity, status, pageable);
+        }
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

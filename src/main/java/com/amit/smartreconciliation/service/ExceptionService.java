@@ -44,6 +44,16 @@ public class ExceptionService {
                 .map(ReconciliationExceptionResponse::fromEntity);
     }
 
+    public Page<ReconciliationExceptionResponse> getAll(
+            ExceptionType type,
+            ExceptionSeverity severity,
+            ExceptionStatus status,
+            Pageable pageable) {
+
+        return exceptionRepository.findAllByFilters(type, severity, status, pageable)
+                .map(ReconciliationExceptionResponse::fromEntity);
+    }
+
     public List<ReconciliationExceptionResponse> getAllByReconciliationId(Long reconciliationId) {
         return exceptionRepository.findByReconciliationId(reconciliationId)
                 .stream()

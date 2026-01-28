@@ -36,5 +36,15 @@ public interface ReconciliationExceptionRepository extends JpaRepository<Reconci
             @Param("status") ExceptionStatus status,
             Pageable pageable);
 
+    @Query("SELECT e FROM ReconciliationException e WHERE " +
+           "(:type IS NULL OR e.type = :type) " +
+           "AND (:severity IS NULL OR e.severity = :severity) " +
+           "AND (:status IS NULL OR e.status = :status)")
+    Page<ReconciliationException> findAllByFilters(
+            @Param("type") ExceptionType type,
+            @Param("severity") ExceptionSeverity severity,
+            @Param("status") ExceptionStatus status,
+            Pageable pageable);
+
     long countByReconciliationIdAndStatus(Long reconciliationId, ExceptionStatus status);
 }

@@ -18,6 +18,7 @@ import { CreateReconciliationWizard } from '@/components/reconciliation'
 import type { ReconciliationStatus } from '@/types'
 import { cn } from '@/lib/utils'
 import { useReconciliations, useDeleteReconciliation, useStartReconciliation } from '@/services/hooks'
+import { useAppStore } from '@/store'
 import type { Reconciliation as ApiReconciliation } from '@/services/types'
 
 const statusConfig: Record<
@@ -36,6 +37,7 @@ const ReconciliationsPage = () => {
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [showWizard, setShowWizard] = useState(false)
 
+  const { setActiveView } = useAppStore()
   const { data: reconciliationsResponse, isLoading, isError, error } = useReconciliations()
   const deleteReconciliation = useDeleteReconciliation()
   const startReconciliation = useStartReconciliation()
@@ -275,7 +277,8 @@ const ReconciliationsPage = () => {
                             aria-label="View details"
                             onClick={(e) => {
                               e.stopPropagation()
-                              console.log('View:', recon.id)
+                              // Navigate to exceptions page to view details
+                              setActiveView('exceptions')
                             }}
                           >
                             <Eye className="h-4 w-4" />
@@ -286,7 +289,7 @@ const ReconciliationsPage = () => {
                             aria-label="Download results"
                             onClick={(e) => {
                               e.stopPropagation()
-                              console.log('Download:', recon.id)
+                              alert(`Download feature coming soon for: ${recon.name}`)
                             }}
                           >
                             <Download className="h-4 w-4" />

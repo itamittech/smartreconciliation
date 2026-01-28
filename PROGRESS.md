@@ -127,6 +127,22 @@
 
 ---
 
+## Bug Fixes This Session
+
+### Exceptions Page + Reconciliation View Navigation
+- [x] **Backend: ExceptionController** - Made `reconciliationId` optional
+  - Allows fetching all exceptions across reconciliations
+  - Added `getAll()` method to ExceptionService
+  - Added `findAllByFilters()` query to repository
+- [x] **Frontend: ExceptionsPage** - Fixed data handling
+  - Handle paginated response (extract `data.content` array)
+  - Added `mapSeverity()` to transform HIGH/MEDIUM -> critical/warning/info
+  - Added `mapType()` to transform MISSING_SOURCE/MISMATCH -> frontend enums
+- [x] **Frontend: ReconciliationsPage** - Fixed view button
+  - "View details" icon now navigates to Exceptions page
+
+---
+
 ## In Progress
 
 _Nothing currently in progress_

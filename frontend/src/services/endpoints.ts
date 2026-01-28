@@ -36,7 +36,7 @@ export const filesApi = {
     uploadFile<UploadedFile>('/files/upload', file, type ? { type } : undefined),
   delete: (id: number) => del<void>(`/files/${id}`),
   getPreview: (id: number, limit?: number) =>
-    get<{ headers: string[]; rows: Record<string, unknown>[] }>(
+    get<{ headers: string[]; rows: string[][] }>(
       `/files/${id}/preview${limit ? `?limit=${limit}` : ''}`
     ),
 }

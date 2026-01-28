@@ -315,12 +315,12 @@ const FilePreviewModal = ({ fileId, onClose }: FilePreviewModalProps) => {
                 <tbody>
                   {preview.rows?.map((row, rowIdx) => (
                     <tr key={rowIdx} className="border-b">
-                      {preview.headers?.map((header, cellIdx) => (
+                      {row.map((cell, cellIdx) => (
                         <td
                           key={cellIdx}
                           className="whitespace-nowrap px-3 py-2"
                         >
-                          {String(row[header] ?? '-')}
+                          {cell ?? '-'}
                         </td>
                       ))}
                     </tr>

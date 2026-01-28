@@ -5,6 +5,7 @@ import {
   ReconciliationsPage,
   ExceptionsPage,
   RulesPage,
+  FilesPage,
   SettingsPage,
 } from '@/pages'
 import { useAppStore } from '@/store'
@@ -24,6 +25,8 @@ const App = () => {
         return <ExceptionsPage />
       case 'rules':
         return <RulesPage />
+      case 'files':
+        return <FilesPage />
       case 'settings':
         return <SettingsPage />
       default:

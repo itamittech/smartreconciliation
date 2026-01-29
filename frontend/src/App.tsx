@@ -1,4 +1,4 @@
-import { Sidebar, Header } from '@/components/layout'
+import { Sidebar, Header, Footer } from '@/components/layout'
 import {
   HomePage,
   ChatPage,
@@ -39,7 +39,10 @@ const App = () => {
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-auto">{renderPage()}</main>
+        <main className="flex-1 overflow-auto">
+          {renderPage()}
+          <Footer />
+        </main>
       </div>
     </div>
   )

@@ -80,6 +80,7 @@ export interface ReconciliationException {
   resolvedBy: string | null
   resolvedAt: string | null
   reconciliationId: number
+  reconciliationName: string
   createdAt: string
   updatedAt: string
 }

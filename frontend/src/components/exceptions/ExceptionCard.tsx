@@ -50,9 +50,12 @@ const ExceptionCard = ({ exception, onResolve }: ExceptionCardProps) => {
               <SeverityIcon className={cn('h-4 w-4', config.color)} />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <Badge variant={config.variant} className="text-xs">
                   {typeLabels[exception.type]}
+                </Badge>
+                <Badge variant="outline" className="text-xs">
+                  {exception.reconciliationName}
                 </Badge>
                 <span className="text-xs text-muted-foreground">
                   {new Date(exception.createdAt).toLocaleDateString()}

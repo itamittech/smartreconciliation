@@ -22,6 +22,7 @@ export interface Reconciliation {
 export interface ReconciliationException {
   id: string
   reconciliationId: string
+  reconciliationName: string
   type: ExceptionType
   severity: ExceptionSeverity
   status: ExceptionStatus

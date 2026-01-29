@@ -42,6 +42,7 @@ function transformException(apiException: ApiException): FrontendException {
   return {
     id: apiException.id.toString(),
     reconciliationId: apiException.reconciliationId.toString(),
+    reconciliationName: apiException.reconciliationName,
     type: mapType(apiException.type),
     severity: mapSeverity(apiException.severity),
     status: apiException.status.toLowerCase() as ExceptionStatus,

@@ -52,11 +52,21 @@ const Sidebar = () => {
       )}
     >
       {/* Logo */}
-      <div className="flex h-16 items-center justify-between border-b px-4">
+      <div className="flex h-20 items-center justify-between border-b px-4 bg-gradient-to-br from-primary/5 to-transparent">
         {sidebarOpen && (
           <div className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary" />
-            <span className="font-semibold">Smart Recon</span>
+            <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-gradient-to-br from-primary to-primary/80 shadow-sm">
+              <Sparkles className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <div>
+              <span className="font-bold text-sm">Smart Recon</span>
+              <p className="text-xs text-muted-foreground">AI Powered</p>
+            </div>
+          </div>
+        )}
+        {!sidebarOpen && (
+          <div className="mx-auto flex items-center justify-center h-9 w-9 rounded-lg bg-gradient-to-br from-primary to-primary/80 shadow-sm">
+            <Sparkles className="h-5 w-5 text-primary-foreground" />
           </div>
         )}
         <Button
@@ -64,7 +74,7 @@ const Sidebar = () => {
           size="icon"
           onClick={toggleSidebar}
           aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-          className={cn(!sidebarOpen && 'mx-auto')}
+          className={cn(!sidebarOpen && 'hidden')}
         >
           {sidebarOpen ? (
             <ChevronLeft className="h-4 w-4" />
@@ -105,11 +115,23 @@ const Sidebar = () => {
       </nav>
 
       {/* Footer */}
-      <div className="border-t p-4">
-        {sidebarOpen && (
-          <p className="text-xs text-muted-foreground">
-            Smart Reconciliation v1.0
-          </p>
+      <div className="border-t p-4 bg-muted/30">
+        {sidebarOpen ? (
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-foreground">
+              Smart Reconciliation
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Version 1.0.0
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Powered by AI
+            </p>
+          </div>
+        ) : (
+          <div className="flex justify-center">
+            <div className="text-xs font-bold text-primary">v1</div>
+          </div>
         )}
       </div>
     </aside>

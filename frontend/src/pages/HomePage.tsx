@@ -5,6 +5,7 @@ import {
   TrendingUp,
   Loader2,
   AlertCircle,
+  Sparkles,
 } from 'lucide-react'
 import {
   StatsCard,
@@ -92,11 +93,46 @@ const HomePage = () => {
 
   return (
     <div className="space-y-6 p-6">
-      {/* Welcome Message */}
+      {/* Welcome Banner with Product Value Proposition */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary via-primary/95 to-primary/90 p-8 text-primary-foreground shadow-lg">
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className="h-6 w-6" />
+            <h2 className="text-3xl font-bold">Smart Reconciliation</h2>
+          </div>
+          <p className="text-lg text-primary-foreground/90 mb-4 max-w-2xl">
+            AI-Powered Financial Data Matching & Exception Management
+          </p>
+          <p className="text-sm text-primary-foreground/80 max-w-3xl">
+            Automate complex reconciliations with intelligent matching algorithms.
+            Reduce manual work by up to 90%, catch discrepancies in real-time, and leverage
+            AI-powered insights to resolve exceptions faster than ever.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-4">
+            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
+              <CheckCircle2 className="h-4 w-4" />
+              <span className="text-sm font-medium">Automated Matching</span>
+            </div>
+            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
+              <TrendingUp className="h-4 w-4" />
+              <span className="text-sm font-medium">Real-time Analytics</span>
+            </div>
+            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
+              <AlertTriangle className="h-4 w-4" />
+              <span className="text-sm font-medium">Exception Intelligence</span>
+            </div>
+          </div>
+        </div>
+        {/* Decorative elements */}
+        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/5" />
+        <div className="absolute -bottom-10 -left-10 h-48 w-48 rounded-full bg-white/5" />
+      </div>
+
+      {/* Quick Overview */}
       <div>
-        <h2 className="text-2xl font-bold">Welcome back</h2>
-        <p className="text-muted-foreground">
-          Here's what's happening with your reconciliations today.
+        <h3 className="text-lg font-semibold mb-1">Today's Overview</h3>
+        <p className="text-sm text-muted-foreground">
+          Monitor your reconciliation performance and manage exceptions
         </p>
       </div>
 

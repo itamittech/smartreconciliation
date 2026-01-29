@@ -114,7 +114,7 @@ public class ChatService {
                 .sessionId(session.getId())
                 .messageId(savedAssistantMessage.getId())
                 .role("assistant")
-                .content(aiResponse)
+                .response(aiResponse)
                 .createdAt(savedAssistantMessage.getCreatedAt())
                 .build();
     }

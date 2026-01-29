@@ -16,7 +16,7 @@ test.describe('Dashboard Page', () => {
 
     // Verify stats cards are visible
     await expect(page.getByText('Total Reconciliations')).toBeVisible();
-    await expect(page.getByText('Match Rate')).toBeVisible();
+    await expect(page.getByText('Match Rate', { exact: true })).toBeVisible();
     await expect(page.getByText('Open Exceptions')).toBeVisible();
     await expect(page.getByText('In Progress')).toBeVisible();
   });
@@ -76,22 +76,20 @@ test.describe('Dashboard Page', () => {
     await page.goto('/');
 
     // Should show error message
-    await expect(
-      page.getByText(/error/i).or(page.getByText(/failed/i)).or(page.getByText(/unable/i))
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Failed to load dashboard')).toBeVisible({ timeout: 5000 });
   });
 
   test('should navigate to other pages from dashboard', async ({ page }) => {
-    // Click on sidebar navigation
-    await page.getByRole('link', { name: /reconciliations/i }).click();
-    await expect(page).toHaveURL(/.*reconciliations/);
+    // Click on sidebar navigation (sidebar uses buttons, not links)
+    await page.getByRole('button', { name: /reconciliations/i }).click();
+    await expect(page.getByRole('heading', { level: 1 })).toContainText(/reconciliations/i);
 
     await page.goto('/');
-    await page.getByRole('link', { name: /exceptions/i }).click();
-    await expect(page).toHaveURL(/.*exceptions/);
+    await page.getByRole('button', { name: /exceptions/i }).click();
+    await expect(page.getByRole('heading', { level: 1 })).toContainText(/exception/i);
 
     await page.goto('/');
-    await page.getByRole('link', { name: /files/i }).click();
-    await expect(page).toHaveURL(/.*files/);
+    await page.getByRole('button', { name: /files/i }).click();
+    await expect(page.getByText('Uploaded Files')).toBeVisible();
   });
 });

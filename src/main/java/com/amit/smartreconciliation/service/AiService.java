@@ -26,6 +26,7 @@ public class AiService {
     private final FileUploadService fileUploadService;
     private final ObjectMapper objectMapper;
     private final ChatContextService chatContextService;
+    private final ChatClient chatClient;
 
     public AiService(ChatModel chatModel,
                      FileUploadService fileUploadService,
@@ -35,6 +36,9 @@ public class AiService {
         this.fileUploadService = fileUploadService;
         this.objectMapper = objectMapper;
         this.chatContextService = chatContextService;
+
+        // Build ChatClient - Spring AI will auto-discover @Tool annotated methods from @Component classes
+        this.chatClient = ChatClient.builder(chatModel).build();
     }
 
     public AiMappingSuggestionResponse suggestMappings(AiMappingSuggestionRequest request) {
@@ -95,7 +99,7 @@ public class AiService {
         try {
             String systemPrompt = buildChatSystemPrompt(context);
 
-            ChatClient chatClient = ChatClient.create(chatModel);
+            // Use the chatClient with registered tools
             return chatClient.prompt()
                     .system(systemPrompt)
                     .user(message)
@@ -111,7 +115,7 @@ public class AiService {
         try {
             String systemPrompt = buildChatSystemPrompt(context);
 
-            ChatClient chatClient = ChatClient.create(chatModel);
+            // Use the chatClient with registered tools
             return chatClient.prompt()
                     .system(systemPrompt)
                     .user(message)

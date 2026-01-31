@@ -315,13 +315,37 @@ Documentation is versioned with the application:
 4. **Examples** - Include practical examples
 5. **Maintainability** - Keep it up to date
 
+### Adding New Documentation
+
+**CRITICAL: Never create documentation files directly in the `docs/` root folder.**
+
+Always place new documentation in the appropriate subfolder:
+
+| I'm documenting... | Place it in... |
+|--------------------|----------------|
+| Product features, roadmap, requirements | `01-product/` |
+| Architecture, system design, database | `02-architecture/` |
+| Developer setup, API endpoints, guides | `03-development/` |
+| AI features, specifications, prompts | `04-ai-integration/` |
+| Deployment, configuration, operations | `05-deployment/` |
+| Test plans, test cases, test data | `06-testing/` |
+| Completed implementation summaries | `99-archive/` |
+
+**Before creating a new document:**
+
+1. **Check the folder README** - Read the README in the target folder to confirm it's the right place
+2. **Look for existing docs** - See if the information should be added to an existing document
+3. **Use descriptive names** - Name files clearly (e.g., `docker-deployment.md`, not `notes.md`)
+4. **Update folder README** - Add a reference to significant new documents in the folder's README
+5. **Cross-reference** - Link to related documentation in other folders
+
 ### Updating Documentation
 
 When code changes:
-1. Update relevant documentation
-2. Add new sections if needed
+1. Update relevant documentation in the appropriate folder
+2. Add new sections if needed (in the correct folder)
 3. Update diagrams if architecture changes
-4. Review related documents
+4. Review related documents across folders
 5. Test all code examples
 
 ### Documentation Review
@@ -333,6 +357,7 @@ Before committing documentation changes:
 - [ ] Update table of contents if needed
 - [ ] Cross-check related documents
 - [ ] Verify all links work
+- [ ] **Confirm document is in the correct folder** (not in docs/ root)
 
 ---
 

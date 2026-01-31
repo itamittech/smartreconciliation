@@ -25,13 +25,16 @@ public class AiService {
     private final ChatModel chatModel;
     private final FileUploadService fileUploadService;
     private final ObjectMapper objectMapper;
+    private final ChatContextService chatContextService;
 
     public AiService(ChatModel chatModel,
                      FileUploadService fileUploadService,
-                     ObjectMapper objectMapper) {
+                     ObjectMapper objectMapper,
+                     ChatContextService chatContextService) {
         this.chatModel = chatModel;
         this.fileUploadService = fileUploadService;
         this.objectMapper = objectMapper;
+        this.chatContextService = chatContextService;
     }
 
     public AiMappingSuggestionResponse suggestMappings(AiMappingSuggestionRequest request) {
@@ -204,17 +207,33 @@ public class AiService {
     }
 
     private String buildChatSystemPrompt(String context) {
-        return """
-            You are an AI assistant specialized in data reconciliation. You help users:
-            - Understand reconciliation results and exceptions
-            - Suggest solutions for data mismatches
-            - Explain matching rules and field mappings
-            - Provide insights on data quality issues
+        // Build comprehensive system prompt with detailed knowledge
+        StringBuilder systemPrompt = new StringBuilder();
 
-            Be concise, helpful, and technical when needed. If context about a specific reconciliation is provided, use it to give more relevant answers.
+        // Add comprehensive system knowledge
+        systemPrompt.append(chatContextService.buildSystemKnowledge());
 
-            Current context:
-            """ + (context != null ? context : "No specific reconciliation context provided.");
+        // Add dynamic context
+        systemPrompt.append("\n## CURRENT SESSION CONTEXT\n\n");
+        if (context != null && !context.trim().isEmpty()) {
+            systemPrompt.append(context);
+        } else {
+            systemPrompt.append("No specific reconciliation or session context provided.\n");
+        }
+
+        systemPrompt.append("""
+
+            ## RESPONSE GUIDELINES
+
+            - Be concise, helpful, and technically accurate
+            - Always reference actual system components (table names, field names, enum values) from the system knowledge above
+            - When explaining how the system works, describe the actual implementation, not hypothetical scenarios
+            - If you don't have specific information in the context, say so clearly
+            - Provide actionable guidance based on the actual system capabilities
+            - Use markdown formatting for better readability
+            """);
+
+        return systemPrompt.toString();
     }
 
     private AiMappingSuggestionResponse parseMappingSuggestionResponse(String response) {

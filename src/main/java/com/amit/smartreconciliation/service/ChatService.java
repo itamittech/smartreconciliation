@@ -31,17 +31,20 @@ public class ChatService {
     private final ReconciliationRepository reconciliationRepository;
     private final OrganizationService organizationService;
     private final AiService aiService;
+    private final ChatContextService chatContextService;
 
     public ChatService(ChatSessionRepository sessionRepository,
                       ChatMessageRepository messageRepository,
                       ReconciliationRepository reconciliationRepository,
                       OrganizationService organizationService,
-                      AiService aiService) {
+                      AiService aiService,
+                      ChatContextService chatContextService) {
         this.sessionRepository = sessionRepository;
         this.messageRepository = messageRepository;
         this.reconciliationRepository = reconciliationRepository;
         this.organizationService = organizationService;
         this.aiService = aiService;
+        this.chatContextService = chatContextService;
     }
 
     @Transactional
@@ -100,7 +103,8 @@ public class ChatService {
                 .build();
         messageRepository.save(userMessage);
 
-        String context = buildContext(session);
+        // Build comprehensive context using the new context service
+        String context = buildEnhancedContext(session, request.getMessage());
         String aiResponse = aiService.chatSync(request.getMessage(), context);
 
         ChatMessage assistantMessage = ChatMessage.builder()
@@ -139,7 +143,8 @@ public class ChatService {
                 .build();
         messageRepository.save(userMessage);
 
-        String context = buildContext(session);
+        // Build comprehensive context using the new context service
+        String context = buildEnhancedContext(session, request.getMessage());
 
         StringBuilder fullResponse = new StringBuilder();
         ChatSession finalSession = session;
@@ -172,26 +177,31 @@ public class ChatService {
         log.info("Deleted chat session: {}", sessionId);
     }
 
-    private String buildContext(ChatSession session) {
+    /**
+     * Builds enhanced context using ChatContextService.
+     * Combines dynamic session context, recent activity, and smart context based on user message.
+     */
+    private String buildEnhancedContext(ChatSession session, String userMessage) {
         StringBuilder context = new StringBuilder();
+        Long orgId = session.getOrganization().getId();
 
-        if (session.getReconciliation() != null) {
-            Reconciliation rec = session.getReconciliation();
-            context.append("Current Reconciliation: ").append(rec.getName()).append("\n");
-            context.append("Status: ").append(rec.getStatus()).append("\n");
-            context.append("Match Rate: ").append(String.format("%.2f%%", rec.getMatchRate())).append("\n");
-            context.append("Total Exceptions: ").append(rec.getExceptionCount()).append("\n");
-            context.append("Source File: ").append(rec.getSourceFile().getOriginalFilename()).append("\n");
-            context.append("Target File: ").append(rec.getTargetFile().getOriginalFilename()).append("\n");
+        // Add dynamic context (reconciliation details, recent activity, statistics)
+        context.append(chatContextService.buildDynamicContext(session, orgId));
+
+        // Add smart context based on what the user is asking about
+        String smartContext = chatContextService.buildSmartContext(userMessage, orgId);
+        if (!smartContext.trim().isEmpty()) {
+            context.append(smartContext);
         }
 
+        // Add recent conversation history
         List<ChatMessage> recentMessages = messageRepository.findBySessionIdOrderByCreatedAtAsc(session.getId());
         if (!recentMessages.isEmpty()) {
-            context.append("\nRecent conversation:\n");
+            context.append("\n## RECENT CONVERSATION\n\n");
             int start = Math.max(0, recentMessages.size() - 10);
             for (int i = start; i < recentMessages.size(); i++) {
                 ChatMessage msg = recentMessages.get(i);
-                context.append(msg.getRole()).append(": ").append(msg.getContent()).append("\n");
+                context.append(msg.getRole().toUpperCase()).append(": ").append(msg.getContent()).append("\n\n");
             }
         }
 

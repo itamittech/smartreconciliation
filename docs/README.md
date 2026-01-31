@@ -6,19 +6,40 @@ Comprehensive technical documentation for the Smart Reconciliation platform.
 
 This documentation suite provides complete coverage of the Smart Reconciliation system from development to operations.
 
+### Folder Organization
+
+Documentation is organized into numbered folders by purpose:
+
+```
+docs/
+├── 01-product/          # Product strategy & requirements
+├── 02-architecture/     # System design & database
+├── 03-development/      # Developer guides & API reference
+├── 04-ai-integration/   # AI capabilities & implementation
+├── 05-deployment/       # Deployment, configuration & operations
+├── 06-testing/          # Test documentation & test cases
+└── 99-archive/          # Completed implementation docs
+```
+
+**Benefits:**
+- **Numbered folders** - Clear reading order and priority
+- **Purpose-based** - Related documents grouped together
+- **Scalable** - Easy to add new documentation in the right category
+- **AI-friendly** - Clear context signals for automated tooling
+
 ### Quick Links
 
 | Document | Description | Audience |
 |----------|-------------|----------|
-| [Product Requirements](product-requirements.md) | Product overview, features, and roadmap | Product Managers, Stakeholders |
-| [API Reference](api-reference.md) | Complete REST API documentation | Developers, Integrators |
-| [Architecture](architecture.md) | System architecture and design | Architects, Senior Developers |
-| [Developer Guide](developer-guide.md) | Development setup and guidelines | Developers |
-| [Deployment Guide](deployment-guide.md) | Production deployment instructions | DevOps, SRE |
-| [Database Schema](database-schema.md) | Complete database documentation | DBAs, Backend Developers |
-| [Configuration Reference](configuration-reference.md) | All configuration options | Administrators, DevOps |
-| [AI Integration Guide](ai-integration-guide.md) | AI features and Spring AI usage | Developers, ML Engineers |
-| [Operations Guide](operations-guide.md) | Day-to-day operations and troubleshooting | Operations, Support |
+| [Product Requirements](01-product/product-requirements.md) | Product overview, features, and roadmap | Product Managers, Stakeholders |
+| [API Reference](03-development/api-reference.md) | Complete REST API documentation | Developers, Integrators |
+| [Architecture](02-architecture/architecture.md) | System architecture and design | Architects, Senior Developers |
+| [Developer Guide](03-development/developer-guide.md) | Development setup and guidelines | Developers |
+| [Deployment Guide](05-deployment/deployment-guide.md) | Production deployment instructions | DevOps, SRE |
+| [Database Schema](02-architecture/database-schema.md) | Complete database documentation | DBAs, Backend Developers |
+| [Configuration Reference](05-deployment/configuration-reference.md) | All configuration options | Administrators, DevOps |
+| [AI Integration Guide](04-ai-integration/ai-integration-guide.md) | AI features and Spring AI usage | Developers, ML Engineers |
+| [Operations Guide](05-deployment/operations-guide.md) | Day-to-day operations and troubleshooting | Operations, Support |
 
 ---
 
@@ -26,29 +47,29 @@ This documentation suite provides complete coverage of the Smart Reconciliation 
 
 ### For New Developers
 
-1. Read [Developer Guide](developer-guide.md) - Set up your environment
-2. Review [Architecture](architecture.md) - Understand the system design
-3. Study [API Reference](api-reference.md) - Learn the API endpoints
-4. Explore [AI Integration Guide](ai-integration-guide.md) - Understand AI features
+1. Read [Developer Guide](03-development/developer-guide.md) - Set up your environment
+2. Review [Architecture](02-architecture/architecture.md) - Understand the system design
+3. Study [API Reference](03-development/api-reference.md) - Learn the API endpoints
+4. Explore [AI Integration Guide](04-ai-integration/ai-integration-guide.md) - Understand AI features
 
 **First Task:**
 Follow the Developer Guide to get the application running locally, then try uploading a file and running a reconciliation.
 
 ### For DevOps/SRE
 
-1. Read [Deployment Guide](deployment-guide.md) - Deployment options
-2. Review [Configuration Reference](configuration-reference.md) - Configuration options
-3. Study [Operations Guide](operations-guide.md) - Daily operations
-4. Check [Database Schema](database-schema.md) - Database setup
+1. Read [Deployment Guide](05-deployment/deployment-guide.md) - Deployment options
+2. Review [Configuration Reference](05-deployment/configuration-reference.md) - Configuration options
+3. Study [Operations Guide](05-deployment/operations-guide.md) - Daily operations
+4. Check [Database Schema](02-architecture/database-schema.md) - Database setup
 
 **First Task:**
 Deploy the application to a test environment using Docker Compose, then set up monitoring with Prometheus and Grafana.
 
 ### For Integrators
 
-1. Read [API Reference](api-reference.md) - API endpoints and examples
-2. Review [Architecture](architecture.md) - Integration points
-3. Check [Configuration Reference](configuration-reference.md) - Authentication setup
+1. Read [API Reference](03-development/api-reference.md) - API endpoints and examples
+2. Review [Architecture](02-architecture/architecture.md) - Integration points
+3. Check [Configuration Reference](05-deployment/configuration-reference.md) - Authentication setup
 
 **First Task:**
 Test the file upload and reconciliation API endpoints using Postman or curl.
@@ -59,7 +80,7 @@ Test the file upload and reconciliation API endpoints using Postman or curl.
 
 ### 1. Product Requirements Document
 
-**File:** [product-requirements.md](product-requirements.md)
+**File:** [product-requirements.md](01-product/product-requirements.md)
 
 Comprehensive product requirements and strategic planning:
 - Executive summary and product vision
@@ -80,7 +101,7 @@ Comprehensive product requirements and strategic planning:
 
 ### 2. API Reference
 
-**File:** [api-reference.md](api-reference.md)
+**File:** [api-reference.md](03-development/api-reference.md)
 
 Complete REST API documentation including:
 - All endpoints with request/response examples
@@ -100,7 +121,7 @@ Complete REST API documentation including:
 
 ### 3. Architecture Documentation
 
-**File:** [architecture.md](architecture.md)
+**File:** [architecture.md](02-architecture/architecture.md)
 
 System architecture and design documentation:
 - C4 model diagrams (context, container, component)
@@ -119,7 +140,7 @@ System architecture and design documentation:
 
 ### 4. Developer Guide
 
-**File:** [developer-guide.md](developer-guide.md)
+**File:** [developer-guide.md](03-development/developer-guide.md)
 
 Complete development guide:
 - Development environment setup
@@ -138,7 +159,7 @@ Complete development guide:
 
 ### 5. Deployment Guide
 
-**File:** [deployment-guide.md](deployment-guide.md)
+**File:** [deployment-guide.md](05-deployment/deployment-guide.md)
 
 Production deployment instructions:
 - Docker deployment
@@ -159,7 +180,7 @@ Production deployment instructions:
 
 ### 6. Database Schema
 
-**File:** [database-schema.md](database-schema.md)
+**File:** [database-schema.md](02-architecture/database-schema.md)
 
 Complete database documentation:
 - Entity relationship diagrams
@@ -178,7 +199,7 @@ Complete database documentation:
 
 ### 7. Configuration Reference
 
-**File:** [configuration-reference.md](configuration-reference.md)
+**File:** [configuration-reference.md](05-deployment/configuration-reference.md)
 
 All configuration options documented:
 - Application configuration
@@ -198,7 +219,7 @@ All configuration options documented:
 
 ### 8. AI Integration Guide
 
-**File:** [ai-integration-guide.md](ai-integration-guide.md)
+**File:** [ai-integration-guide.md](04-ai-integration/ai-integration-guide.md)
 
 AI capabilities and implementation:
 - Spring AI framework
@@ -219,7 +240,7 @@ AI capabilities and implementation:
 
 ### 9. Operations Guide
 
-**File:** [operations-guide.md](operations-guide.md)
+**File:** [operations-guide.md](05-deployment/operations-guide.md)
 
 Day-to-day operations:
 - Daily health checks
@@ -461,19 +482,19 @@ Proprietary - All rights reserved.
 Based on your role, here's where to start:
 
 **Developers:**
-→ [Developer Guide](developer-guide.md) → [Architecture](architecture.md) → [API Reference](api-reference.md)
+→ [Developer Guide](03-development/developer-guide.md) → [Architecture](02-architecture/architecture.md) → [API Reference](03-development/api-reference.md)
 
 **DevOps/SRE:**
-→ [Deployment Guide](deployment-guide.md) → [Operations Guide](operations-guide.md) → [Configuration Reference](configuration-reference.md)
+→ [Deployment Guide](05-deployment/deployment-guide.md) → [Operations Guide](05-deployment/operations-guide.md) → [Configuration Reference](05-deployment/configuration-reference.md)
 
 **Database Administrators:**
-→ [Database Schema](database-schema.md) → [Deployment Guide](deployment-guide.md) → [Operations Guide](operations-guide.md)
+→ [Database Schema](02-architecture/database-schema.md) → [Deployment Guide](05-deployment/deployment-guide.md) → [Operations Guide](05-deployment/operations-guide.md)
 
 **Architects:**
-→ [Architecture](architecture.md) → [AI Integration Guide](ai-integration-guide.md) → [API Reference](api-reference.md)
+→ [Architecture](02-architecture/architecture.md) → [AI Integration Guide](04-ai-integration/ai-integration-guide.md) → [API Reference](03-development/api-reference.md)
 
 **Product Managers:**
-→ [Product Requirements](product-requirements.md) → [API Reference](api-reference.md) → [AI Integration Guide](ai-integration-guide.md)
+→ [Product Requirements](01-product/product-requirements.md) → [API Reference](03-development/api-reference.md) → [AI Integration Guide](04-ai-integration/ai-integration-guide.md)
 
 ---
 

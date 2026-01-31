@@ -10,6 +10,7 @@ This documentation suite provides complete coverage of the Smart Reconciliation 
 
 | Document | Description | Audience |
 |----------|-------------|----------|
+| [Product Requirements](product-requirements.md) | Product overview, features, and roadmap | Product Managers, Stakeholders |
 | [API Reference](api-reference.md) | Complete REST API documentation | Developers, Integrators |
 | [Architecture](architecture.md) | System architecture and design | Architects, Senior Developers |
 | [Developer Guide](developer-guide.md) | Development setup and guidelines | Developers |
@@ -56,7 +57,28 @@ Test the file upload and reconciliation API endpoints using Postman or curl.
 
 ## Documentation Overview
 
-### 1. API Reference
+### 1. Product Requirements Document
+
+**File:** [product-requirements.md](product-requirements.md)
+
+Comprehensive product requirements and strategic planning:
+- Executive summary and product vision
+- Target user personas
+- Current features and capabilities
+- Success metrics and KPIs
+- Competitive analysis
+- Future improvements and roadmap
+- Strategic phases (NOW, NEXT, LATER)
+
+**Key Sections:**
+- Problem statement and solution
+- 10 prioritized improvements
+- 3-phase strategic roadmap
+- Risk mitigation strategies
+- Complete API endpoint inventory
+- Codebase summary
+
+### 2. API Reference
 
 **File:** [api-reference.md](api-reference.md)
 
@@ -76,7 +98,7 @@ Complete REST API documentation including:
 - Chat Interface
 - Data Sources
 
-### 2. Architecture Documentation
+### 3. Architecture Documentation
 
 **File:** [architecture.md](architecture.md)
 
@@ -95,7 +117,7 @@ System architecture and design documentation:
 - AI integration
 - Data flow sequences
 
-### 3. Developer Guide
+### 4. Developer Guide
 
 **File:** [developer-guide.md](developer-guide.md)
 
@@ -114,7 +136,7 @@ Complete development guide:
 - Testing examples
 - Troubleshooting
 
-### 4. Deployment Guide
+### 5. Deployment Guide
 
 **File:** [deployment-guide.md](deployment-guide.md)
 
@@ -135,7 +157,7 @@ Production deployment instructions:
 - Azure Container Instances
 - Google Cloud Run
 
-### 5. Database Schema
+### 6. Database Schema
 
 **File:** [database-schema.md](database-schema.md)
 
@@ -154,7 +176,7 @@ Complete database documentation:
 - Sample queries
 - Backup procedures
 
-### 6. Configuration Reference
+### 7. Configuration Reference
 
 **File:** [configuration-reference.md](configuration-reference.md)
 
@@ -174,7 +196,7 @@ All configuration options documented:
 - Environment-specific configs
 - Best practices
 
-### 7. AI Integration Guide
+### 8. AI Integration Guide
 
 **File:** [ai-integration-guide.md](ai-integration-guide.md)
 
@@ -195,7 +217,7 @@ AI capabilities and implementation:
 - Cost management
 - Best practices
 
-### 8. Operations Guide
+### 9. Operations Guide
 
 **File:** [operations-guide.md](operations-guide.md)
 
@@ -451,7 +473,7 @@ Based on your role, here's where to start:
 → [Architecture](architecture.md) → [AI Integration Guide](ai-integration-guide.md) → [API Reference](api-reference.md)
 
 **Product Managers:**
-→ [API Reference](api-reference.md) → [AI Integration Guide](ai-integration-guide.md) → [Architecture](architecture.md)
+→ [Product Requirements](product-requirements.md) → [API Reference](api-reference.md) → [AI Integration Guide](ai-integration-guide.md)
 
 ---
 

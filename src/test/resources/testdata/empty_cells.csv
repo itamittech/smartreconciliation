@@ -1,0 +1,6 @@
+id,name,amount,date,notes
+1,John Smith,100.00,2024-01-15,
+2,,200.00,2024-01-16,Missing name
+3,Bob Johnson,,2024-01-17,Missing amount
+4,Alice Williams,400.00,,No date
+5,Charlie Brown,500.00,2024-01-19,Complete

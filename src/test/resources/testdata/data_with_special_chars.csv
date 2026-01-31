@@ -1,0 +1,6 @@
+id,name,description,notes
+1,"Smith, John","Invoice for ""Q1"" services","Contains
+newline"
+2,"O'Brien, Mary","Payment with €500.00 amount","Unicode: ñ, ü, é"
+3,"Tech-Corp™","Contract #123 & addendum","Symbols: @#$%"
+4,"Doe, ""Jane""","Quote: She said ""Hello""","Nested quotes"

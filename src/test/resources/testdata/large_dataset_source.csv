@@ -1,0 +1,11 @@
+id,reference,description,amount,category,date
+1,REF-00001,Payment for Q1 services,1250.50,Services,2024-01-15
+2,REF-00002,Product purchase - Widget A,340.00,Products,2024-01-15
+3,REF-00003,Consulting fees - January,2500.00,Consulting,2024-01-16
+4,REF-00004,Monthly subscription,99.99,Subscription,2024-01-16
+5,REF-00005,Hardware purchase,1500.00,Products,2024-01-17
+6,REF-00006,Support services,750.00,Services,2024-01-17
+7,REF-00007,Software license,2000.00,License,2024-01-18
+8,REF-00008,Training session,1200.00,Training,2024-01-18
+9,REF-00009,Maintenance contract,3500.00,Services,2024-01-19
+10,REF-00010,Product warranty,250.00,Products,2024-01-19

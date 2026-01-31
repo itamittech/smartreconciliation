@@ -109,6 +109,10 @@ public class FileParserService {
                 }
                 rows.add(rowData);
             }
+        } catch (org.apache.poi.openxml4j.exceptions.NotOfficeXmlFileException e) {
+            throw new FileProcessingException("Invalid Excel file format: " + e.getMessage(), e);
+        } catch (Exception e) {
+            throw new FileProcessingException("Error parsing Excel file: " + e.getMessage(), e);
         }
 
         return new ParseResult(headers, rows);

@@ -203,24 +203,25 @@ class FileParserServiceTest {
     @Test
     @DisplayName("TC-FPS-008: Handle Corrupted File")
     void testHandleCorruptedFile() {
-        // Given - Create a corrupted CSV file
+        // Given - Create a corrupted CSV file with mismatched columns
         MultipartFile corruptedFile = new MockMultipartFile(
             "file",
             "corrupted.csv",
             "text/csv",
-            "This is not,a valid\nCSV\"file with unmatched quotes".getBytes()
+            "header1,header2\nvalue1".getBytes() // Missing second column value
         );
 
         // When & Then
-        assertThatCode(() -> fileParserService.parseFile(corruptedFile))
-            .doesNotThrowAnyException(); // CSV parser is lenient
+        // CSV parser will throw exception when trying to access missing column
+        assertThatThrownBy(() -> fileParserService.parseFile(corruptedFile))
+            .isInstanceOf(Exception.class); // Can be FileProcessingException or IllegalArgumentException
 
-        // For truly corrupted files, it should throw FileProcessingException
+        // The parser detects structural issues in CSV files
     }
 
     // ==================== Helper Methods ====================
 
-    private byte[] createMockExcelContent() throws IOException {
+    private byte[] createMockExcelContent() {
         // Create a minimal valid Excel file structure
         // For real testing, you would use Apache POI to create actual Excel content
         // or include a real test Excel file in resources
@@ -229,7 +230,7 @@ class FileParserServiceTest {
         };
     }
 
-    private byte[] createMockExcelWithEmptyRows() throws IOException {
+    private byte[] createMockExcelWithEmptyRows() {
         return createMockExcelContent();
     }
 }

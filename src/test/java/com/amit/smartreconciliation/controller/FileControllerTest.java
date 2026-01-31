@@ -460,7 +460,7 @@ class FileControllerTest {
                     .andExpect(jsonPath("$.success").value(true))
                     .andExpect(jsonPath("$.data.id").value(1))
                     .andExpect(jsonPath("$.data.originalFilename").value("test.csv"))
-                    .andExpect(jsonPath("$.data.storedFilename").value("uuid_test.csv"))
+                    // Note: storedFilename is not exposed in UploadedFileResponse for security reasons
                     .andExpect(jsonPath("$.data.contentType").value("text/csv"))
                     .andExpect(jsonPath("$.data.fileSize").value(2048))
                     .andExpect(jsonPath("$.data.status").value("PROCESSED"))
@@ -798,7 +798,7 @@ class FileControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success").value(true))
                     .andExpect(jsonPath("$.message").value("File deleted successfully"))
-                    .andExpect(jsonPath("$.data").isEmpty());
+                    .andExpect(jsonPath("$.data").doesNotExist()); // data field is excluded when null due to @JsonInclude(NON_NULL)
 
             ArgumentCaptor<Long> idCaptor = ArgumentCaptor.forClass(Long.class);
             verify(fileUploadService, times(1)).deleteFile(idCaptor.capture());

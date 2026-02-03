@@ -36,4 +36,26 @@ public class ChatSessionResponse {
     public Boolean getActive() { return active; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
+
+    public void setId(Long id) { this.id = id; }
+    public void setTitle(String title) { this.title = title; }
+    public void setReconciliationId(Long reconciliationId) { this.reconciliationId = reconciliationId; }
+    public void setMessages(List<ChatMessageResponse> messages) { this.messages = messages; }
+    public void setActive(Boolean active) { this.active = active; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public static Builder builder() { return new Builder(); }
+
+    public static class Builder {
+        private final ChatSessionResponse r = new ChatSessionResponse();
+        public Builder id(Long v) { r.id = v; return this; }
+        public Builder title(String v) { r.title = v; return this; }
+        public Builder reconciliationId(Long v) { r.reconciliationId = v; return this; }
+        public Builder messages(List<ChatMessageResponse> v) { r.messages = v; return this; }
+        public Builder active(Boolean v) { r.active = v; return this; }
+        public Builder createdAt(LocalDateTime v) { r.createdAt = v; return this; }
+        public Builder updatedAt(LocalDateTime v) { r.updatedAt = v; return this; }
+        public ChatSessionResponse build() { return r; }
+    }
 }

@@ -1,0 +1,127 @@
+{
+  "module": "AI Integration",
+  "component": "AiService",
+  "testLevel": "Unit Test",
+  "totalTestCases": 12,
+  "testCases": [
+    {
+      "id": "TC-AI-001",
+      "title": "Generate Field Mapping Suggestions",
+      "category": "Field Mapping Suggestions Tests",
+      "given": "source file schema with columns: [\"invoice_id\", \"customer_name\", \"total_amount\", \"order_date\"] and target file schema with columns: [\"id\", \"client_name\", \"amount\", \"purchase_date\"]",
+      "when": "suggestFieldMappings() is called with both schemas",
+      "then": "AI model is invoked with prompt containing both schemas and response contains suggested mappings with confidence scores between 0 and 1"
+    },
+    {
+      "id": "TC-AI-002",
+      "title": "Parse JSON Response Wrapped in Markdown",
+      "category": "Field Mapping Suggestions Tests",
+      "given": "AI returns response wrapped in markdown code block",
+      "when": "parseAiResponse() is called",
+      "then": "JSON content is extracted from markdown block and parsed as valid JSON array and mapping objects are correctly deserialized"
+    },
+    {
+      "id": "TC-AI-003",
+      "title": "Parse Plain JSON Response",
+      "category": "Field Mapping Suggestions Tests",
+      "given": "AI returns plain JSON without markdown",
+      "when": "parseAiResponse() is called",
+      "then": "JSON is parsed directly and mapping objects are correctly deserialized"
+    },
+    {
+      "id": "TC-AI-004",
+      "title": "Handle Missing Fields with Defaults",
+      "category": "Field Mapping Suggestions Tests",
+      "given": "AI response is missing \"confidence\" field",
+      "when": "parseAiResponse() is called",
+      "then": "default confidence value 0.5 is assigned and mapping is still valid"
+    },
+    {
+      "id": "TC-AI-005",
+      "title": "Identify Key Fields in Suggestions",
+      "category": "Field Mapping Suggestions Tests",
+      "given": "source schema includes column \"id\" with high uniqueness (95%) and target schema includes column \"invoice_id\" with high uniqueness (98%)",
+      "when": "suggestFieldMappings() is called",
+      "then": "AI identifies these as likely key fields and mapping includes isKeyField=true for id→invoice_id"
+    },
+    {
+      "id": "TC-AI-006",
+      "title": "Suggest Matching Rules Based on Field Types",
+      "category": "Matching Rule Suggestions Tests",
+      "given": "field mappings: customer_name → client_name (TEXT type), amount → total_amount (CURRENCY type), reference → ref_number (TEXT type)",
+      "when": "suggestMatchingRules() is called",
+      "then": "AI suggests: FUZZY match for customer_name with threshold 0.85, RANGE match for amount with tolerance 0.50, EXACT match for reference and suggestions include reasoning for each rule type"
+    },
+    {
+      "id": "TC-AI-007",
+      "title": "Suggest Pattern Matching for Reference Fields",
+      "category": "Matching Rule Suggestions Tests",
+      "given": "field mapping: invoice_ref → reference and sample values show pattern: \"INV-12345\", \"INV-67890\"",
+      "when": "suggestMatchingRules() is called",
+      "then": "AI suggests PATTERN match with STARTS_WITH pattern \"INV-\" and confidence score indicates pattern detection certainty"
+    },
+    {
+      "id": "TC-AI-008",
+      "title": "Suggest Resolution for Value Mismatch",
+      "category": "Exception Resolution Suggestions Tests",
+      "given": "exception type VALUE_MISMATCH and field \"customer_name\" and sourceValue \"John Smith\" and targetValue \"Jon Smith\"",
+      "when": "suggestResolution() is called",
+      "then": "AI analyzes the mismatch and suggests: \"Possible typo in source. Recommended action: Update source to 'Jon Smith' or configure fuzzy matching with threshold 0.90\""
+    },
+    {
+      "id": "TC-AI-009",
+      "title": "Suggest Resolution for Missing Record",
+      "category": "Exception Resolution Suggestions Tests",
+      "given": "exception type MISSING_TARGET and sourceRecord: {id: \"123\", name: \"Acme Corp\", amount: \"1000\"}",
+      "when": "suggestResolution() is called",
+      "then": "AI suggests: \"Record exists in source but not in target. Verify if record was deleted in target system or if there's a data synchronization issue.\""
+    },
+    {
+      "id": "TC-AI-010",
+      "title": "Send Sync Chat Message",
+      "category": "Chat Integration Tests",
+      "given": "user message \"What is the match rate for Q1 reconciliations?\" and chat context includes recent reconciliation statistics",
+      "when": "sendChatMessage() is called with sync=true",
+      "then": "AI model processes message with context and response is returned as single string and response addresses the question with relevant data"
+    },
+    {
+      "id": "TC-AI-011",
+      "title": "Stream Chat Message",
+      "category": "Chat Integration Tests",
+      "given": "user message \"Explain the fuzzy matching algorithm\" and streaming is enabled",
+      "when": "sendChatMessage() is called with stream=true",
+      "then": "Flux<String> is returned for streaming response and tokens are emitted as they're generated and complete response is assembled from token stream"
+    },
+    {
+      "id": "TC-AI-012",
+      "title": "Handle AI Service Unavailable",
+      "category": "Error Handling Tests",
+      "given": "AI service endpoint is unreachable",
+      "when": "suggestFieldMappings() is called",
+      "then": "RuntimeException is thrown and exception message is \"AI service unavailable\" and error is logged with details"
+    }
+  ],
+  "testDataRequirements": {
+    "sampleSchemas": [
+      "Source: [\"invoice_id\", \"customer_name\", \"total_amount\", \"order_date\", \"status\"]",
+      "Target: [\"id\", \"client_name\", \"amount\", \"purchase_date\", \"state\"]"
+    ],
+    "sampleFieldTypes": {
+      "INTEGER": "id columns with high uniqueness",
+      "TEXT": "name, description fields",
+      "CURRENCY": "amount, price, total fields",
+      "DATE": "order_date, purchase_date",
+      "PERCENTAGE": "discount, tax_rate"
+    },
+    "sampleExceptions": [
+      "VALUE_MISMATCH: {field: \"amount\", source: \"100.00\", target: \"100.50\"}",
+      "MISSING_TARGET: {sourceRecord: {id: \"123\", name: \"Acme\", amount: \"1000\"}}",
+      "MISSING_SOURCE: {targetRecord: {id: \"456\", name: \"TechCo\", amount: \"2000\"}}"
+    ],
+    "mockObjects": [
+      "ChatModel mock returning String responses",
+      "StreamingChatModel mock returning Flux<String>",
+      "AI response strings with various formats (markdown, plain JSON)"
+    ]
+  }
+}

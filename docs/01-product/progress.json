@@ -1,0 +1,1797 @@
+{
+  "generatedAt": "2026-02-03T12:00:00Z",
+  "product": "Smart Reconciliation",
+  "version": "1.0",
+  "summary": {
+    "totalFeatures": 57,
+    "inProgress": 45,
+    "notPicked": 12,
+    "completed": 0
+  },
+  "features": [
+    {
+      "id": "F4.1.1",
+      "category": "File Management System",
+      "name": "Multi-file upload",
+      "description": "Upload single or multiple files (CSV, Excel) up to 100MB each with UUID-prefixed naming and metadata persistence",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/controller/FileController.java",
+            "src/main/java/com/amit/smartreconciliation/service/FileUploadService.java"
+          ],
+          "notes": "Full implementation for CSV and Excel. Multi-file and single file endpoints working. JSON parsing throws 'not yet implemented' exception in FileParserService.java line 122."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/pages/FilesPage.tsx"
+          ],
+          "notes": "File upload UI implemented with single file upload. Multi-file upload not exposed in UI (only single file input). File accepts CSV and Excel formats."
+        }
+      },
+      "acceptanceCriteria": [
+        "Files stored on disk with UUID-prefixed naming",
+        "Metadata persisted to DB"
+      ],
+      "gaps": [
+        "JSON file parsing not implemented (throws FileProcessingException)",
+        "Frontend only supports single file upload, not batch"
+      ]
+    },
+    {
+      "id": "F4.1.2",
+      "category": "File Management System",
+      "name": "Async processing",
+      "description": "Files parsed and analyzed asynchronously after upload with status transitions",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/service/FileUploadService.java",
+            "src/main/java/com/amit/smartreconciliation/config/AsyncConfig.java"
+          ],
+          "notes": "Async processing implemented with @Async annotation. Status transitions from UPLOADING -> UPLOADED -> PROCESSING -> PROCESSED/FAILED. AsyncConfig only has @EnableAsync, no custom thread pool configuration despite PRD stating core:4, max:8, queue:100."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/pages/FilesPage.tsx"
+          ],
+          "notes": "Shows file status badge but no polling for status updates during processing."
+        }
+      },
+      "acceptanceCriteria": [
+        "Status transitions: UPLOADING -> UPLOADED -> PROCESSING -> PROCESSED/FAILED"
+      ],
+      "gaps": [
+        "Custom thread pool configuration missing (should be core:4, max:8, queue:100)",
+        "Frontend does not poll for status updates during processing"
+      ]
+    },
+    {
+      "id": "F4.1.3",
+      "category": "File Management System",
+      "name": "Schema detection",
+      "description": "Automatic column type detection across 10+ data types",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/service/SchemaDetectionService.java"
+          ],
+          "notes": "Full implementation detecting: integer, number, currency, percentage, date, email, boolean, text. Supports multiple date formats. Well-tested with unit tests."
+        },
+        "frontend": {
+          "status": "NotPicked",
+          "files": [],
+          "notes": "Schema information not displayed in Files page. useFilePreview exists but schema details not shown."
+        }
+      },
+      "acceptanceCriteria": [
+        "Correctly identifies integer, number, currency, percentage, date, email, boolean, text"
+      ],
+      "gaps": [
+        "Frontend does not display detected schema to users"
+      ]
+    },
+    {
+      "id": "F4.1.4",
+      "category": "File Management System",
+      "name": "File preview",
+      "description": "Preview first N rows of uploaded data",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/controller/FileController.java",
+            "src/main/java/com/amit/smartreconciliation/service/FileUploadService.java"
+          ],
+          "notes": "GET /api/v1/files/{id}/preview endpoint working with configurable row count (default 100)."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/pages/FilesPage.tsx"
+          ],
+          "notes": "FilePreviewModal component implemented showing first 10 rows in a table. Eye button triggers preview."
+        }
+      },
+      "acceptanceCriteria": [
+        "Returns headers + configurable row count (default 100)"
+      ],
+      "gaps": [
+        "Frontend hardcodes 10 rows instead of configurable amount"
+      ]
+    },
+    {
+      "id": "F4.1.5",
+      "category": "File Management System",
+      "name": "Schema API",
+      "description": "Retrieve detected schema with sample values, null counts, unique counts",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/controller/FileController.java",
+            "src/main/java/com/amit/smartreconciliation/service/FileUploadService.java"
+          ],
+          "notes": "GET /api/v1/files/{id}/schema endpoint working. Returns per-column analytics including detectedType, nullCount, uniqueCount, sampleValues."
+        },
+        "frontend": {
+          "status": "NotPicked",
+          "files": [],
+          "notes": "No UI to view schema analysis. Hook exists in services/hooks.ts but not used."
+        }
+      },
+      "acceptanceCriteria": [
+        "JSON response with per-column analytics"
+      ],
+      "gaps": [
+        "No frontend UI to display schema analysis results"
+      ]
+    },
+    {
+      "id": "F4.2.1",
+      "category": "Reconciliation Engine",
+      "name": "Reconciliation creation",
+      "description": "Submit source file, target file, and rule set to start reconciliation",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/controller/ReconciliationController.java",
+            "src/main/java/com/amit/smartreconciliation/service/ReconciliationService.java"
+          ],
+          "notes": "POST /api/v1/reconciliations endpoint working. Returns immediately with PENDING status, processing runs asynchronously."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/pages/ReconciliationsPage.tsx",
+            "frontend/src/components/reconciliation/CreateReconciliationWizard.tsx"
+          ],
+          "notes": "4-step creation wizard implemented with file selection and rule set selection. Wizard has step indicator and validation."
+        }
+      },
+      "acceptanceCriteria": [
+        "Returns immediately with PENDING status",
+        "Processing runs asynchronously"
+      ],
+      "gaps": []
+    },
+    {
+      "id": "F4.2.2",
+      "category": "Reconciliation Engine",
+      "name": "Key-based matching",
+      "description": "Index records by composite keys from field mappings",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/service/ReconciliationService.java"
+          ],
+          "notes": "indexByKey method implements HashMap-based indexing for O(n) matching performance. Supports composite keys from multiple field mappings."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [],
+          "notes": "N/A - Backend-only feature"
+        }
+      },
+      "acceptanceCriteria": [
+        "O(n) matching performance using HashMap-based indexing"
+      ],
+      "gaps": []
+    },
+    {
+      "id": "F4.2.3",
+      "category": "Reconciliation Engine",
+      "name": "Six match types",
+      "description": "EXACT, FUZZY (Levenshtein), RANGE (numeric tolerance), CONTAINS, STARTS_WITH, ENDS_WITH",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/service/ReconciliationService.java",
+            "src/main/java/com/amit/smartreconciliation/enums/MatchType.java"
+          ],
+          "notes": "All 6 match types implemented in compareValues method. Levenshtein distance calculation implemented. Fuzzy threshold and tolerance configurable."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [],
+          "notes": "N/A - Backend-only feature. Match type selection would be in rule creation."
+        }
+      },
+      "acceptanceCriteria": [
+        "Each strategy correctly identifies matches according to its algorithm and configured thresholds"
+      ],
+      "gaps": []
+    },
+    {
+      "id": "F4.2.4",
+      "category": "Reconciliation Engine",
+      "name": "Progress tracking",
+      "description": "Real-time progress percentage (0-100) during execution",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/service/ReconciliationService.java"
+          ],
+          "notes": "Progress updates at: 5% (start), 20% (source parse), 40% (target parse), 90% (matching), 100% (completion). Stored in database."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/pages/ReconciliationsPage.tsx"
+          ],
+          "notes": "Match rate progress bar shown. useReconciliations hook refetches every 5 seconds for IN_PROGRESS status. Progress percentage not displayed directly."
+        }
+      },
+      "acceptanceCriteria": [
+        "Progress updates at file parse (20%, 40%), matching (90%), and completion (100%)"
+      ],
+      "gaps": [
+        "Frontend shows match rate, not processing progress percentage"
+      ]
+    },
+    {
+      "id": "F4.2.5",
+      "category": "Reconciliation Engine",
+      "name": "Statistical output",
+      "description": "Match rate, record counts, exception counts stored as JSONB",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/service/ReconciliationService.java",
+            "src/main/java/com/amit/smartreconciliation/entity/Reconciliation.java"
+          ],
+          "notes": "Statistics JSONB field populated with totalSourceRecords, totalTargetRecords, matchedRecords, unmatchedSourceRecords, unmatchedTargetRecords, exceptionCount."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/pages/ReconciliationsPage.tsx"
+          ],
+          "notes": "Table shows records, match rate, exception count. Match rate color-coded (green >= 95%, yellow >= 80%, red < 80%)."
+        }
+      },
+      "acceptanceCriteria": [
+        "Comprehensive statistics accessible via results endpoint"
+      ],
+      "gaps": []
+    },
+    {
+      "id": "F4.2.6",
+      "category": "Reconciliation Engine",
+      "name": "Cancellation",
+      "description": "Cancel in-progress reconciliations",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/controller/ReconciliationController.java",
+            "src/main/java/com/amit/smartreconciliation/service/ReconciliationService.java"
+          ],
+          "notes": "POST /api/v1/reconciliations/{id}/cancel endpoint. Sets status to CANCELLED for PENDING/IN_PROGRESS. Does not actually interrupt running async task."
+        },
+        "frontend": {
+          "status": "NotPicked",
+          "files": [],
+          "notes": "No cancel button in ReconciliationsPage UI."
+        }
+      },
+      "acceptanceCriteria": [
+        "Status transitions to CANCELLED for PENDING/IN_PROGRESS reconciliations"
+      ],
+      "gaps": [
+        "Does not actually interrupt running async processing",
+        "No cancel button in frontend"
+      ]
+    },
+    {
+      "id": "F4.3.1",
+      "category": "Rule Management",
+      "name": "Rule set CRUD",
+      "description": "Create, read, update, delete versioned rule sets",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/controller/RuleController.java",
+            "src/main/java/com/amit/smartreconciliation/service/RuleService.java"
+          ],
+          "notes": "Full CRUD implemented. Version auto-increments on update. Cascade operations for field mappings and matching rules."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/pages/RulesPage.tsx"
+          ],
+          "notes": "Master-detail layout with rule list and detail view. Delete working. Create button has TODO comment, Edit shows button but no implementation, Duplicate shows button but no implementation."
+        }
+      },
+      "acceptanceCriteria": [
+        "Version auto-increments on update",
+        "Cascade delete of mappings and rules"
+      ],
+      "gaps": [
+        "Create rule set modal not implemented",
+        "Edit rule set not implemented",
+        "Duplicate rule set not implemented"
+      ]
+    },
+    {
+      "id": "F4.3.2",
+      "category": "Rule Management",
+      "name": "Field mappings",
+      "description": "Define source-to-target column mappings with key designation and transforms",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/controller/RuleController.java",
+            "src/main/java/com/amit/smartreconciliation/service/RuleService.java",
+            "src/main/java/com/amit/smartreconciliation/entity/FieldMapping.java"
+          ],
+          "notes": "POST /api/v1/rules/{id}/mappings endpoint. Supports confidence scores, transform configuration, and key field marking. Transform field exists but transforms not applied during reconciliation."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/pages/RulesPage.tsx"
+          ],
+          "notes": "Field mappings displayed with source->target arrows and Key badges. No UI to add/edit individual mappings."
+        }
+      },
+      "acceptanceCriteria": [
+        "Supports confidence scores, transform configuration, and key field marking"
+      ],
+      "gaps": [
+        "Transform configurations not applied during reconciliation execution",
+        "No UI to add/edit field mappings"
+      ]
+    },
+    {
+      "id": "F4.3.3",
+      "category": "Rule Management",
+      "name": "Matching rules",
+      "description": "Define per-field matching strategies with priorities",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/controller/RuleController.java",
+            "src/main/java/com/amit/smartreconciliation/service/RuleService.java",
+            "src/main/java/com/amit/smartreconciliation/entity/MatchingRule.java"
+          ],
+          "notes": "POST /api/v1/rules/{id}/matching-rules endpoint. Supports tolerance thresholds, fuzzy matching thresholds, priority, and activation control."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/pages/RulesPage.tsx"
+          ],
+          "notes": "Matching rules displayed with type badge and threshold. No UI to add/edit individual matching rules."
+        }
+      },
+      "acceptanceCriteria": [
+        "Supports tolerance thresholds, fuzzy matching thresholds, and activation control"
+      ],
+      "gaps": [
+        "No UI to add/edit matching rules"
+      ]
+    },
+    {
+      "id": "F4.3.4",
+      "category": "Rule Management",
+      "name": "Version tracking",
+      "description": "Rule sets maintain version history",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/service/RuleService.java",
+            "src/main/java/com/amit/smartreconciliation/entity/RuleSet.java"
+          ],
+          "notes": "Version field increments on every modification. No historical version storage - only current version maintained."
+        },
+        "frontend": {
+          "status": "NotPicked",
+          "files": [],
+          "notes": "Version number not displayed in UI."
+        }
+      },
+      "acceptanceCriteria": [
+        "Version increments on every modification"
+      ],
+      "gaps": [
+        "No historical version storage - cannot view/revert to previous versions",
+        "Version not displayed in frontend"
+      ]
+    },
+    {
+      "id": "F4.4.1",
+      "category": "AI Integration",
+      "name": "Multi-provider support",
+      "description": "Switch between Anthropic Claude, OpenAI GPT-4o, DeepSeek via config",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/config/AiConfig.java",
+            "src/main/java/com/amit/smartreconciliation/service/AiService.java"
+          ],
+          "notes": "Spring AI 1.1.2 auto-configuration handles provider selection via spring.ai.* properties. ChatModel interface abstracts provider. All three providers (anthropic, openai, deepseek) are dependencies."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/pages/SettingsPage.tsx"
+          ],
+          "notes": "AI Settings tab has provider dropdown (Anthropic, OpenAI, DeepSeek, Ollama). Uses mock data - selection not persisted to backend."
+        }
+      },
+      "acceptanceCriteria": [
+        "Single app.ai.provider property selects active provider at startup"
+      ],
+      "gaps": [
+        "Frontend AI provider selection not connected to backend",
+        "Runtime provider switching not implemented (requires restart)"
+      ]
+    },
+    {
+      "id": "F4.4.2",
+      "category": "AI Integration",
+      "name": "AI field mapping suggestions",
+      "description": "Analyze source/target schemas and suggest mappings with confidence scores",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/controller/AiController.java",
+            "src/main/java/com/amit/smartreconciliation/service/AiService.java"
+          ],
+          "notes": "POST /api/v1/ai/suggest-mapping endpoint. Returns JSON with sourceField, targetField, confidence, reason, isKey, suggestedTransform. Parses AI response and handles markdown code blocks."
+        },
+        "frontend": {
+          "status": "NotPicked",
+          "files": [],
+          "notes": "No UI to trigger AI mapping suggestions. Would integrate with reconciliation wizard."
+        }
+      },
+      "acceptanceCriteria": [
+        "Returns JSON with sourceField, targetField, confidence, reason, isKey, suggestedTransform"
+      ],
+      "gaps": [
+        "No frontend integration - users cannot trigger AI suggestions from UI"
+      ]
+    },
+    {
+      "id": "F4.4.3",
+      "category": "AI Integration",
+      "name": "AI rule suggestions",
+      "description": "Recommend matching rules based on schemas and existing mappings",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/controller/AiController.java",
+            "src/main/java/com/amit/smartreconciliation/service/AiService.java"
+          ],
+          "notes": "POST /api/v1/ai/suggest-rules endpoint. Returns natural language response with matching strategy recommendations."
+        },
+        "frontend": {
+          "status": "NotPicked",
+          "files": [],
+          "notes": "No UI to trigger AI rule suggestions."
+        }
+      },
+      "acceptanceCriteria": [
+        "Natural language response with matching strategy recommendations"
+      ],
+      "gaps": [
+        "No frontend integration"
+      ]
+    },
+    {
+      "id": "F4.4.4",
+      "category": "AI Integration",
+      "name": "AI exception resolution",
+      "description": "Generate actionable resolution suggestions for individual exceptions",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/controller/ExceptionController.java",
+            "src/main/java/com/amit/smartreconciliation/service/ExceptionService.java",
+            "src/main/java/com/amit/smartreconciliation/service/AiService.java"
+          ],
+          "notes": "GET /api/v1/exceptions/{id}/suggestions endpoint. Suggestions cached in aiSuggestion field to avoid redundant API calls."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/components/exceptions/ExceptionCard.tsx"
+          ],
+          "notes": "ExceptionCard displays aiSuggestion with sparkle icon. No button to request new suggestion if none cached."
+        }
+      },
+      "acceptanceCriteria": [
+        "Suggestions cached in aiSuggestion field to avoid redundant API calls"
+      ],
+      "gaps": [
+        "No button to manually trigger AI suggestion generation"
+      ]
+    },
+    {
+      "id": "F4.5.1",
+      "category": "Chat System",
+      "name": "Session management",
+      "description": "Create, list, retrieve, and soft-delete chat sessions",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/controller/ChatController.java",
+            "src/main/java/com/amit/smartreconciliation/service/ChatService.java"
+          ],
+          "notes": "Full CRUD for sessions. Sessions can be linked to reconciliations. Soft delete sets active=false."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/components/chat/ChatContainer.tsx"
+          ],
+          "notes": "Chat messages stored in Zustand store. No session list UI - always creates new session. Session persistence across page refresh not implemented."
+        }
+      },
+      "acceptanceCriteria": [
+        "Sessions can be linked to specific reconciliations for contextual awareness"
+      ],
+      "gaps": [
+        "No session list/history UI",
+        "Cannot resume previous sessions",
+        "Session not persisted across page refresh (only in Zustand)"
+      ]
+    },
+    {
+      "id": "F4.5.2",
+      "category": "Chat System",
+      "name": "Synchronous messaging",
+      "description": "Send message and receive complete AI response",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/controller/ChatController.java",
+            "src/main/java/com/amit/smartreconciliation/service/ChatService.java"
+          ],
+          "notes": "POST /api/v1/chat/message endpoint. User and assistant messages persisted to database."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/components/chat/ChatContainer.tsx"
+          ],
+          "notes": "useQuickChat hook calls /chat/message endpoint. Shows loading indicator while waiting."
+        }
+      },
+      "acceptanceCriteria": [
+        "User and assistant messages persisted to database"
+      ],
+      "gaps": []
+    },
+    {
+      "id": "F4.5.3",
+      "category": "Chat System",
+      "name": "Streaming responses",
+      "description": "Server-Sent Events (SSE) stream for real-time AI responses",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/controller/ChatController.java",
+            "src/main/java/com/amit/smartreconciliation/service/ChatService.java"
+          ],
+          "notes": "POST /api/v1/chat/stream endpoint returns Flux<String> as text/event-stream. Full response persisted on completion."
+        },
+        "frontend": {
+          "status": "NotPicked",
+          "files": [
+            "frontend/src/components/chat/ChatContainer.tsx"
+          ],
+          "notes": "ChatContainer only uses synchronous useQuickChat hook. SSE streaming endpoint exists in backend but frontend does not consume it."
+        }
+      },
+      "acceptanceCriteria": [
+        "Content streamed as text/event-stream",
+        "Full response persisted on completion"
+      ],
+      "gaps": [
+        "Frontend does not implement SSE consumer - uses sync endpoint instead"
+      ]
+    },
+    {
+      "id": "F4.5.4",
+      "category": "Chat System",
+      "name": "Contextual awareness",
+      "description": "Chat includes reconciliation context (status, match rate, exceptions) and recent message history",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/service/ChatService.java",
+            "src/main/java/com/amit/smartreconciliation/service/ChatContextService.java"
+          ],
+          "notes": "ChatContextService builds system knowledge and dynamic context. buildEnhancedContext includes reconciliation details, recent activity, smart context based on user message, and last 10 messages."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [],
+          "notes": "N/A - Backend-only context building"
+        }
+      },
+      "acceptanceCriteria": [
+        "Last 10 messages included in prompt context"
+      ],
+      "gaps": []
+    },
+    {
+      "id": "F4.6.1",
+      "category": "Exception Management",
+      "name": "Exception types",
+      "description": "MISSING_SOURCE, MISSING_TARGET, VALUE_MISMATCH, DUPLICATE, FORMAT_ERROR, TOLERANCE_EXCEEDED",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/enums/ExceptionType.java",
+            "src/main/java/com/amit/smartreconciliation/service/ReconciliationService.java"
+          ],
+          "notes": "Enum defines all 6 types. ReconciliationService assigns MISSING_SOURCE, MISSING_TARGET, VALUE_MISMATCH, DUPLICATE during reconciliation. FORMAT_ERROR and TOLERANCE_EXCEEDED not actively used."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/pages/ExceptionsPage.tsx"
+          ],
+          "notes": "Type filter dropdown. ExceptionCard shows type. mapType function handles backend types."
+        }
+      },
+      "acceptanceCriteria": [
+        "Correct type assigned based on discrepancy nature"
+      ],
+      "gaps": [
+        "FORMAT_ERROR and TOLERANCE_EXCEEDED types not generated by reconciliation engine"
+      ]
+    },
+    {
+      "id": "F4.6.2",
+      "category": "Exception Management",
+      "name": "Severity levels",
+      "description": "CRITICAL, HIGH, MEDIUM, LOW",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/enums/ExceptionSeverity.java",
+            "src/main/java/com/amit/smartreconciliation/service/ReconciliationService.java"
+          ],
+          "notes": "Key field mismatches = CRITICAL, missing records = HIGH, value mismatches = MEDIUM. LOW not actively assigned."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/pages/ExceptionsPage.tsx",
+            "frontend/src/components/exceptions/ExceptionCard.tsx"
+          ],
+          "notes": "Severity filter dropdown. ExceptionCard has severity-colored border. Summary cards show Critical and Open counts."
+        }
+      },
+      "acceptanceCriteria": [
+        "Key field mismatches = CRITICAL",
+        "Missing records = HIGH",
+        "Value mismatches = MEDIUM"
+      ],
+      "gaps": [
+        "LOW severity not used"
+      ]
+    },
+    {
+      "id": "F4.6.3",
+      "category": "Exception Management",
+      "name": "Status workflow",
+      "description": "OPEN -> IN_REVIEW -> RESOLVED / IGNORED",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/enums/ExceptionStatus.java",
+            "src/main/java/com/amit/smartreconciliation/service/ExceptionService.java"
+          ],
+          "notes": "Status transitions tracked. resolvedAt timestamp set when RESOLVED. resolvedBy identity stored."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/pages/ExceptionsPage.tsx",
+            "frontend/src/components/exceptions/ExceptionCard.tsx"
+          ],
+          "notes": "Accept/Reject/Investigate buttons. Accept resolves, Reject ignores, Investigate only logs to console."
+        }
+      },
+      "acceptanceCriteria": [
+        "Status transitions tracked with timestamps and resolver identity"
+      ],
+      "gaps": [
+        "IN_REVIEW status transition not implemented in frontend",
+        "Investigate action not fully implemented"
+      ]
+    },
+    {
+      "id": "F4.6.4",
+      "category": "Exception Management",
+      "name": "Paginated filtering",
+      "description": "Filter by reconciliation, type, severity, status with pagination and sorting",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/controller/ExceptionController.java",
+            "src/main/java/com/amit/smartreconciliation/service/ExceptionService.java"
+          ],
+          "notes": "GET /api/v1/exceptions supports all filters. Default page size 20. Configurable sort field and direction."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/pages/ExceptionsPage.tsx",
+            "frontend/src/components/exceptions/ExceptionFilters.tsx"
+          ],
+          "notes": "Filters for severity, status, type, and search. No pagination controls - loads all filtered exceptions."
+        }
+      },
+      "acceptanceCriteria": [
+        "Default page size 20",
+        "Configurable sort field and direction"
+      ],
+      "gaps": [
+        "No pagination controls in frontend"
+      ]
+    },
+    {
+      "id": "F4.6.5",
+      "category": "Exception Management",
+      "name": "Bulk resolution",
+      "description": "Resolve multiple exceptions in a single API call",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/controller/ExceptionController.java",
+            "src/main/java/com/amit/smartreconciliation/service/ExceptionService.java"
+          ],
+          "notes": "POST /api/v1/exceptions/bulk-resolve endpoint. All specified exceptions updated atomically."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/pages/ExceptionsPage.tsx"
+          ],
+          "notes": "Accept All AI Suggestions button triggers bulk resolve for exceptions with aiSuggestion. No checkbox selection for arbitrary bulk operations."
+        }
+      },
+      "acceptanceCriteria": [
+        "All specified exceptions updated atomically"
+      ],
+      "gaps": [
+        "No checkbox multi-select for arbitrary bulk operations"
+      ]
+    },
+    {
+      "id": "F4.6.6",
+      "category": "Exception Management",
+      "name": "AI resolution suggestions",
+      "description": "Get AI-generated resolution guidance per exception",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/controller/ExceptionController.java",
+            "src/main/java/com/amit/smartreconciliation/service/ExceptionService.java"
+          ],
+          "notes": "GET /api/v1/exceptions/{id}/suggestions endpoint. Suggestions cached after first generation."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/components/exceptions/ExceptionCard.tsx"
+          ],
+          "notes": "aiSuggestion displayed if present. No button to request suggestion generation."
+        }
+      },
+      "acceptanceCriteria": [
+        "Suggestions cached after first generation"
+      ],
+      "gaps": [
+        "No UI button to trigger suggestion generation"
+      ]
+    },
+    {
+      "id": "F4.7.1",
+      "category": "Dashboard",
+      "name": "Aggregate metrics",
+      "description": "Total/completed/pending/failed reconciliations, overall match rate",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/controller/DashboardController.java",
+            "src/main/java/com/amit/smartreconciliation/service/DashboardService.java"
+          ],
+          "notes": "GET /api/v1/dashboard/metrics returns complete dashboard state including all counts and overall match rate average."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/pages/HomePage.tsx",
+            "frontend/src/components/dashboard/StatsCard.tsx"
+          ],
+          "notes": "4 StatsCards showing Total Reconciliations, Match Rate, Open Exceptions, In Progress. useDashboardMetrics hook fetches data."
+        }
+      },
+      "acceptanceCriteria": [
+        "Single API call returns complete dashboard state"
+      ],
+      "gaps": []
+    },
+    {
+      "id": "F4.7.2",
+      "category": "Dashboard",
+      "name": "Exception analytics",
+      "description": "Open vs. resolved counts, breakdown by type and severity",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/service/DashboardService.java"
+          ],
+          "notes": "exceptionsByType and exceptionsBySeverity maps returned with type/severity keys and count values."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/pages/HomePage.tsx",
+            "frontend/src/components/dashboard/MatchRateChart.tsx"
+          ],
+          "notes": "MatchRateChart built from exceptionsByType data. Not a true trend chart over time."
+        }
+      },
+      "acceptanceCriteria": [
+        "Maps returned with type/severity keys and count values"
+      ],
+      "gaps": [
+        "Chart shows exception breakdown, not match rate trend over time"
+      ]
+    },
+    {
+      "id": "F4.7.3",
+      "category": "Dashboard",
+      "name": "Recent activity",
+      "description": "Last 10 reconciliations with summary details",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/service/DashboardService.java"
+          ],
+          "notes": "recentReconciliations list ordered by creation date descending, limited to 10."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/pages/HomePage.tsx",
+            "frontend/src/components/dashboard/RecentReconciliations.tsx"
+          ],
+          "notes": "RecentReconciliations component displays list with status badges and View Details action."
+        }
+      },
+      "acceptanceCriteria": [
+        "Ordered by creation date descending"
+      ],
+      "gaps": []
+    },
+    {
+      "id": "F4.7.4",
+      "category": "Dashboard",
+      "name": "Resource counts",
+      "description": "Total uploaded files and rule sets",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/service/DashboardService.java"
+          ],
+          "notes": "totalFilesUploaded and totalRuleSets included in metrics response."
+        },
+        "frontend": {
+          "status": "NotPicked",
+          "files": [],
+          "notes": "File and rule set counts not displayed on dashboard."
+        }
+      },
+      "acceptanceCriteria": [
+        "Scoped to current organization"
+      ],
+      "gaps": [
+        "Frontend does not display file and rule set counts"
+      ]
+    },
+    {
+      "id": "F4.8.1",
+      "category": "Data Source Management",
+      "name": "Data source CRUD",
+      "description": "Create, read, update, delete data source configurations",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/controller/DataSourceController.java",
+            "src/main/java/com/amit/smartreconciliation/service/DataSourceService.java"
+          ],
+          "notes": "Full CRUD implemented. Supports FILE, DATABASE, and API types via DataSourceType enum."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/pages/SettingsPage.tsx"
+          ],
+          "notes": "Data Sources tab shows mock connections. Add Connection button present but uses mock data. Not connected to backend DataSource API."
+        }
+      },
+      "acceptanceCriteria": [
+        "Supports FILE, DATABASE, and API types"
+      ],
+      "gaps": [
+        "Frontend uses mock data, not connected to backend API"
+      ]
+    },
+    {
+      "id": "F4.8.2",
+      "category": "Data Source Management",
+      "name": "Connection testing",
+      "description": "Test connectivity to configured data sources",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/controller/DataSourceController.java",
+            "src/main/java/com/amit/smartreconciliation/service/DataSourceService.java"
+          ],
+          "notes": "POST /api/v1/datasources/{id}/test endpoint. performConnectionTest has TODO comments for DATABASE and API types - returns true without actual test."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/pages/SettingsPage.tsx"
+          ],
+          "notes": "Test button present for each connection but updates mock state, not backend."
+        }
+      },
+      "acceptanceCriteria": [
+        "Records test timestamp, success/failure, and error details"
+      ],
+      "gaps": [
+        "DATABASE and API connection tests not implemented (always return true)",
+        "Frontend Test button not connected to backend"
+      ]
+    },
+    {
+      "id": "F4.8.3",
+      "category": "Data Source Management",
+      "name": "Type filtering",
+      "description": "List data sources filtered by type",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/controller/DataSourceController.java",
+            "src/main/java/com/amit/smartreconciliation/service/DataSourceService.java"
+          ],
+          "notes": "GET /api/v1/datasources?type=DATABASE query parameter filtering implemented."
+        },
+        "frontend": {
+          "status": "NotPicked",
+          "files": [],
+          "notes": "No type filter in Settings Data Sources tab."
+        }
+      },
+      "acceptanceCriteria": [
+        "Query parameter-based filtering"
+      ],
+      "gaps": [
+        "No type filter in frontend"
+      ]
+    },
+    {
+      "id": "F4.9.1",
+      "category": "Frontend Application",
+      "name": "Dashboard Page",
+      "description": "Welcome banner, KPI stat cards, match rate trend chart, recent reconciliations, quick actions",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [],
+          "notes": "N/A - Frontend page"
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/pages/HomePage.tsx",
+            "frontend/src/components/dashboard/StatsCard.tsx",
+            "frontend/src/components/dashboard/MatchRateChart.tsx",
+            "frontend/src/components/dashboard/RecentReconciliations.tsx",
+            "frontend/src/components/dashboard/QuickActions.tsx"
+          ],
+          "notes": "Full implementation with welcome banner, 4 KPI cards, chart, recent reconciliations list, and quick action buttons. Connected to backend via useDashboardMetrics."
+        }
+      },
+      "acceptanceCriteria": [
+        "useDashboardMetrics - live data from /dashboard/metrics"
+      ],
+      "gaps": [
+        "Match rate chart shows exception breakdown, not historical trend"
+      ]
+    },
+    {
+      "id": "F4.9.2",
+      "category": "Frontend Application",
+      "name": "AI Chat Page",
+      "description": "Full conversational interface with user/AI message bubbles, file upload, quick-start prompts",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [],
+          "notes": "N/A - Frontend page"
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/pages/ChatPage.tsx",
+            "frontend/src/components/chat/ChatContainer.tsx",
+            "frontend/src/components/chat/ChatMessage.tsx",
+            "frontend/src/components/chat/ChatInput.tsx"
+          ],
+          "notes": "Full chat interface with message bubbles, file upload integration, quick-start prompt suggestions, loading indicator, error banner, auto-scroll. Uses sync endpoint, not SSE streaming."
+        }
+      },
+      "acceptanceCriteria": [
+        "useQuickChat - sends to /chat/message",
+        "useUploadFile for inline file uploads"
+      ],
+      "gaps": [
+        "Uses synchronous endpoint instead of SSE streaming",
+        "No session management UI"
+      ]
+    },
+    {
+      "id": "F4.9.3",
+      "category": "Frontend Application",
+      "name": "Reconciliations Page",
+      "description": "Data table with search, status filter, 4-step creation wizard modal",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [],
+          "notes": "N/A - Frontend page"
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/pages/ReconciliationsPage.tsx",
+            "frontend/src/components/reconciliation/CreateReconciliationWizard.tsx",
+            "frontend/src/components/reconciliation/WizardStepIndicator.tsx"
+          ],
+          "notes": "Data table with search, status filter, match rate progress bars (color-coded), status badges. 4-step wizard (Details -> Source File -> Target File -> Rules) with validation. Start, view, download, delete actions."
+        }
+      },
+      "acceptanceCriteria": [
+        "useReconciliations, useCreateReconciliation, useDeleteReconciliation, useStartReconciliation"
+      ],
+      "gaps": [
+        "Download button shows 'coming soon' alert",
+        "No polling for status updates during processing"
+      ]
+    },
+    {
+      "id": "F4.9.4",
+      "category": "Frontend Application",
+      "name": "Exceptions Page",
+      "description": "Summary cards, multi-filter panel, exception card list with AI suggestions",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [],
+          "notes": "N/A - Frontend page"
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/pages/ExceptionsPage.tsx",
+            "frontend/src/components/exceptions/ExceptionCard.tsx",
+            "frontend/src/components/exceptions/ExceptionFilters.tsx"
+          ],
+          "notes": "Summary cards (Critical, Open, Resolved), multi-filter panel (search, severity, status, type), exception card list with severity color-coding, AI suggestion display, accept/reject/investigate actions, bulk accept AI suggestions button."
+        }
+      },
+      "acceptanceCriteria": [
+        "useExceptions, useResolveException, useIgnoreException, useBulkResolveExceptions"
+      ],
+      "gaps": [
+        "No pagination controls",
+        "Investigate action only logs to console"
+      ]
+    },
+    {
+      "id": "F4.9.5",
+      "category": "Frontend Application",
+      "name": "Files Page",
+      "description": "File upload, searchable file table, file preview modal, delete functionality",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [],
+          "notes": "N/A - Frontend page"
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/pages/FilesPage.tsx"
+          ],
+          "notes": "File upload button with hidden input, searchable file table (name, size, rows, columns, status, date), file preview modal with tabular data (10 rows), delete functionality."
+        }
+      },
+      "acceptanceCriteria": [
+        "useFiles, useUploadFile, useDeleteFile, useFilePreview"
+      ],
+      "gaps": [
+        "Only single file upload, not multi-file",
+        "Schema view not implemented"
+      ]
+    },
+    {
+      "id": "F4.9.6",
+      "category": "Frontend Application",
+      "name": "Rules Page",
+      "description": "Master-detail layout with rule set list and detail view showing field mappings and matching rules",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [],
+          "notes": "N/A - Frontend page"
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/pages/RulesPage.tsx"
+          ],
+          "notes": "Master-detail layout with rule set list (left panel) and detail view (right panel). Detail shows field mappings with source->target arrows, matching rules with type badges, summary statistics. Delete working."
+        }
+      },
+      "acceptanceCriteria": [
+        "useRuleSets, useDeleteRuleSet"
+      ],
+      "gaps": [
+        "Create rule set not implemented",
+        "Edit rule set not implemented",
+        "Duplicate rule set not implemented"
+      ]
+    },
+    {
+      "id": "F4.9.7",
+      "category": "Frontend Application",
+      "name": "Settings Page",
+      "description": "6-tab settings panel: Profile, Data Sources, AI Settings, Notifications, Security, Appearance",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [],
+          "notes": "N/A - Frontend page"
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/pages/SettingsPage.tsx"
+          ],
+          "notes": "6-tab panel implemented with all UI elements: Profile form fields, Data Sources connection list with test button, AI Settings provider selector (Anthropic/OpenAI/DeepSeek/Ollama) with API key and feature toggles, Notifications toggle switches, Security password/2FA/sessions, Appearance theme/language/date format."
+        }
+      },
+      "acceptanceCriteria": [
+        "Currently uses mock data; UI-ready for backend integration"
+      ],
+      "gaps": [
+        "All tabs use mock data or local state",
+        "No backend persistence for any settings",
+        "AI provider selection not connected to backend"
+      ]
+    },
+    {
+      "id": "F4.10.1",
+      "category": "Cross-Cutting Concerns",
+      "name": "Multi-tenancy",
+      "description": "All data scoped to organization; default org auto-created on startup",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/service/OrganizationService.java"
+          ],
+          "notes": "Default organization auto-created via @PostConstruct. All services use getDefaultOrganization() to scope data. No multi-org support yet."
+        },
+        "frontend": {
+          "status": "NotPicked",
+          "files": [],
+          "notes": "No organization switching UI."
+        }
+      },
+      "acceptanceCriteria": [
+        "Default org auto-created on startup"
+      ],
+      "gaps": [
+        "Only single default organization supported",
+        "No organization management or switching"
+      ]
+    },
+    {
+      "id": "F4.10.2",
+      "category": "Cross-Cutting Concerns",
+      "name": "Global error handling",
+      "description": "Structured error responses for validation, file processing, AI, and general errors",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/exception/GlobalExceptionHandler.java"
+          ],
+          "notes": "Handles ResourceNotFoundException, FileProcessingException, ReconciliationException, AiServiceException, MethodArgumentNotValidException, MaxUploadSizeExceededException, and general Exception."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/services/api.ts"
+          ],
+          "notes": "ApiError class handles error responses. Pages show error states with AlertCircle icons."
+        }
+      },
+      "acceptanceCriteria": [
+        "Structured error responses for all error types"
+      ],
+      "gaps": []
+    },
+    {
+      "id": "F4.10.3",
+      "category": "Cross-Cutting Concerns",
+      "name": "CORS configuration",
+      "description": "Configurable allowed origins",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/config/WebConfig.java"
+          ],
+          "notes": "app.cors.allowed-origins property with default localhost:5173, localhost:3000. Allows GET, POST, PUT, DELETE, PATCH, OPTIONS."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [],
+          "notes": "N/A - Backend config"
+        }
+      },
+      "acceptanceCriteria": [
+        "Default: localhost:5173, localhost:3000"
+      ],
+      "gaps": []
+    },
+    {
+      "id": "F4.10.4",
+      "category": "Cross-Cutting Concerns",
+      "name": "Health check",
+      "description": "GET /api/v1/health returns service status, version, and timestamp",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/controller/HealthController.java"
+          ],
+          "notes": "Returns status=UP, timestamp, service name, version 1.0.0."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/services/hooks.ts"
+          ],
+          "notes": "useHealth hook polls every 30 seconds."
+        }
+      },
+      "acceptanceCriteria": [
+        "Returns service status, version, and timestamp"
+      ],
+      "gaps": []
+    },
+    {
+      "id": "F4.10.5",
+      "category": "Cross-Cutting Concerns",
+      "name": "Async processing",
+      "description": "Thread pool for background operations",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/config/AsyncConfig.java"
+          ],
+          "notes": "Only @EnableAsync annotation. No custom thread pool configuration."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [],
+          "notes": "N/A - Backend config"
+        }
+      },
+      "acceptanceCriteria": [
+        "Thread pool (core: 4, max: 8, queue: 100)"
+      ],
+      "gaps": [
+        "Custom thread pool not configured (using Spring defaults)"
+      ]
+    },
+    {
+      "id": "F4.10.6",
+      "category": "Cross-Cutting Concerns",
+      "name": "API versioning",
+      "description": "All controllers use /api/v1/ prefix",
+      "status": "InProgress",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/controller/*.java"
+          ],
+          "notes": "All 8 controllers use @RequestMapping(\"/api/v1/...\") prefix."
+        },
+        "frontend": {
+          "status": "InProgress",
+          "files": [
+            "frontend/src/services/api.ts"
+          ],
+          "notes": "API_BASE_URL defaults to http://localhost:8080/api/v1"
+        }
+      },
+      "acceptanceCriteria": [
+        "/api/v1/ prefix for future version evolution"
+      ],
+      "gaps": []
+    },
+    {
+      "id": "F9.1.1",
+      "category": "Future Improvements - High Priority",
+      "name": "Authentication and Authorization System",
+      "description": "Implement Spring Security with JWT-based authentication and RBAC",
+      "status": "NotPicked",
+      "implementation": {
+        "backend": {
+          "status": "NotPicked",
+          "files": [],
+          "notes": "No Spring Security configuration found. User entity and UserRole enum exist but not enforced. All endpoints unauthenticated."
+        },
+        "frontend": {
+          "status": "NotPicked",
+          "files": [],
+          "notes": "No login/logout UI. No JWT token management."
+        }
+      },
+      "acceptanceCriteria": [
+        "JWT-based authentication",
+        "Role-based access control (ADMIN, OPERATOR, VIEWER, AUDITOR)",
+        "Organization-scoped data isolation enforced"
+      ],
+      "gaps": [
+        "No Spring Security configuration",
+        "No authentication filters or security config",
+        "User and UserRole entities exist but not used",
+        "All endpoints publicly accessible"
+      ]
+    },
+    {
+      "id": "F9.1.2",
+      "category": "Future Improvements - High Priority",
+      "name": "Client-Side Routing and Deep Linking",
+      "description": "Replace Zustand activeView navigation with React Router",
+      "status": "NotPicked",
+      "implementation": {
+        "backend": {
+          "status": "NotApplicable",
+          "files": [],
+          "notes": "Frontend feature"
+        },
+        "frontend": {
+          "status": "NotPicked",
+          "files": ["frontend/src/App.tsx"],
+          "notes": "Currently uses switch statement on activeView state. No router library. Navigation state lost on refresh."
+        }
+      },
+      "acceptanceCriteria": [
+        "URL-based navigation",
+        "Shareable links to reconciliations/exceptions",
+        "Browser back/forward working",
+        "Parameterized routes (/reconciliations/:id)"
+      ],
+      "gaps": [
+        "No React Router or routing library",
+        "All navigation via Zustand activeView state",
+        "URLs not bookmarkable or shareable"
+      ]
+    },
+    {
+      "id": "F9.1.3",
+      "category": "Future Improvements - High Priority",
+      "name": "JSON File Parser Implementation",
+      "description": "Complete JSON file parsing capability in FileParserService",
+      "status": "NotPicked",
+      "implementation": {
+        "backend": {
+          "status": "NotPicked",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/service/FileParserService.java"
+          ],
+          "notes": "parseJSON method throws FileProcessingException('JSON parsing not yet implemented') at line 122"
+        },
+        "frontend": {
+          "status": "NotApplicable",
+          "files": [],
+          "notes": "Backend feature"
+        }
+      },
+      "acceptanceCriteria": [
+        "Parse JSON arrays of objects",
+        "Handle nested JSON structures"
+      ],
+      "gaps": [
+        "parseJSON method stub at FileParserService.java:122"
+      ]
+    },
+    {
+      "id": "F9.2.1",
+      "category": "Future Improvements - Medium Priority",
+      "name": "Database and API Data Source Connectors",
+      "description": "Implement live data ingestion from PostgreSQL, MySQL, SQL Server, Oracle via JDBC and REST APIs",
+      "status": "NotPicked",
+      "implementation": {
+        "backend": {
+          "status": "NotPicked",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/service/DataSourceService.java"
+          ],
+          "notes": "performConnectionTest method has TODO comments for DATABASE (line 126) and API (line 129) types. Both return true without actual testing."
+        },
+        "frontend": {
+          "status": "NotApplicable",
+          "files": [],
+          "notes": "Backend feature"
+        }
+      },
+      "acceptanceCriteria": [
+        "JDBC connection support for major databases",
+        "REST API endpoint connectivity",
+        "Secure credential management"
+      ],
+      "gaps": [
+        "DATABASE connection test TODO at DataSourceService.java:126",
+        "API connection test TODO at DataSourceService.java:129"
+      ]
+    },
+    {
+      "id": "F9.2.2",
+      "category": "Future Improvements - Medium Priority",
+      "name": "Scheduled and Recurring Reconciliations",
+      "description": "Add ability to schedule reconciliations at specified intervals or triggered by webhooks",
+      "status": "NotPicked",
+      "implementation": {
+        "backend": {
+          "status": "NotPicked",
+          "files": [],
+          "notes": "No @Scheduled annotations found. No Quartz Scheduler integration."
+        },
+        "frontend": {
+          "status": "NotPicked",
+          "files": [],
+          "notes": "No scheduling UI"
+        }
+      },
+      "acceptanceCriteria": [
+        "Daily/weekly/monthly scheduling",
+        "Webhook-triggered execution",
+        "Email notifications on completion"
+      ],
+      "gaps": [
+        "No scheduler implementation",
+        "No cron job configuration"
+      ]
+    },
+    {
+      "id": "F9.2.3",
+      "category": "Future Improvements - Medium Priority",
+      "name": "Reconciliation Result Export",
+      "description": "Enable export of reconciliation results to CSV, Excel, and PDF formats",
+      "status": "NotPicked",
+      "implementation": {
+        "backend": {
+          "status": "NotPicked",
+          "files": [],
+          "notes": "No export endpoints found in ReconciliationController"
+        },
+        "frontend": {
+          "status": "NotPicked",
+          "files": ["frontend/src/pages/ReconciliationsPage.tsx"],
+          "notes": "Download button exists (line 292) but shows alert('Download feature coming soon'). UI ready, backend missing."
+        }
+      },
+      "acceptanceCriteria": [
+        "CSV export",
+        "Excel export with Apache POI",
+        "PDF generation with charts"
+      ],
+      "gaps": [
+        "No export endpoints in backend",
+        "Frontend download button placeholder only"
+      ]
+    },
+    {
+      "id": "F9.2.4",
+      "category": "Future Improvements - Medium Priority",
+      "name": "Connect Settings Page to Backend",
+      "description": "Connect Settings page tabs to real backend APIs for persistence",
+      "status": "NotPicked",
+      "implementation": {
+        "backend": {
+          "status": "NotPicked",
+          "files": [],
+          "notes": "DataSource API exists. No user preferences API, notification preferences, or theme persistence."
+        },
+        "frontend": {
+          "status": "NotPicked",
+          "files": ["frontend/src/pages/SettingsPage.tsx"],
+          "notes": "Complete 6-tab UI using mockConnections array (line 27) and local state. No backend integration."
+        }
+      },
+      "acceptanceCriteria": [
+        "User profile CRUD",
+        "AI provider configuration persistence",
+        "Notification preferences storage",
+        "Theme persistence"
+      ],
+      "gaps": [
+        "Settings page uses mock data",
+        "No user preferences API"
+      ]
+    },
+    {
+      "id": "F9.3.1",
+      "category": "Future Improvements - Low Priority",
+      "name": "PGvector-Powered Semantic Search and RAG",
+      "description": "Leverage PGvector for embedding reconciliation rules and historical resolutions",
+      "status": "NotPicked",
+      "implementation": {
+        "backend": {
+          "status": "NotPicked",
+          "files": [],
+          "notes": "PGvector dependency exists but no vector embedding or RAG implementation found"
+        },
+        "frontend": {
+          "status": "NotApplicable",
+          "files": [],
+          "notes": "Backend feature"
+        }
+      },
+      "acceptanceCriteria": [
+        "Embedding pipeline for reconciliation data",
+        "Vector store population strategy",
+        "RAG-enhanced AI assistant responses"
+      ],
+      "gaps": [
+        "No embedding generation",
+        "No vector store usage"
+      ]
+    },
+    {
+      "id": "F9.3.2",
+      "category": "Future Improvements - Low Priority",
+      "name": "Audit Trail and Activity Logging",
+      "description": "Implement comprehensive audit logging for all state-changing operations",
+      "status": "NotPicked",
+      "implementation": {
+        "backend": {
+          "status": "NotPicked",
+          "files": [],
+          "notes": "No audit entity or audit log repository found. No AOP-based logging."
+        },
+        "frontend": {
+          "status": "NotApplicable",
+          "files": [],
+          "notes": "Backend feature"
+        }
+      },
+      "acceptanceCriteria": [
+        "Immutable audit events",
+        "User identity capture",
+        "Before/after state tracking"
+      ],
+      "gaps": [
+        "No audit trail entity",
+        "No AOP logging aspects"
+      ]
+    },
+    {
+      "id": "F9.3.3",
+      "category": "Future Improvements - Low Priority",
+      "name": "Multi-Currency and Data Transformation Pipeline",
+      "description": "Build configurable transformation pipeline with currency conversion, date normalization, string standardization",
+      "status": "NotPicked",
+      "implementation": {
+        "backend": {
+          "status": "NotPicked",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/entity/FieldMapping.java"
+          ],
+          "notes": "FieldMapping entity has transform and transformConfig fields but they are not actively used during reconciliation."
+        },
+        "frontend": {
+          "status": "NotApplicable",
+          "files": [],
+          "notes": "Backend feature"
+        }
+      },
+      "acceptanceCriteria": [
+        "Currency conversion with exchange rates",
+        "Date format normalization",
+        "String standardization transforms"
+      ],
+      "gaps": [
+        "Transform fields exist but not used in ReconciliationService",
+        "No transformation engine"
+      ]
+    },
+    {
+      "id": "F9.3.4",
+      "category": "Future Improvements - Low Priority",
+      "name": "Performance Optimization for Large Files",
+      "description": "Implement streaming file processing, parallel record matching, and database batch operations",
+      "status": "NotPicked",
+      "implementation": {
+        "backend": {
+          "status": "NotPicked",
+          "files": [],
+          "notes": "Current implementation loads entire files into memory. No streaming processing."
+        },
+        "frontend": {
+          "status": "NotApplicable",
+          "files": [],
+          "notes": "Backend feature"
+        }
+      },
+      "acceptanceCriteria": [
+        "Chunked file parsing for 100K+ rows",
+        "Java 21 virtual threads for parallel matching",
+        "Batch database operations"
+      ],
+      "gaps": [
+        "In-memory file processing only",
+        "No streaming parser"
+      ]
+    },
+    {
+      "id": "F9.3.5",
+      "category": "Future Improvements - Low Priority",
+      "name": "SSE Streaming in Chat UI",
+      "description": "Implement EventSource or fetch-based SSE consumer in frontend",
+      "status": "NotPicked",
+      "implementation": {
+        "backend": {
+          "status": "InProgress",
+          "files": [
+            "src/main/java/com/amit/smartreconciliation/controller/ChatController.java"
+          ],
+          "notes": "SSE streaming endpoint exists (POST /chat/stream returning Flux<String>)"
+        },
+        "frontend": {
+          "status": "NotPicked",
+          "files": [
+            "frontend/src/components/chat/ChatContainer.tsx"
+          ],
+          "notes": "Only uses synchronous useQuickChat() hook. No EventSource or SSE consumer."
+        }
+      },
+      "acceptanceCriteria": [
+        "EventSource or fetch SSE consumer",
+        "Progressive message rendering",
+        "Token-by-token display"
+      ],
+      "gaps": [
+        "Frontend not using backend SSE endpoint",
+        "No EventSource implementation"
+      ]
+    }
+  ]
+}

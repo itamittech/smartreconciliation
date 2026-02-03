@@ -1,0 +1,121 @@
+{
+  "module": "File Management",
+  "component": "FileUploadService",
+  "testLevel": "Unit Test",
+  "totalTestCases": 12,
+  "testCases": [
+    {
+      "id": "TC-FUS-001",
+      "title": "Upload Valid CSV File",
+      "category": "File Upload Tests",
+      "given": "a multipart file \"source_data.csv\" with valid CSV content and user belongs to organization ID \"org-123\"",
+      "when": "uploadFile() is called with the file and organizationId",
+      "then": "file is saved to file system with unique filename and UploadedFile entity is created with status UPLOADED and UploadedFile ID is returned and fileParserService.parseFile() is NOT called yet (async)"
+    },
+    {
+      "id": "TC-FUS-002",
+      "title": "Upload Valid Excel File",
+      "category": "File Upload Tests",
+      "given": "a multipart file \"data.xlsx\" with valid Excel content and user belongs to organization ID \"org-456\"",
+      "when": "uploadFile() is called with the file and organizationId",
+      "then": "file is saved with .xlsx extension preserved and UploadedFile entity is created with correct filename and size and file status is UPLOADED"
+    },
+    {
+      "id": "TC-FUS-003",
+      "title": "Process File Asynchronously After Upload",
+      "category": "Async File Processing Tests",
+      "given": "an UploadedFile entity with status UPLOADED and file exists on file system",
+      "when": "processFileAsync() is called with the file ID",
+      "then": "file status is updated to PROCESSING and fileParserService.parseFile() is called and parsed data is stored in parsedData field and schemaDetectionService.detectSchema() is called and schema is stored in schema field and file status is updated to COMPLETED and processing completes within 30 seconds for 10,000 row file"
+    },
+    {
+      "id": "TC-FUS-004",
+      "title": "Handle File Processing Failure",
+      "category": "Async File Processing Tests",
+      "given": "an UploadedFile entity with status UPLOADED and fileParserService.parseFile() throws RuntimeException",
+      "when": "processFileAsync() is called",
+      "then": "file status is updated to FAILED and error message is captured and stored and exception is logged and no schema is generated"
+    },
+    {
+      "id": "TC-FUS-005",
+      "title": "Generate File Preview with First 100 Rows",
+      "category": "Preview Generation Tests",
+      "given": "a processed file with 10,000 rows and file status is COMPLETED",
+      "when": "getFilePreview() is called with file ID",
+      "then": "exactly 100 rows are returned and rows include all columns from the original file and data is correctly formatted"
+    },
+    {
+      "id": "TC-FUS-006",
+      "title": "Generate Preview for Small File",
+      "category": "Preview Generation Tests",
+      "given": "a processed file with only 10 rows and file status is COMPLETED",
+      "when": "getFilePreview() is called",
+      "then": "all 10 rows are returned and no padding or empty rows are added"
+    },
+    {
+      "id": "TC-FUS-007",
+      "title": "Retrieve Detected Schema",
+      "category": "Schema Retrieval Tests",
+      "given": "a processed file with detected schema and schema contains 4 columns with types: INTEGER, TEXT, CURRENCY, DATE",
+      "when": "getFileSchema() is called with file ID",
+      "then": "schema JSON is returned and all 4 column definitions are included and each column has name, type, uniqueCount, and sampleValues"
+    },
+    {
+      "id": "TC-FUS-008",
+      "title": "Handle Schema Request for Unprocessed File",
+      "category": "Schema Retrieval Tests",
+      "given": "an UploadedFile with status PROCESSING and schema is not yet available",
+      "when": "getFileSchema() is called",
+      "then": "an IllegalStateException is thrown and exception message is \"File processing not completed\""
+    },
+    {
+      "id": "TC-FUS-009",
+      "title": "Get File Status and Details",
+      "category": "File Status Tracking Tests",
+      "given": "an UploadedFile with status COMPLETED and file has 1,000 rows and 5 columns",
+      "when": "getFileStatus() is called with file ID",
+      "then": "FileStatusDTO is returned and DTO contains: id, filename, status, rowCount, columnCount, uploadDate and rowCount is 1,000 and columnCount is 5"
+    },
+    {
+      "id": "TC-FUS-010",
+      "title": "List All Files for Organization",
+      "category": "File Status Tracking Tests",
+      "given": "organization \"org-123\" has uploaded 3 files and another organization \"org-456\" has uploaded 2 files",
+      "when": "listFiles() is called with organizationId \"org-123\"",
+      "then": "exactly 3 files are returned and all files belong to organization \"org-123\" and files are sorted by uploadDate descending"
+    },
+    {
+      "id": "TC-FUS-011",
+      "title": "Delete Uploaded File",
+      "category": "File Deletion Tests",
+      "given": "an UploadedFile with ID \"file-789\" and file exists in database and file system",
+      "when": "deleteFile() is called with file ID \"file-789\"",
+      "then": "file is removed from file system and UploadedFile entity is deleted from database and no exception is thrown"
+    },
+    {
+      "id": "TC-FUS-012",
+      "title": "Handle File Storage Failure",
+      "category": "Error Handling Tests",
+      "given": "a valid multipart file and file system has insufficient disk space",
+      "when": "uploadFile() is called",
+      "then": "an IOException is thrown and no UploadedFile entity is created and exception message indicates storage failure"
+    }
+  ],
+  "testDataRequirements": {
+    "multipartFiles": [
+      "source_data.csv: Valid CSV, 100 rows",
+      "data.xlsx: Valid Excel, 50 rows",
+      "large_file.csv: 10,000 rows for performance testing"
+    ],
+    "mockObjects": [
+      "FileParserService mock returning List<Map<String, String>>",
+      "SchemaDetectionService mock returning schema JSON",
+      "FileRepository mock with save/find/delete operations",
+      "File system mock for storage operations"
+    ],
+    "testEntities": [
+      "UploadedFile entities with various statuses: UPLOADED, PROCESSING, COMPLETED, FAILED",
+      "Organizations with different IDs"
+    ]
+  }
+}

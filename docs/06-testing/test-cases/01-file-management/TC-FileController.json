@@ -1,0 +1,99 @@
+{
+  "module": "File Management",
+  "component": "FileController",
+  "testLevel": "Integration Test",
+  "totalTestCases": 9,
+  "testCases": [
+    {
+      "id": "TC-FC-001",
+      "title": "POST /api/files/upload - Upload Single CSV File",
+      "category": "Upload Endpoint Tests",
+      "given": "a valid CSV multipart file in the request and request header \"X-Organization-Id: org-123\"",
+      "when": "POST request is sent to /api/files/upload",
+      "then": "HTTP status 200 OK is returned and response body contains file ID and file is saved to database with status UPLOADED"
+    },
+    {
+      "id": "TC-FC-002",
+      "title": "POST /api/files/upload - Upload Excel File",
+      "category": "Upload Endpoint Tests",
+      "given": "a valid XLSX multipart file in the request and request header \"X-Organization-Id: org-456\"",
+      "when": "POST request is sent to /api/files/upload",
+      "then": "HTTP status 200 OK is returned and response contains file ID and filename and file entity is created with correct organization"
+    },
+    {
+      "id": "TC-FC-003",
+      "title": "POST /api/files/upload - Reject Invalid File Type",
+      "category": "Upload Endpoint Tests",
+      "given": "a PDF file in the multipart request and request header \"X-Organization-Id: org-123\"",
+      "when": "POST request is sent to /api/files/upload",
+      "then": "HTTP status 400 Bad Request is returned and error message is \"Unsupported file type: pdf\" and no file is saved to database"
+    },
+    {
+      "id": "TC-FC-004",
+      "title": "GET /api/files/{id} - Retrieve File Details",
+      "category": "File Details Endpoint Tests",
+      "given": "a file with ID \"file-123\" exists in database and file has status COMPLETED with 500 rows and 4 columns",
+      "when": "GET request is sent to /api/files/file-123",
+      "then": "HTTP status 200 OK is returned and response body contains: id, filename, status, rowCount, columnCount, uploadDate and status is \"COMPLETED\" and rowCount is 500"
+    },
+    {
+      "id": "TC-FC-005",
+      "title": "GET /api/files/{id} - File Not Found",
+      "category": "File Details Endpoint Tests",
+      "given": "no file with ID \"file-999\" exists",
+      "when": "GET request is sent to /api/files/file-999",
+      "then": "HTTP status 404 Not Found is returned and error message is \"File not found\""
+    },
+    {
+      "id": "TC-FC-006",
+      "title": "GET /api/files/{id}/preview - Get File Preview",
+      "category": "Preview and Schema Endpoint Tests",
+      "given": "a file with ID \"file-456\" has 10,000 rows and file status is COMPLETED",
+      "when": "GET request is sent to /api/files/file-456/preview",
+      "then": "HTTP status 200 OK is returned and response contains exactly 100 rows and each row contains all column data"
+    },
+    {
+      "id": "TC-FC-007",
+      "title": "GET /api/files/{id}/schema - Get Detected Schema",
+      "category": "Preview and Schema Endpoint Tests",
+      "given": "a file with ID \"file-789\" has detected schema and schema includes 4 columns: id (INTEGER), name (TEXT), amount (CURRENCY), date (DATE)",
+      "when": "GET request is sent to /api/files/file-789/schema",
+      "then": "HTTP status 200 OK is returned and response contains schema JSON array with 4 elements and each element has: name, type, uniqueCount, sampleValues"
+    },
+    {
+      "id": "TC-FC-008",
+      "title": "GET /api/files - List All Files for Organization",
+      "category": "List and Delete Endpoint Tests",
+      "given": "organization \"org-123\" has 3 uploaded files and request header \"X-Organization-Id: org-123\"",
+      "when": "GET request is sent to /api/files",
+      "then": "HTTP status 200 OK is returned and response contains array of 3 file objects and all files belong to organization \"org-123\" and files are ordered by uploadDate descending"
+    },
+    {
+      "id": "TC-FC-009",
+      "title": "DELETE /api/files/{id} - Delete File",
+      "category": "List and Delete Endpoint Tests",
+      "given": "a file with ID \"file-321\" exists and file belongs to organization \"org-123\"",
+      "when": "DELETE request is sent to /api/files/file-321",
+      "then": "HTTP status 204 No Content is returned and file is removed from database and physical file is deleted from file system"
+    }
+  ],
+  "testConfiguration": {
+    "testEnvironment": "@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)",
+    "database": "TestContainers PostgreSQL",
+    "httpClient": "MockMvc or RestAssured",
+    "testDataSetup": [
+      "Create test organizations in database",
+      "Upload test files before each test",
+      "Clean up files after each test"
+    ],
+    "requiredFiles": [
+      "source_data.csv: 100 rows, 4 columns",
+      "mixed_data_types.xlsx: 50 rows, 6 columns",
+      "large_dataset.csv: 10,000 rows"
+    ],
+    "headers": [
+      "X-Organization-Id: Organization identifier",
+      "Content-Type: multipart/form-data for uploads"
+    ]
+  }
+}

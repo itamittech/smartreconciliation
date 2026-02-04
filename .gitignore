@@ -129,6 +129,8 @@ test-results/
 frontend/coverage/
 frontend/playwright-report/
 frontend/test-results/
+frontend/vite-dev.err
+frontend/vite-dev.out
 
 ### AWS/Cloud Credentials ###
 .aws/

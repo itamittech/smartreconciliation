@@ -83,6 +83,12 @@ mvnw.cmd spring-boot:run
 
 The application will start on `http://localhost:8080`.
 
+## TDD Workflow
+
+This repo uses a test-driven workflow. Start here:
+- `docs/06-testing/tdd-workflow.md`
+- Project skill: `$smartrecon-tdd` (repo-scoped automation of the workflow)
+
 ## Development Commands
 
 ### Windows

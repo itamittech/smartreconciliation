@@ -92,46 +92,54 @@ const HomePage = () => {
     : defaultChartData
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Welcome Banner with Product Value Proposition */}
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary via-primary/95 to-primary/90 p-8 text-primary-foreground shadow-lg">
+    <div className="space-y-8 p-6 lg:p-8">
+      {/* Welcome Banner with Product Value Proposition - Enhanced with brand guidelines */}
+      <div className="relative overflow-hidden rounded-2xl gradient-primary p-10 lg:p-12 text-white shadow-[var(--shadow-brand)]">
+        {/* Background pattern */}
+        <div className="absolute inset-0 pattern-dots opacity-30" />
+
         <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="h-6 w-6" />
-            <h2 className="text-3xl font-bold">Smart Reconciliation</h2>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center justify-center h-12 w-12 rounded-xl bg-white/20 backdrop-blur-sm">
+              <Sparkles className="h-6 w-6" />
+            </div>
+            <h2 className="text-4xl lg:text-5xl font-bold tracking-tight">Smart Reconciliation</h2>
           </div>
-          <p className="text-lg text-primary-foreground/90 mb-4 max-w-2xl">
+          <p className="text-xl lg:text-2xl text-white/95 mb-5 max-w-3xl font-medium">
             AI-Powered Financial Data Matching & Exception Management
           </p>
-          <p className="text-sm text-primary-foreground/80 max-w-3xl">
+          <p className="text-base text-white/85 max-w-3xl leading-relaxed mb-8">
             Automate complex reconciliations with intelligent matching algorithms.
             Reduce manual work by up to 90%, catch discrepancies in real-time, and leverage
             AI-powered insights to resolve exceptions faster than ever.
           </p>
-          <div className="mt-6 flex flex-wrap gap-4">
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
-              <CheckCircle2 className="h-4 w-4" />
-              <span className="text-sm font-medium">Automated Matching</span>
+
+          {/* Feature badges with glassmorphism */}
+          <div className="flex flex-wrap gap-3">
+            <div className="flex items-center gap-2.5 bg-white/15 backdrop-blur-md rounded-xl px-5 py-3 border border-white/20 shadow-lg transition-transform hover:scale-105">
+              <CheckCircle2 className="h-5 w-5" />
+              <span className="text-sm font-semibold">Automated Matching</span>
             </div>
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
-              <TrendingUp className="h-4 w-4" />
-              <span className="text-sm font-medium">Real-time Analytics</span>
+            <div className="flex items-center gap-2.5 bg-white/15 backdrop-blur-md rounded-xl px-5 py-3 border border-white/20 shadow-lg transition-transform hover:scale-105">
+              <TrendingUp className="h-5 w-5" />
+              <span className="text-sm font-semibold">Real-time Analytics</span>
             </div>
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
-              <AlertTriangle className="h-4 w-4" />
-              <span className="text-sm font-medium">Exception Intelligence</span>
+            <div className="flex items-center gap-2.5 bg-white/15 backdrop-blur-md rounded-xl px-5 py-3 border border-white/20 shadow-lg transition-transform hover:scale-105">
+              <AlertTriangle className="h-5 w-5" />
+              <span className="text-sm font-semibold">Exception Intelligence</span>
             </div>
           </div>
         </div>
-        {/* Decorative elements */}
-        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/5" />
-        <div className="absolute -bottom-10 -left-10 h-48 w-48 rounded-full bg-white/5" />
+
+        {/* Decorative gradient orbs - refined */}
+        <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute -bottom-16 -left-16 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
       </div>
 
-      {/* Quick Overview */}
+      {/* Quick Overview - Enhanced typography */}
       <div>
-        <h3 className="text-lg font-semibold mb-1">Today's Overview</h3>
-        <p className="text-sm text-muted-foreground">
+        <h3 className="text-2xl font-bold text-[var(--color-neutral-900)] mb-2">Today's Overview</h3>
+        <p className="text-base text-[var(--color-neutral-600)]">
           Monitor your reconciliation performance and manage exceptions
         </p>
       </div>

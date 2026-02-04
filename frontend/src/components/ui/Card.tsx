@@ -1,12 +1,32 @@
 import { forwardRef, type HTMLAttributes } from 'react'
 import { cn } from '@/lib/utils'
 
-const Card = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
+export interface CardProps extends HTMLAttributes<HTMLDivElement> {
+  variant?: 'default' | 'elevated' | 'interactive' | 'outline'
+}
+
+const Card = forwardRef<HTMLDivElement, CardProps>(
+  ({ className, variant = 'default', ...props }, ref) => (
     <div
       ref={ref}
       className={cn(
-        'rounded-lg border bg-card text-card-foreground shadow-sm',
+        // Base styles from brand guidelines
+        'rounded-xl bg-card text-card-foreground border transition-all duration-200',
+        // Variant styles
+        {
+          // Default - subtle shadow
+          'border-[var(--color-neutral-200)] shadow-[var(--shadow-sm)]': variant === 'default',
+
+          // Elevated - medium shadow for prominence
+          'border-[var(--color-neutral-200)] shadow-[var(--shadow-md)]': variant === 'elevated',
+
+          // Interactive - hover effects
+          'border-[var(--color-neutral-200)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] hover:-translate-y-1 cursor-pointer':
+            variant === 'interactive',
+
+          // Outline - minimal shadow, prominent border
+          'border-2 border-[var(--color-brand-200)] shadow-[var(--shadow-xs)]': variant === 'outline',
+        },
         className
       )}
       {...props}
@@ -30,7 +50,10 @@ const CardTitle = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLHeadingEle
   ({ className, ...props }, ref) => (
     <h3
       ref={ref}
-      className={cn('text-2xl font-semibold leading-none tracking-tight', className)}
+      className={cn(
+        'text-xl font-semibold leading-tight tracking-tight text-[var(--color-neutral-900)]',
+        className
+      )}
       {...props}
     />
   )
@@ -41,7 +64,7 @@ const CardDescription = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLPara
   ({ className, ...props }, ref) => (
     <p
       ref={ref}
-      className={cn('text-sm text-muted-foreground', className)}
+      className={cn('text-sm text-[var(--color-neutral-600)] leading-relaxed', className)}
       {...props}
     />
   )

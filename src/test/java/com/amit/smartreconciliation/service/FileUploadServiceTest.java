@@ -33,7 +33,7 @@ import static org.mockito.Mockito.*;
  * Unit tests for FileUploadService
  * Module: File Management
  * Test Level: Unit Test
- * Total Test Cases: 12
+ * Total Test Cases: 15
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("FileUploadService Unit Tests")
@@ -146,6 +146,39 @@ class FileUploadServiceTest {
         verify(uploadedFileRepository, atLeast(1)).save(captor.capture());
     }
 
+    @Test
+    @DisplayName("TC-FUS-014: UUID-Prefixed File Naming")
+    void testUuidPrefixedFileNaming() throws Exception {
+        // Given
+        MockMultipartFile csvFile = new MockMultipartFile(
+            "file",
+            "source_data.csv",
+            "text/csv",
+            "id,name,amount\n1,John,100.00".getBytes()
+        );
+
+        UploadedFile savedFile = createMockUploadedFile(1L, "source_data.csv", FileStatus.UPLOADING);
+        UploadedFile uploadedFile = createMockUploadedFile(1L, "source_data.csv", FileStatus.UPLOADED);
+        uploadedFile.setFilePath(tempDir.resolve("test.csv").toString());
+
+        when(uploadedFileRepository.save(any(UploadedFile.class)))
+            .thenReturn(savedFile)
+            .thenReturn(uploadedFile);
+        when(uploadedFileRepository.findById(1L)).thenReturn(Optional.of(uploadedFile));
+
+        // When
+        fileUploadService.uploadFile(csvFile);
+
+        // Then
+        ArgumentCaptor<UploadedFile> captor = ArgumentCaptor.forClass(UploadedFile.class);
+        verify(uploadedFileRepository, atLeast(1)).save(captor.capture());
+        UploadedFile firstSave = captor.getAllValues().get(0);
+
+        assertThat(firstSave.getStoredFilename()).endsWith("_" + "source_data.csv");
+        assertThat(firstSave.getStoredFilename())
+            .matches("^[0-9a-fA-F-]{36}_.+");
+    }
+
     // ==================== Async File Processing Tests ====================
 
     @Test
@@ -212,6 +245,43 @@ class FileUploadServiceTest {
 
         assertThat(finalSave.getStatus()).isEqualTo(FileStatus.FAILED);
         assertThat(finalSave.getProcessingError()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("TC-FUS-015: Status Transitions During Async Processing")
+    void testStatusTransitionsDuringAsyncProcessing() throws Exception {
+        // Given
+        UploadedFile uploadedFile = createMockUploadedFile(1L, "test.csv", FileStatus.UPLOADED);
+        uploadedFile.setFilePath(tempDir.resolve("test.csv").toString());
+
+        when(uploadedFileRepository.findById(1L)).thenReturn(Optional.of(uploadedFile));
+
+        FileParserService.ParseResult parseResult = new FileParserService.ParseResult(
+            List.of("id", "name", "amount"),
+            List.of(
+                Arrays.asList("1", "John", "100"),
+                Arrays.asList("2", "Jane", "200")
+            )
+        );
+        when(fileParserService.parseFile(any(Path.class))).thenReturn(parseResult);
+
+        List<Map<String, Object>> schema = List.of(
+            Map.of("name", "id", "detectedType", "integer", "nullCount", 0, "uniqueCount", 2, "sampleValues", List.of("1", "2"))
+        );
+        when(schemaDetectionService.detectSchemaAsMap(any(), any())).thenReturn(schema);
+
+        List<FileStatus> statuses = new ArrayList<>();
+        when(uploadedFileRepository.save(any(UploadedFile.class))).thenAnswer(invocation -> {
+            UploadedFile arg = invocation.getArgument(0);
+            statuses.add(arg.getStatus());
+            return arg;
+        });
+
+        // When
+        fileUploadService.processFileAsync(1L);
+
+        // Then
+        assertThat(statuses).containsSequence(FileStatus.PROCESSING, FileStatus.PROCESSED);
     }
 
     // ==================== Preview Generation Tests ====================
@@ -288,10 +358,41 @@ class FileUploadServiceTest {
             .hasMessageContaining("File is not yet processed");
     }
 
+    @Test
+    @DisplayName("TC-FUS-009: Schema Analytics Include Null and Unique Counts")
+    void testSchemaAnalyticsIncludeNullAndUniqueCounts() {
+        // Given
+        UploadedFile file = createMockUploadedFile(1L, "test.csv", FileStatus.PROCESSED);
+        List<Map<String, Object>> schema = List.of(
+            Map.of(
+                "name", "amount",
+                "detectedType", "currency",
+                "nullCount", 2,
+                "uniqueCount", 5,
+                "sampleValues", List.of("$10", "$20", "$30")
+            )
+        );
+        file.setDetectedSchema(schema);
+        file.setRowCount(10);
+
+        when(uploadedFileRepository.findById(1L)).thenReturn(Optional.of(file));
+
+        // When
+        SchemaResponse response = fileUploadService.getSchema(1L);
+
+        // Then
+        assertThat(response).isNotNull();
+        assertThat(response.getColumns()).hasSize(1);
+        SchemaResponse.ColumnSchema column = response.getColumns().get(0);
+        assertThat(column.getName()).isEqualTo("amount");
+        assertThat(column.getNullCount()).isEqualTo(2);
+        assertThat(column.getUniqueCount()).isEqualTo(5);
+    }
+
     // ==================== File Status Tracking Tests ====================
 
     @Test
-    @DisplayName("TC-FUS-009: Get File Status and Details")
+    @DisplayName("TC-FUS-010: Get File Status and Details")
     void testGetFileStatusAndDetails() {
         // Given
         UploadedFile file = createProcessedFileWithRows(1L, 1000);
@@ -311,7 +412,7 @@ class FileUploadServiceTest {
     }
 
     @Test
-    @DisplayName("TC-FUS-010: List All Files for Organization")
+    @DisplayName("TC-FUS-011: List All Files for Organization")
     void testListAllFilesForOrganization() {
         // Given
         List<UploadedFile> files = Arrays.asList(
@@ -334,7 +435,7 @@ class FileUploadServiceTest {
     // ==================== File Deletion Tests ====================
 
     @Test
-    @DisplayName("TC-FUS-011: Delete Uploaded File")
+    @DisplayName("TC-FUS-012: Delete Uploaded File")
     void testDeleteUploadedFile() {
         // Given
         UploadedFile file = createMockUploadedFile(1L, "test.csv", FileStatus.PROCESSED);
@@ -352,7 +453,7 @@ class FileUploadServiceTest {
     // ==================== Error Handling Tests ====================
 
     @Test
-    @DisplayName("TC-FUS-012: Handle File Storage Failure")
+    @DisplayName("TC-FUS-013: Handle File Storage Failure")
     void testHandleFileStorageFailure() {
         // Given
         MockMultipartFile file = new MockMultipartFile(

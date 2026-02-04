@@ -91,7 +91,7 @@ class FileControllerTest {
     class SingleFileUploadTests {
 
         @Test
-        @DisplayName("TC-FC-001: POST /api/v1/files/upload/single - Upload Single CSV File")
+        @DisplayName("TC-FC-002: POST /api/v1/files/upload/single - Upload Single CSV File")
         void testUploadSingleCsvFile() throws Exception {
             // Given
             MockMultipartFile file = new MockMultipartFile(
@@ -125,7 +125,7 @@ class FileControllerTest {
         }
 
         @ParameterizedTest
-        @DisplayName("TC-FC-002: Upload Various File Types Successfully")
+        @DisplayName("TC-FC-028: Upload Various File Types Successfully")
         @CsvSource({
             "data.xlsx, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             "legacy.xls, application/vnd.ms-excel",
@@ -163,7 +163,7 @@ class FileControllerTest {
         }
 
         @Test
-        @DisplayName("TC-FC-003: POST /api/v1/files/upload/single - Reject Invalid File Type")
+        @DisplayName("TC-FC-029: POST /api/v1/files/upload/single - Reject Invalid File Type")
         void testRejectInvalidFileType() throws Exception {
             // Given
             MockMultipartFile pdfFile = new MockMultipartFile(
@@ -187,7 +187,7 @@ class FileControllerTest {
         }
 
         @ParameterizedTest
-        @DisplayName("TC-FC-004: Reject Invalid Content-Type Headers")
+        @DisplayName("TC-FC-030: Reject Invalid Content-Type Headers")
         @ValueSource(strings = {"application/pdf", "image/png", "text/plain", "application/json"})
         void testRejectInvalidContentTypes(String invalidContentType) throws Exception {
             // Given
@@ -212,7 +212,7 @@ class FileControllerTest {
         }
 
         @Test
-        @DisplayName("TC-FC-005: Upload File with Special Characters in Filename")
+        @DisplayName("TC-FC-031: Upload File with Special Characters in Filename")
         void testUploadFileWithSpecialCharactersInFilename() throws Exception {
             // Given
             String specialFilename = "Sales Report 2024 (Q1) - Final v2.0.csv";
@@ -246,7 +246,7 @@ class FileControllerTest {
         }
 
         @Test
-        @DisplayName("TC-FC-006: Reject Empty File Upload")
+        @DisplayName("TC-FC-032: Reject Empty File Upload")
         void testRejectEmptyFile() throws Exception {
             // Given
             MockMultipartFile emptyFile = new MockMultipartFile(
@@ -270,7 +270,7 @@ class FileControllerTest {
         }
 
         @Test
-        @DisplayName("TC-FC-007: Missing File Parameter Returns 400")
+        @DisplayName("TC-FC-014: POST /api/v1/files/upload/single - Reject Missing File")
         void testMissingFileParameter() throws Exception {
             // When & Then
             mockMvc.perform(multipart("/api/v1/files/upload/single"))
@@ -280,11 +280,11 @@ class FileControllerTest {
         }
 
         @Test
-        @DisplayName("TC-FC-008: File Size Exceeds Maximum Limit")
+        @DisplayName("TC-FC-011: POST /api/v1/files/upload - Reject Oversized File")
         void testFileSizeExceedsLimit() throws Exception {
             // Given
             MockMultipartFile largeFile = new MockMultipartFile(
-                "file",
+                "files",
                 "large.csv",
                 "text/csv",
                 new byte[1024] // Simulated large file
@@ -294,7 +294,7 @@ class FileControllerTest {
                 .thenThrow(new MaxUploadSizeExceededException(100 * 1024 * 1024));
 
             // When & Then
-            mockMvc.perform(multipart("/api/v1/files/upload/single")
+            mockMvc.perform(multipart("/api/v1/files/upload")
                     .file(largeFile))
                     .andExpect(status().isPayloadTooLarge())
                     .andExpect(jsonPath("$.success").value(false))
@@ -311,7 +311,7 @@ class FileControllerTest {
     class MultipleFilesUploadTests {
 
         @Test
-        @DisplayName("TC-FC-009: POST /api/v1/files/upload - Upload Multiple Files Successfully")
+        @DisplayName("TC-FC-001: POST /api/v1/files/upload - Upload Multiple Files")
         void testUploadMultipleFiles() throws Exception {
             // Given
             MockMultipartFile file1 = new MockMultipartFile(
@@ -373,7 +373,7 @@ class FileControllerTest {
         }
 
         @Test
-        @DisplayName("TC-FC-010: Upload Single File via Multiple Upload Endpoint")
+        @DisplayName("TC-FC-033: Upload Single File via Multiple Upload Endpoint")
         void testUploadSingleFileViaMultipleEndpoint() throws Exception {
             // Given
             MockMultipartFile file = new MockMultipartFile(
@@ -398,7 +398,7 @@ class FileControllerTest {
         }
 
         @Test
-        @DisplayName("TC-FC-011: Partial Failure in Multiple Upload - First File Fails")
+        @DisplayName("TC-FC-004: POST /api/v1/files/upload - Reject Invalid File Type")
         void testPartialFailureFirstFileFails() throws Exception {
             // Given
             MockMultipartFile file1 = new MockMultipartFile(
@@ -437,7 +437,7 @@ class FileControllerTest {
     class FileDetailsTests {
 
         @Test
-        @DisplayName("TC-FC-012: GET /api/v1/files/{id} - Retrieve File Details")
+        @DisplayName("TC-FC-005: GET /api/v1/files/{id} - Retrieve File Details")
         void testRetrieveFileDetails() throws Exception {
             // Given
             UploadedFile completedFile = UploadedFile.builder()
@@ -473,7 +473,7 @@ class FileControllerTest {
         }
 
         @Test
-        @DisplayName("TC-FC-013: GET /api/v1/files/{id} - File Not Found")
+        @DisplayName("TC-FC-006: GET /api/v1/files/{id} - File Not Found")
         void testFileNotFound() throws Exception {
             // Given
             when(fileUploadService.getById(999L))
@@ -489,7 +489,7 @@ class FileControllerTest {
         }
 
         @Test
-        @DisplayName("TC-FC-014: GET /api/v1/files/{id} - Invalid ID Format Returns 400")
+        @DisplayName("TC-FC-034: GET /api/v1/files/{id} - Invalid ID Format Returns 400")
         void testInvalidIdFormat() throws Exception {
             // When & Then
             mockMvc.perform(get("/api/v1/files/invalid"))
@@ -506,7 +506,7 @@ class FileControllerTest {
     class PreviewAndSchemaTests {
 
         @Test
-        @DisplayName("TC-FC-015: GET /api/v1/files/{id}/preview - Get File Preview with Default Rows")
+        @DisplayName("TC-FC-007: GET /api/v1/files/{id}/preview - Get File Preview")
         void testGetFilePreviewWithDefaultRows() throws Exception {
             // Given
             FilePreviewResponse previewResponse = FilePreviewResponse.builder()
@@ -541,7 +541,7 @@ class FileControllerTest {
         }
 
         @Test
-        @DisplayName("TC-FC-016: GET /api/v1/files/{id}/preview - Get Preview with Custom Row Count")
+        @DisplayName("TC-FC-012: GET /api/v1/files/{id}/preview - Custom Row Count")
         void testGetFilePreviewWithCustomRows() throws Exception {
             // Given
             FilePreviewResponse previewResponse = FilePreviewResponse.builder()
@@ -567,7 +567,7 @@ class FileControllerTest {
         }
 
         @ParameterizedTest
-        @DisplayName("TC-FC-017: Preview with Various Row Counts")
+        @DisplayName("TC-FC-035: Preview with Various Row Counts")
         @ValueSource(ints = {1, 10, 50, 100, 200, 500, 1000})
         void testPreviewWithVariousRowCounts(int rowCount) throws Exception {
             // Given
@@ -592,7 +592,7 @@ class FileControllerTest {
         }
 
         @Test
-        @DisplayName("TC-FC-018: Preview with Excessive Row Count")
+        @DisplayName("TC-FC-036: Preview with Excessive Row Count")
         void testPreviewWithExcessiveRowCount() throws Exception {
             // Given - Service should handle excessive row count
             FilePreviewResponse previewResponse = FilePreviewResponse.builder()
@@ -617,7 +617,7 @@ class FileControllerTest {
         }
 
         @Test
-        @DisplayName("TC-FC-019: Preview with Negative Row Count")
+        @DisplayName("TC-FC-037: Preview with Negative Row Count")
         void testPreviewWithNegativeRowCount() throws Exception {
             // Given
             when(fileUploadService.getPreview(1L, -10))
@@ -634,7 +634,7 @@ class FileControllerTest {
         }
 
         @Test
-        @DisplayName("TC-FC-020: Preview with Zero Row Count")
+        @DisplayName("TC-FC-038: Preview with Zero Row Count")
         void testPreviewWithZeroRowCount() throws Exception {
             // Given
             when(fileUploadService.getPreview(1L, 0))
@@ -650,7 +650,7 @@ class FileControllerTest {
         }
 
         @Test
-        @DisplayName("TC-FC-021: GET /api/v1/files/{id}/schema - Get Detected Schema")
+        @DisplayName("TC-FC-013: GET /api/v1/files/{id}/schema - Includes Analytics")
         void testGetDetectedSchema() throws Exception {
             // Given
             List<SchemaResponse.ColumnSchema> columns = Arrays.asList(
@@ -718,7 +718,7 @@ class FileControllerTest {
         }
 
         @Test
-        @DisplayName("TC-FC-022: Schema Detection for File Not Found")
+        @DisplayName("TC-FC-039: Schema Detection for File Not Found")
         void testSchemaForNonExistentFile() throws Exception {
             // Given
             when(fileUploadService.getSchema(999L))
@@ -741,7 +741,7 @@ class FileControllerTest {
     class ListAndDeleteTests {
 
         @Test
-        @DisplayName("TC-FC-023: GET /api/v1/files - List All Files for Organization")
+        @DisplayName("TC-FC-009: GET /api/v1/files - List All Files for Organization")
         void testListAllFilesForOrganization() throws Exception {
             // Given
             List<UploadedFileResponse> files = Arrays.asList(
@@ -771,7 +771,7 @@ class FileControllerTest {
         }
 
         @Test
-        @DisplayName("TC-FC-024: GET /api/v1/files - Empty File List")
+        @DisplayName("TC-FC-040: GET /api/v1/files - Empty File List")
         void testGetAllFilesWhenEmpty() throws Exception {
             // Given
             when(fileUploadService.getAll()).thenReturn(Collections.emptyList());
@@ -788,7 +788,7 @@ class FileControllerTest {
         }
 
         @Test
-        @DisplayName("TC-FC-025: DELETE /api/v1/files/{id} - Delete File Successfully")
+        @DisplayName("TC-FC-010: DELETE /api/v1/files/{id} - Delete File")
         void testDeleteFile() throws Exception {
             // Given
             doNothing().when(fileUploadService).deleteFile(1L);
@@ -806,7 +806,7 @@ class FileControllerTest {
         }
 
         @Test
-        @DisplayName("TC-FC-026: DELETE /api/v1/files/{id} - Delete Non-Existent File")
+        @DisplayName("TC-FC-041: DELETE /api/v1/files/{id} - Delete Non-Existent File")
         void testDeleteNonExistentFile() throws Exception {
             // Given
             doThrow(new ResourceNotFoundException("UploadedFile", 999L))
@@ -822,7 +822,7 @@ class FileControllerTest {
         }
 
         @Test
-        @DisplayName("TC-FC-027: DELETE /api/v1/files/{id} - Delete File In Use")
+        @DisplayName("TC-FC-042: DELETE /api/v1/files/{id} - Delete File In Use")
         void testDeleteFileInUse() throws Exception {
             // Given
             doThrow(new FileProcessingException("Cannot delete file: currently in use by active reconciliation"))

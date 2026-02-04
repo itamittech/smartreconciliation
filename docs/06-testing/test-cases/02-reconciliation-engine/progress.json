@@ -5,9 +5,9 @@
   "moduleName": "Reconciliation Engine",
   "summary": {
     "totalTestCases": 44,
-    "implementedTestCases": 0,
-    "pendingTestCases": 44,
-    "completionPercentage": 0.0
+    "implementedTestCases": 2,
+    "pendingTestCases": 42,
+    "completionPercentage": 4.55
   },
   "components": [
     {
@@ -57,7 +57,7 @@
       "testLevel": "Integration Test",
       "totalTestCases": 8,
       "implemented": false,
-      "testFile": null,
+      "testFile": "src/test/java/com/amit/smartreconciliation/controller/ReconciliationControllerTest.java",
       "testCases": [
         {"id": "TC-RC-001", "title": "POST /api/reconciliations - Create Reconciliation", "implemented": false},
         {"id": "TC-RC-002", "title": "POST /api/reconciliations - Missing Required Field", "implemented": false},
@@ -65,8 +65,8 @@
         {"id": "TC-RC-004", "title": "GET /api/reconciliations/{id}/exceptions - List Exceptions", "implemented": false},
         {"id": "TC-RC-005", "title": "POST /api/reconciliations/{id}/cancel - Cancel Reconciliation", "implemented": false},
         {"id": "TC-RC-006", "title": "GET /api/reconciliations - List All Reconciliations", "implemented": false},
-        {"id": "TC-RC-007", "title": "GET /api/reconciliations/{id}/results - Get Results", "implemented": false},
-        {"id": "TC-RC-008", "title": "GET /api/reconciliations/{id}/status - Get Status", "implemented": false}
+        {"id": "TC-RC-007", "title": "GET /api/reconciliations/{id}/results - Get Results", "implemented": true},
+        {"id": "TC-RC-008", "title": "GET /api/reconciliations/{id}/status - Get Status", "implemented": true}
       ]
     },
     {

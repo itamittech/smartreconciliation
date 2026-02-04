@@ -27,7 +27,7 @@
       "testLevel": "Integration Test",
       "totalTestCases": 6,
       "implemented": false,
-      "testFile": null,
+      "testFile": "src/test/java/com/amit/smartreconciliation/exception/GlobalExceptionHandlerTest.java",
       "testCases": [
         {"id": "TC-GEH-001", "title": "Validation Error Response", "implemented": false},
         {"id": "TC-GEH-002", "title": "File Processing Error Response", "implemented": false},

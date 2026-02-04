@@ -18,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
@@ -95,7 +96,7 @@ class ChatServiceTest {
         testSession = createTestSession(1L, testReconciliation);
 
         // Default mock behavior
-        when(organizationService.getDefaultOrganization()).thenReturn(testOrganization);
+        lenient().when(organizationService.getDefaultOrganization()).thenReturn(testOrganization);
     }
 
     // ==================== Session Creation Tests ====================
@@ -734,6 +735,8 @@ class ChatServiceTest {
             .active(true)
             .build();
         session.setId(id);
+        ReflectionTestUtils.setField(session, "createdAt", LocalDateTime.now().minusMinutes(id));
+        ReflectionTestUtils.setField(session, "updatedAt", LocalDateTime.now().minusMinutes(id));
         return session;
     }
 
@@ -755,6 +758,7 @@ class ChatServiceTest {
                 .session(session)
                 .build();
             msg.setId((long) (i + 1));
+            ReflectionTestUtils.setField(msg, "createdAt", LocalDateTime.now().minusMinutes(count - i));
             messages.add(msg);
         }
         return messages;

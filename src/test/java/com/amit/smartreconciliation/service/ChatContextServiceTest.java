@@ -541,12 +541,14 @@ class ChatContextServiceTest {
         ruleSet.setFieldMappings(Arrays.asList(keyMapping, normalMapping));
 
         MatchingRule rule1 = new MatchingRule();
-        rule1.setFieldName("invoice_id");
+        rule1.setSourceField("invoice_id");
+        rule1.setTargetField("id");
         rule1.setMatchType(MatchType.EXACT);
         rule1.setRuleSet(ruleSet);
 
         MatchingRule rule2 = new MatchingRule();
-        rule2.setFieldName("customer_name");
+        rule2.setSourceField("customer_name");
+        rule2.setTargetField("customer_name");
         rule2.setMatchType(MatchType.FUZZY);
         rule2.setFuzzyThreshold(0.85);
         rule2.setRuleSet(ruleSet);
@@ -596,16 +598,16 @@ class ChatContextServiceTest {
         return Arrays.asList(ex1, ex2, ex3);
     }
 
-    private DashboardService.DashboardMetrics createDashboardMetrics() {
-        Map<String, Long> exceptionsByType = new HashMap<>();
-        exceptionsByType.put("MISSING_SOURCE", 20L);
-        exceptionsByType.put("VALUE_MISMATCH", 25L);
+    private com.amit.smartreconciliation.dto.response.DashboardMetricsResponse createDashboardMetrics() {
+        Map<String, Integer> exceptionsByType = new HashMap<>();
+        exceptionsByType.put("MISSING_SOURCE", 20);
+        exceptionsByType.put("VALUE_MISMATCH", 25);
 
-        Map<String, Long> exceptionsBySeverity = new HashMap<>();
-        exceptionsBySeverity.put("HIGH", 30L);
-        exceptionsBySeverity.put("MEDIUM", 15L);
+        Map<String, Integer> exceptionsBySeverity = new HashMap<>();
+        exceptionsBySeverity.put("HIGH", 30);
+        exceptionsBySeverity.put("MEDIUM", 15);
 
-        return DashboardService.DashboardMetrics.builder()
+        return com.amit.smartreconciliation.dto.response.DashboardMetricsResponse.builder()
             .totalReconciliations(10)
             .completedReconciliations(8)
             .pendingReconciliations(1)

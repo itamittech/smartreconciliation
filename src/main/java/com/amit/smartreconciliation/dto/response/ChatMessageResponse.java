@@ -10,6 +10,7 @@ public class ChatMessageResponse {
     private String content;
     private Map<String, Object> metadata;
     private LocalDateTime createdAt;
+    private Long sessionId;
 
     public ChatMessageResponse() {}
 
@@ -20,6 +21,9 @@ public class ChatMessageResponse {
         r.content = entity.getContent();
         r.metadata = entity.getMetadata();
         r.createdAt = entity.getCreatedAt();
+        if (entity.getSession() != null) {
+            r.sessionId = entity.getSession().getId();
+        }
         return r;
     }
 
@@ -29,47 +33,27 @@ public class ChatMessageResponse {
     public Map<String, Object> getMetadata() { return metadata; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 
-    public Long getSessionId() {
-        // For test compatibility - extract from entity when needed
-        return null;
-    }
+    public Long getSessionId() { return sessionId; }
 
     public void setId(Long id) { this.id = id; }
     public void setRole(String role) { this.role = role; }
     public void setContent(String content) { this.content = content; }
     public void setMetadata(Map<String, Object> metadata) { this.metadata = metadata; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public void setSessionId(Long sessionId) { this.sessionId = sessionId; }
 
     public static Builder builder() { return new Builder(); }
 
     public static class Builder {
         private final ChatMessageResponse r = new ChatMessageResponse();
-        private Long sessionId;
         public Builder id(Long v) { r.id = v; return this; }
-        public Builder sessionId(Long v) { this.sessionId = v; return this; }
+        public Builder sessionId(Long v) { r.sessionId = v; return this; }
         public Builder role(String v) { r.role = v; return this; }
         public Builder content(String v) { r.content = v; return this; }
         public Builder metadata(Map<String, Object> v) { r.metadata = v; return this; }
         public Builder createdAt(LocalDateTime v) { r.createdAt = v; return this; }
         public ChatMessageResponse build() {
-            // Store sessionId for tests
-            if (sessionId != null) {
-                ChatMessageResponseWithSession extended = new ChatMessageResponseWithSession();
-                extended.id = r.id;
-                extended.role = r.role;
-                extended.content = r.content;
-                extended.metadata = r.metadata;
-                extended.createdAt = r.createdAt;
-                extended.sessionId = sessionId;
-                return extended;
-            }
             return r;
         }
-    }
-
-    private static class ChatMessageResponseWithSession extends ChatMessageResponse {
-        private Long sessionId;
-        @Override
-        public Long getSessionId() { return sessionId; }
     }
 }

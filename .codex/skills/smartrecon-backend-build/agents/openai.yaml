@@ -1,0 +1,4 @@
+interface:
+  display_name: "SmartRecon Backend Build"
+  short_description: "Build, run, and stabilize the backend"
+  default_prompt: "Use $smartrecon-backend-build to compile, run, and fix backend build/test failures until green."

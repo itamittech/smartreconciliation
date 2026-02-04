@@ -49,6 +49,9 @@ public class ReconciliationException {
     private String resolution;
     private String resolvedBy;
     private LocalDateTime resolvedAt;
+    private LocalDateTime acknowledgedAt;
+    private LocalDateTime reviewedAt;
+    private LocalDateTime ignoredAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reconciliation_id", nullable = false)
@@ -105,6 +108,15 @@ public class ReconciliationException {
 
     public LocalDateTime getResolvedAt() { return resolvedAt; }
     public void setResolvedAt(LocalDateTime resolvedAt) { this.resolvedAt = resolvedAt; }
+
+    public LocalDateTime getAcknowledgedAt() { return acknowledgedAt; }
+    public void setAcknowledgedAt(LocalDateTime acknowledgedAt) { this.acknowledgedAt = acknowledgedAt; }
+
+    public LocalDateTime getReviewedAt() { return reviewedAt; }
+    public void setReviewedAt(LocalDateTime reviewedAt) { this.reviewedAt = reviewedAt; }
+
+    public LocalDateTime getIgnoredAt() { return ignoredAt; }
+    public void setIgnoredAt(LocalDateTime ignoredAt) { this.ignoredAt = ignoredAt; }
 
     public Reconciliation getReconciliation() { return reconciliation; }
     public void setReconciliation(Reconciliation reconciliation) { this.reconciliation = reconciliation; }

@@ -426,6 +426,39 @@ class ChatControllerTest {
         }
 
         @Test
+        @DisplayName("TC-CC-007: Exclude Deleted Sessions")
+        void shouldExcludeDeletedSessions() throws Exception {
+            // Given
+            List<ChatSessionResponse> sessions = Arrays.asList(
+                ChatSessionResponse.builder()
+                    .id(1L)
+                    .title("Active Session")
+                    .active(true)
+                    .createdAt(LocalDateTime.now().minusDays(1))
+                    .build(),
+                ChatSessionResponse.builder()
+                    .id(2L)
+                    .title("Another Active Session")
+                    .active(true)
+                    .createdAt(LocalDateTime.now())
+                    .build()
+            );
+
+            when(chatService.getSessions()).thenReturn(sessions);
+
+            // When & Then
+            mockMvc.perform(get("/api/v1/chat/sessions")
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data", hasSize(2)))
+                .andExpect(jsonPath("$.data[0].active").value(true))
+                .andExpect(jsonPath("$.data[1].active").value(true));
+
+            verify(chatService).getSessions();
+        }
+
+        @Test
         @DisplayName("Should get single session by ID")
         void shouldGetSingleSession() throws Exception {
             // Given

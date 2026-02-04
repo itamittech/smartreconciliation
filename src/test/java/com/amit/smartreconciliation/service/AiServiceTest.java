@@ -17,6 +17,7 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.test.util.ReflectionTestUtils;
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
@@ -587,6 +588,37 @@ class AiServiceTest {
             assertThat(response).isNotNull();
             assertThat(response.getMappings()).hasSize(1);
         }
+    }
+
+    // ==================== Provider Selection Tests ====================
+
+    @Test
+    @DisplayName("TC-AI-013: Select Provider Based on Configuration")
+    void testSelectProviderBasedOnConfiguration() {
+        // Given
+        com.amit.smartreconciliation.config.AiConfig config = new com.amit.smartreconciliation.config.AiConfig();
+
+        org.springframework.ai.anthropic.AnthropicChatModel anthropic =
+                mock(org.springframework.ai.anthropic.AnthropicChatModel.class);
+        org.springframework.ai.openai.OpenAiChatModel openAi =
+                mock(org.springframework.ai.openai.OpenAiChatModel.class);
+        org.springframework.ai.deepseek.DeepSeekChatModel deepSeek =
+                mock(org.springframework.ai.deepseek.DeepSeekChatModel.class);
+
+        // When / Then - OpenAI
+        ReflectionTestUtils.setField(config, "aiProvider", "openai");
+        ChatModel selectedOpenAi = config.primaryChatModel(anthropic, openAi, deepSeek);
+        assertThat(selectedOpenAi).isSameAs(openAi);
+
+        // When / Then - DeepSeek
+        ReflectionTestUtils.setField(config, "aiProvider", "deepseek");
+        ChatModel selectedDeepSeek = config.primaryChatModel(anthropic, openAi, deepSeek);
+        assertThat(selectedDeepSeek).isSameAs(deepSeek);
+
+        // When / Then - Default (Anthropic)
+        ReflectionTestUtils.setField(config, "aiProvider", "anthropic");
+        ChatModel selectedAnthropic = config.primaryChatModel(anthropic, openAi, deepSeek);
+        assertThat(selectedAnthropic).isSameAs(anthropic);
     }
 
     // ==================== Helper Methods ====================

@@ -73,6 +73,14 @@ public class ExceptionController {
         return ResponseEntity.ok(ApiResponse.success("Exceptions updated successfully", response));
     }
 
+    @PostMapping("/bulk-update")
+    public ResponseEntity<ApiResponse<List<ReconciliationExceptionResponse>>> bulkUpdateStatus(
+            @Valid @RequestBody BulkExceptionRequest request) {
+        List<ReconciliationExceptionResponse> response = exceptionService.bulkUpdate(request);
+        String message = response.size() + " exceptions updated successfully";
+        return ResponseEntity.ok(ApiResponse.success(message, response));
+    }
+
     @GetMapping("/{id}/suggestions")
     public ResponseEntity<ApiResponse<String>> getSuggestion(@PathVariable Long id) {
         String suggestion = exceptionService.getSuggestion(id);

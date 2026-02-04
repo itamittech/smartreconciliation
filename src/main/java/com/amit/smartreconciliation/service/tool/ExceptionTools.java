@@ -50,7 +50,7 @@ public class ExceptionTools {
             @ToolParam(description = "Filter by reconciliation ID. Leave null to get exceptions across all reconciliations.") Long reconciliationId,
             @ToolParam(description = "Filter by exception type: MISSING_SOURCE, MISSING_TARGET, VALUE_MISMATCH, DUPLICATE, FORMAT_ERROR, TOLERANCE_EXCEEDED. Leave null for all types.") String exceptionType,
             @ToolParam(description = "Filter by severity: CRITICAL, HIGH, MEDIUM, LOW. Leave null for all severities.") String severity,
-            @ToolParam(description = "Filter by status: OPEN, IN_REVIEW, RESOLVED, IGNORED. Leave null for all statuses.") String status,
+            @ToolParam(description = "Filter by status: OPEN, ACKNOWLEDGED, IN_REVIEW, RESOLVED, IGNORED. Leave null for all statuses.") String status,
             @ToolParam(description = "Maximum results to return (1-100). Defaults to 20 if null.") Integer limit) {
 
         log.info("🤖 Tool Call: listExceptions(reconciliationId={}, type={}, severity={}, status={}, limit={})",

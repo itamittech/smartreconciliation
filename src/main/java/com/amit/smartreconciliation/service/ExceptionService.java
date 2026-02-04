@@ -73,9 +73,19 @@ public class ExceptionService {
                 .orElseThrow(() -> new ResourceNotFoundException("ReconciliationException", id));
 
         if (request.getStatus() != null) {
+            if (exception.getStatus() == ExceptionStatus.RESOLVED
+                    && request.getStatus() != ExceptionStatus.RESOLVED) {
+                throw new IllegalStateException("Cannot reopen resolved exception");
+            }
             exception.setStatus(request.getStatus());
             if (request.getStatus() == ExceptionStatus.RESOLVED) {
                 exception.setResolvedAt(LocalDateTime.now());
+            } else if (request.getStatus() == ExceptionStatus.ACKNOWLEDGED) {
+                exception.setAcknowledgedAt(LocalDateTime.now());
+            } else if (request.getStatus() == ExceptionStatus.IN_REVIEW) {
+                exception.setReviewedAt(LocalDateTime.now());
+            } else if (request.getStatus() == ExceptionStatus.IGNORED) {
+                exception.setIgnoredAt(LocalDateTime.now());
             }
         }
 
@@ -94,12 +104,25 @@ public class ExceptionService {
 
     @Transactional
     public List<ReconciliationExceptionResponse> bulkUpdate(BulkExceptionRequest request) {
-        List<ReconciliationException> exceptions = exceptionRepository.findAllById(request.getExceptionIds());
+        List<Long> ids = request.getExceptionIds();
+        List<ReconciliationException> exceptions = exceptionRepository.findAllById(ids);
+        if (exceptions.size() != ids.size()) {
+            List<Long> foundIds = exceptions.stream().map(ReconciliationException::getId).toList();
+            ids.stream()
+                    .filter(id -> !foundIds.contains(id))
+                    .forEach(missingId -> log.error("Bulk update failed for missing exception: {}", missingId));
+        }
 
         for (ReconciliationException exception : exceptions) {
             exception.setStatus(request.getStatus());
             if (request.getStatus() == ExceptionStatus.RESOLVED) {
                 exception.setResolvedAt(LocalDateTime.now());
+            } else if (request.getStatus() == ExceptionStatus.ACKNOWLEDGED) {
+                exception.setAcknowledgedAt(LocalDateTime.now());
+            } else if (request.getStatus() == ExceptionStatus.IN_REVIEW) {
+                exception.setReviewedAt(LocalDateTime.now());
+            } else if (request.getStatus() == ExceptionStatus.IGNORED) {
+                exception.setIgnoredAt(LocalDateTime.now());
             }
             if (request.getResolution() != null) {
                 exception.setResolution(request.getResolution());
@@ -140,5 +163,17 @@ public class ExceptionService {
 
     public long countByStatus(Long reconciliationId, ExceptionStatus status) {
         return exceptionRepository.countByReconciliationIdAndStatus(reconciliationId, status);
+    }
+
+    public java.util.Map<ExceptionStatus, Long> countByStatus(Long reconciliationId) {
+        java.util.EnumMap<ExceptionStatus, Long> counts = new java.util.EnumMap<>(ExceptionStatus.class);
+        for (ExceptionStatus status : ExceptionStatus.values()) {
+            counts.put(status, exceptionRepository.countByReconciliationIdAndStatus(reconciliationId, status));
+        }
+        return counts;
+    }
+
+    public ExceptionSeverity assignSeverity(boolean isKeyField) {
+        return isKeyField ? ExceptionSeverity.CRITICAL : ExceptionSeverity.MEDIUM;
     }
 }

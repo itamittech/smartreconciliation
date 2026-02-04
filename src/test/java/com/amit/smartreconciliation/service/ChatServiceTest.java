@@ -600,7 +600,7 @@ class ChatServiceTest {
         }
 
         @Test
-        @DisplayName("Should delete session by setting active flag to false")
+        @DisplayName("TC-CS-012: Soft Delete Session")
         void shouldDeleteSessionBySoftDelete() {
             // Given
             Long sessionId = 1L;

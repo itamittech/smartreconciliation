@@ -22,6 +22,9 @@ public class ReconciliationExceptionResponse {
     private String resolution;
     private String resolvedBy;
     private LocalDateTime resolvedAt;
+    private LocalDateTime acknowledgedAt;
+    private LocalDateTime reviewedAt;
+    private LocalDateTime ignoredAt;
     private Long reconciliationId;
     private String reconciliationName;
     private LocalDateTime createdAt;
@@ -45,6 +48,9 @@ public class ReconciliationExceptionResponse {
         r.resolution = entity.getResolution();
         r.resolvedBy = entity.getResolvedBy();
         r.resolvedAt = entity.getResolvedAt();
+        r.acknowledgedAt = entity.getAcknowledgedAt();
+        r.reviewedAt = entity.getReviewedAt();
+        r.ignoredAt = entity.getIgnoredAt();
         r.reconciliationId = entity.getReconciliation().getId();
         r.reconciliationName = entity.getReconciliation().getName();
         r.createdAt = entity.getCreatedAt();
@@ -66,6 +72,9 @@ public class ReconciliationExceptionResponse {
     public String getResolution() { return resolution; }
     public String getResolvedBy() { return resolvedBy; }
     public LocalDateTime getResolvedAt() { return resolvedAt; }
+    public LocalDateTime getAcknowledgedAt() { return acknowledgedAt; }
+    public LocalDateTime getReviewedAt() { return reviewedAt; }
+    public LocalDateTime getIgnoredAt() { return ignoredAt; }
     public Long getReconciliationId() { return reconciliationId; }
     public String getReconciliationName() { return reconciliationName; }
     public LocalDateTime getCreatedAt() { return createdAt; }

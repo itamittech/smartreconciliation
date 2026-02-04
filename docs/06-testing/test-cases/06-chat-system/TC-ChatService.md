@@ -3,7 +3,7 @@
 **Module**: Chat System
 **Component**: ChatService
 **Test Level**: Unit Test
-**Total Test Cases**: 11
+**Total Test Cases**: 12
 
 ---
 
@@ -158,6 +158,16 @@ Reconciliation Context:
 **Then** only 3 ACTIVE sessions are returned
 **And** sessions are ordered by last message timestamp descending
 **And** each session includes: id, reconciliationId (if any), status, createdDate
+
+---
+
+### TC-CS-012: Soft Delete Session
+
+**Given** session "session-888" exists with status ACTIVE
+**When** deleteSession() is called
+**Then** session is marked as DELETED or CLOSED
+**And** messages remain stored
+**And** listSessions() no longer returns the session
 
 ---
 

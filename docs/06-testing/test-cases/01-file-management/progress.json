@@ -1,0 +1,100 @@
+{
+  "projectName": "Smart Reconciliation",
+  "generatedDate": "2026-02-04",
+  "moduleId": "01",
+  "moduleName": "File Management",
+  "summary": {
+    "totalTestCases": 50,
+    "implementedTestCases": 42,
+    "pendingTestCases": 8,
+    "completionPercentage": 84.0
+  },
+  "components": [
+    {
+      "componentName": "FileParserService",
+      "testLevel": "Unit Test",
+      "totalTestCases": 8,
+      "implemented": true,
+      "testFile": "src/test/java/com/amit/smartreconciliation/service/FileParserServiceTest.java",
+      "testCases": [
+        {"id": "TC-FPS-001", "title": "Parse Valid CSV File with Standard Data", "implemented": true},
+        {"id": "TC-FPS-002", "title": "Parse CSV with Special Characters", "implemented": true},
+        {"id": "TC-FPS-003", "title": "Parse CSV with Empty Cells", "implemented": true},
+        {"id": "TC-FPS-004", "title": "Parse Large CSV File", "implemented": true},
+        {"id": "TC-FPS-005", "title": "Parse XLSX File with Mixed Data Types", "implemented": true},
+        {"id": "TC-FPS-006", "title": "Parse Excel File with Empty Rows", "implemented": true},
+        {"id": "TC-FPS-007", "title": "Handle Unsupported File Type", "implemented": true},
+        {"id": "TC-FPS-008", "title": "Handle Corrupted File", "implemented": true}
+      ]
+    },
+    {
+      "componentName": "SchemaDetectionService",
+      "testLevel": "Unit Test",
+      "totalTestCases": 13,
+      "implemented": true,
+      "testFile": "src/test/java/com/amit/smartreconciliation/service/SchemaDetectionServiceTest.java",
+      "testCases": [
+        {"id": "TC-SDS-001", "title": "Detect Integer Type", "implemented": true},
+        {"id": "TC-SDS-002", "title": "Detect Decimal Number Type", "implemented": true},
+        {"id": "TC-SDS-003", "title": "Detect Currency Type", "implemented": true},
+        {"id": "TC-SDS-004", "title": "Detect Date Type with ISO Format", "implemented": true},
+        {"id": "TC-SDS-005", "title": "Detect Date Type with US Format", "implemented": true},
+        {"id": "TC-SDS-006", "title": "Detect Date Type with European Format", "implemented": true},
+        {"id": "TC-SDS-007", "title": "Detect Email Type", "implemented": true},
+        {"id": "TC-SDS-008", "title": "Detect Percentage Type", "implemented": true},
+        {"id": "TC-SDS-009", "title": "Detect Boolean Type", "implemented": true},
+        {"id": "TC-SDS-010", "title": "Detect Text Type as Default", "implemented": true},
+        {"id": "TC-SDS-011", "title": "Handle Mixed Types with Dominant Type", "implemented": true},
+        {"id": "TC-SDS-012", "title": "Handle Null Values in Column", "implemented": true},
+        {"id": "TC-SDS-013", "title": "Detect Full Schema for File", "implemented": true}
+      ]
+    },
+    {
+      "componentName": "FileUploadService",
+      "testLevel": "Unit Test",
+      "totalTestCases": 15,
+      "implemented": false,
+      "testFile": "src/test/java/com/amit/smartreconciliation/service/FileUploadServiceTest.java",
+      "testCases": [
+        {"id": "TC-FUS-001", "title": "Upload Valid CSV File", "implemented": true},
+        {"id": "TC-FUS-002", "title": "Upload Valid Excel File", "implemented": true},
+        {"id": "TC-FUS-003", "title": "Process File Asynchronously After Upload", "implemented": true},
+        {"id": "TC-FUS-004", "title": "Handle File Processing Failure", "implemented": true},
+        {"id": "TC-FUS-005", "title": "Generate File Preview with First 100 Rows", "implemented": true},
+        {"id": "TC-FUS-006", "title": "Generate Preview for Small File", "implemented": true},
+        {"id": "TC-FUS-007", "title": "Retrieve Detected Schema", "implemented": true},
+        {"id": "TC-FUS-008", "title": "Handle Schema Request for Unprocessed File", "implemented": true},
+        {"id": "TC-FUS-009", "title": "Schema Analytics Include Null and Unique Counts", "implemented": false},
+        {"id": "TC-FUS-010", "title": "Get File Status and Details", "implemented": true},
+        {"id": "TC-FUS-011", "title": "List All Files for Organization", "implemented": true},
+        {"id": "TC-FUS-012", "title": "Delete Uploaded File", "implemented": true},
+        {"id": "TC-FUS-013", "title": "Handle File Storage Failure", "implemented": true},
+        {"id": "TC-FUS-014", "title": "UUID-Prefixed File Naming", "implemented": false},
+        {"id": "TC-FUS-015", "title": "Status Transitions During Async Processing", "implemented": false}
+      ]
+    },
+    {
+      "componentName": "FileController",
+      "testLevel": "Integration Test",
+      "totalTestCases": 14,
+      "implemented": false,
+      "testFile": "src/test/java/com/amit/smartreconciliation/controller/FileControllerTest.java",
+      "testCases": [
+        {"id": "TC-FC-001", "title": "POST /api/v1/files/upload - Upload Multiple Files", "implemented": false},
+        {"id": "TC-FC-002", "title": "POST /api/v1/files/upload/single - Upload Single CSV File", "implemented": true},
+        {"id": "TC-FC-003", "title": "POST /api/v1/files/upload/single - Upload Excel File", "implemented": true},
+        {"id": "TC-FC-004", "title": "POST /api/v1/files/upload - Reject Invalid File Type", "implemented": true},
+        {"id": "TC-FC-005", "title": "GET /api/v1/files/{id} - Retrieve File Details", "implemented": true},
+        {"id": "TC-FC-006", "title": "GET /api/v1/files/{id} - File Not Found", "implemented": true},
+        {"id": "TC-FC-007", "title": "GET /api/v1/files/{id}/preview - Get File Preview", "implemented": true},
+        {"id": "TC-FC-008", "title": "GET /api/v1/files/{id}/schema - Get Detected Schema", "implemented": true},
+        {"id": "TC-FC-009", "title": "GET /api/v1/files - List All Files for Organization", "implemented": true},
+        {"id": "TC-FC-010", "title": "DELETE /api/v1/files/{id} - Delete File", "implemented": true},
+        {"id": "TC-FC-011", "title": "POST /api/v1/files/upload - Reject Oversized File", "implemented": false},
+        {"id": "TC-FC-012", "title": "GET /api/v1/files/{id}/preview - Custom Row Count", "implemented": false},
+        {"id": "TC-FC-013", "title": "GET /api/v1/files/{id}/schema - Includes Analytics", "implemented": false},
+        {"id": "TC-FC-014", "title": "POST /api/v1/files/upload/single - Reject Missing File", "implemented": false}
+      ]
+    }
+  ]
+}

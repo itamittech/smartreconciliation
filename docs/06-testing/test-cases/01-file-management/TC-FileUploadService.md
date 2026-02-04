@@ -3,7 +3,7 @@
 **Module**: File Management
 **Component**: FileUploadService
 **Test Level**: Unit Test
-**Total Test Cases**: 12
+**Total Test Cases**: 15
 
 ---
 
@@ -107,9 +107,18 @@
 
 ---
 
+### TC-FUS-009: Schema Analytics Include Null and Unique Counts
+
+**Given** a processed file with schema analytics
+**When** getFileSchema() is called
+**Then** each column includes nullCount and uniqueCount
+**And** sampleValues are present for each column
+
+---
+
 ## File Status Tracking Tests
 
-### TC-FUS-009: Get File Status and Details
+### TC-FUS-010: Get File Status and Details
 
 **Given** an UploadedFile with status COMPLETED
 **And** file has 1,000 rows and 5 columns
@@ -121,7 +130,7 @@
 
 ---
 
-### TC-FUS-010: List All Files for Organization
+### TC-FUS-011: List All Files for Organization
 
 **Given** organization "org-123" has uploaded 3 files
 **And** another organization "org-456" has uploaded 2 files
@@ -134,7 +143,7 @@
 
 ## File Deletion Tests
 
-### TC-FUS-011: Delete Uploaded File
+### TC-FUS-012: Delete Uploaded File
 
 **Given** an UploadedFile with ID "file-789"
 **And** file exists in database and file system
@@ -147,7 +156,7 @@
 
 ## Error Handling Tests
 
-### TC-FUS-012: Handle File Storage Failure
+### TC-FUS-013: Handle File Storage Failure
 
 **Given** a valid multipart file
 **And** file system has insufficient disk space
@@ -155,6 +164,26 @@
 **Then** an IOException is thrown
 **And** no UploadedFile entity is created
 **And** exception message indicates storage failure
+
+---
+
+## File Naming & Status Tests
+
+### TC-FUS-014: UUID-Prefixed File Naming
+
+**Given** a file named "payments.csv"
+**When** uploadFile() is called
+**Then** the stored filename is prefixed with a UUID
+**And** the original filename is preserved in metadata
+
+---
+
+### TC-FUS-015: Status Transitions During Async Processing
+
+**Given** an uploaded file with status UPLOADING
+**When** upload completes and async processing starts
+**Then** status transitions UPLOADING -> UPLOADED -> PROCESSING
+**And** status ends in PROCESSED or FAILED
 
 ---
 

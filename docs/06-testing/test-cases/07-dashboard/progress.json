@@ -1,0 +1,26 @@
+{
+  "projectName": "Smart Reconciliation",
+  "generatedDate": "2026-02-04",
+  "moduleId": "07",
+  "moduleName": "Dashboard & Analytics",
+  "summary": {
+    "totalTestCases": 3,
+    "implementedTestCases": 0,
+    "pendingTestCases": 3,
+    "completionPercentage": 0.0
+  },
+  "components": [
+    {
+      "componentName": "DashboardService",
+      "testLevel": "Unit Test",
+      "totalTestCases": 3,
+      "implemented": false,
+      "testFile": null,
+      "testCases": [
+        {"id": "TC-DS-001", "title": "Calculate Summary Statistics for Organization", "implemented": false},
+        {"id": "TC-DS-002", "title": "Calculate Average Match Rate for Completed Reconciliations", "implemented": false},
+        {"id": "TC-DS-003", "title": "Retrieve Recent Reconciliations", "implemented": false}
+      ]
+    }
+  ]
+}

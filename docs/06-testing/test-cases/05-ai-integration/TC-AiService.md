@@ -3,7 +3,7 @@
 **Module**: AI Integration
 **Component**: AiService
 **Test Level**: Unit Test
-**Total Test Cases**: 12
+**Total Test Cases**: 13
 
 ---
 
@@ -170,6 +170,15 @@ Let me know if you need adjustments.
 **Then** RuntimeException is thrown
 **And** exception message is "AI service unavailable"
 **And** error is logged with details
+
+---
+
+### TC-AI-013: Select Provider Based on Configuration
+
+**Given** app.ai.provider is set to "openai"
+**When** AiService initializes
+**Then** the OpenAI ChatModel is used for requests
+**And** switching provider to "anthropic" uses the Anthropic model
 
 ---
 

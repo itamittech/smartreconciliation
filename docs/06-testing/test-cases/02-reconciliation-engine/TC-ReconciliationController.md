@@ -3,7 +3,7 @@
 **Module**: Reconciliation Engine
 **Component**: ReconciliationController
 **Test Level**: Integration Test
-**Total Test Cases**: 6
+**Total Test Cases**: 8
 
 ---
 
@@ -111,6 +111,24 @@
 **And** response contains paginated list of 5 reconciliations
 **And** reconciliations are sorted by createdDate descending
 **And** each reconciliation includes: id, name, status, matchRate, createdDate
+
+---
+
+### TC-RC-007: GET /api/reconciliations/{id}/results - Get Results
+
+**Given** a completed reconciliation
+**When** GET /api/reconciliations/{id}/results is called
+**Then** HTTP 200 is returned
+**And** response includes statistics and match rate
+
+---
+
+### TC-RC-008: GET /api/reconciliations/{id}/status - Get Status
+
+**Given** an in-progress reconciliation
+**When** GET /api/reconciliations/{id}/status is called
+**Then** HTTP 200 is returned
+**And** response includes status and progress percentage
 
 ---
 

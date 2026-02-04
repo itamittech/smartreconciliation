@@ -3,7 +3,7 @@
 **Module**: Rule Management
 **Component**: RuleController
 **Test Level**: Integration Test
-**Total Test Cases**: 7
+**Total Test Cases**: 8
 
 ---
 
@@ -112,6 +112,15 @@
 **Then** HTTP status 200 OK is returned
 **And** response contains array of 3 rule sets
 **And** each rule set includes: id, name, version, fieldMappings, matchingRules
+
+---
+
+### TC-RUC-008: GET /api/rules/{id} - Retrieve Rule Set Details
+
+**Given** rule set "rule-321" exists with version 4
+**When** GET request is sent to /api/rules/rule-321
+**Then** HTTP status 200 OK is returned
+**And** response includes version and rule configuration
 
 ---
 

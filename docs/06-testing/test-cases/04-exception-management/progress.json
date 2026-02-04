@@ -1,0 +1,69 @@
+{
+  "projectName": "Smart Reconciliation",
+  "generatedDate": "2026-02-04",
+  "moduleId": "04",
+  "moduleName": "Exception Management",
+  "summary": {
+    "totalTestCases": 28,
+    "implementedTestCases": 0,
+    "pendingTestCases": 28,
+    "completionPercentage": 0.0
+  },
+  "components": [
+    {
+      "componentName": "ExceptionService",
+      "testLevel": "Unit Test",
+      "totalTestCases": 18,
+      "implemented": false,
+      "testFile": null,
+      "testCases": [
+        {"id": "TC-ES-001", "title": "Filter Exceptions by Type", "implemented": false},
+        {"id": "TC-ES-002", "title": "Filter Exceptions by Severity", "implemented": false},
+        {"id": "TC-ES-003", "title": "Filter Exceptions by Status", "implemented": false},
+        {"id": "TC-ES-004", "title": "Filter with Multiple Criteria", "implemented": false},
+        {"id": "TC-ES-005", "title": "Filter with No Matching Results", "implemented": false},
+        {"id": "TC-ES-006", "title": "Paginate Exception List", "implemented": false},
+        {"id": "TC-ES-007", "title": "Retrieve Second Page", "implemented": false},
+        {"id": "TC-ES-008", "title": "Update Exception Status to RESOLVED", "implemented": false},
+        {"id": "TC-ES-009", "title": "Update Exception Status to ACKNOWLEDGED", "implemented": false},
+        {"id": "TC-ES-010", "title": "Cannot Reopen Resolved Exception", "implemented": false},
+        {"id": "TC-ES-011", "title": "Bulk Update Multiple Exceptions", "implemented": false},
+        {"id": "TC-ES-012", "title": "Bulk Update with Partial Failure", "implemented": false},
+        {"id": "TC-ES-013", "title": "Generate AI Suggestion for Value Mismatch", "implemented": false},
+        {"id": "TC-ES-014", "title": "Return Cached AI Suggestion", "implemented": false},
+        {"id": "TC-ES-015", "title": "Count Exceptions by Status", "implemented": false},
+        {"id": "TC-ES-016", "title": "Assign Severity Based on Key Field", "implemented": false},
+        {"id": "TC-ES-017", "title": "Update Exception Status to IN_REVIEW", "implemented": false},
+        {"id": "TC-ES-018", "title": "Update Exception Status to IGNORED", "implemented": false}
+      ]
+    },
+    {
+      "componentName": "ExceptionController",
+      "testLevel": "Integration Test",
+      "totalTestCases": 7,
+      "implemented": false,
+      "testFile": null,
+      "testCases": [
+        {"id": "TC-EC-001", "title": "GET /api/reconciliations/{id}/exceptions - List with Filters", "implemented": false},
+        {"id": "TC-EC-002", "title": "GET /api/reconciliations/{id}/exceptions - No Filters", "implemented": false},
+        {"id": "TC-EC-003", "title": "GET /api/exceptions/{id} - Retrieve Exception Details", "implemented": false},
+        {"id": "TC-EC-004", "title": "PUT /api/exceptions/{id} - Update Exception Status", "implemented": false},
+        {"id": "TC-EC-005", "title": "POST /api/v1/exceptions/bulk-update - Bulk Update Exceptions", "implemented": false},
+        {"id": "TC-EC-006", "title": "POST /api/v1/exceptions/bulk-resolve - Bulk Resolve Exceptions", "implemented": false},
+        {"id": "TC-EC-007", "title": "GET /api/v1/exceptions/{id}/suggestions - AI Suggestion", "implemented": false}
+      ]
+    },
+    {
+      "componentName": "ReconciliationExceptionRepository",
+      "testLevel": "Repository Test",
+      "totalTestCases": 3,
+      "implemented": false,
+      "testFile": null,
+      "testCases": [
+        {"id": "TC-RER-001", "title": "Find Exceptions by Reconciliation ID", "implemented": false},
+        {"id": "TC-RER-002", "title": "Custom Filter Query with Multiple Criteria", "implemented": false},
+        {"id": "TC-RER-003", "title": "Handle Null Filter Values", "implemented": false}
+      ]
+    }
+  ]
+}

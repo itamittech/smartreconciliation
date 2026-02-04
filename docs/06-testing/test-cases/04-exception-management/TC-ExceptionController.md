@@ -3,17 +3,17 @@
 **Module**: Exception Management
 **Component**: ExceptionController
 **Test Level**: Integration Test
-**Total Test Cases**: 5
+**Total Test Cases**: 7
 
 ---
 
 ## List Exceptions Tests
 
-### TC-EC-001: GET /api/reconciliations/{id}/exceptions - List with Filters
+### TC-EC-001: GET /api/v1/reconciliations/{id}/exceptions - List with Filters
 
 **Given** reconciliation "recon-123" has 20 exceptions
 **And** query parameters: type=VALUE_MISMATCH, severity=HIGH, status=OPEN, page=0, size=10
-**When** GET request is sent to /api/reconciliations/recon-123/exceptions?type=VALUE_MISMATCH&severity=HIGH&status=OPEN
+**When** GET request is sent to /api/v1/reconciliations/recon-123/exceptions?type=VALUE_MISMATCH&severity=HIGH&status=OPEN
 **Then** HTTP status 200 OK is returned
 **And** response body contains paginated exception list
 **And** only exceptions matching all filter criteria are returned
@@ -21,11 +21,11 @@
 
 ---
 
-### TC-EC-002: GET /api/reconciliations/{id}/exceptions - No Filters
+### TC-EC-002: GET /api/v1/reconciliations/{id}/exceptions - No Filters
 
 **Given** reconciliation "recon-456" has 15 exceptions
 **And** no query parameters provided
-**When** GET request is sent to /api/reconciliations/recon-456/exceptions
+**When** GET request is sent to /api/v1/reconciliations/recon-456/exceptions
 **Then** HTTP status 200 OK is returned
 **And** all 15 exceptions are returned (paginated)
 **And** default page size is applied (e.g., 20)
@@ -34,7 +34,7 @@
 
 ## Single Exception Retrieval Tests
 
-### TC-EC-003: GET /api/exceptions/{id} - Retrieve Exception Details
+### TC-EC-003: GET /api/v1/exceptions/{id} - Retrieve Exception Details
 
 **Given** exception "exc-789" exists
 **And** exception has:
@@ -44,7 +44,7 @@
 - field: "amount"
 - sourceValue: "100.00"
 - targetValue: "150.00"
-**When** GET request is sent to /api/exceptions/exc-789
+**When** GET request is sent to /api/v1/exceptions/exc-789
 **Then** HTTP status 200 OK is returned
 **And** response body contains all exception details:
 ```json
@@ -67,7 +67,7 @@
 
 ## Update Exception Tests
 
-### TC-EC-004: PUT /api/exceptions/{id} - Update Exception Status
+### TC-EC-004: PUT /api/v1/exceptions/{id} - Update Exception Status
 
 **Given** exception "exc-111" has status OPEN
 **And** request body:
@@ -78,7 +78,7 @@
   "resolvedBy": "user-456"
 }
 ```
-**When** PUT request is sent to /api/exceptions/exc-111
+**When** PUT request is sent to /api/v1/exceptions/exc-111
 **Then** HTTP status 200 OK is returned
 **And** exception status is updated to RESOLVED
 **And** resolution details are saved
@@ -88,7 +88,7 @@
 
 ## Bulk Update Tests
 
-### TC-EC-005: POST /api/exceptions/bulk-update - Bulk Update Exceptions
+### TC-EC-005: POST /api/v1/exceptions/bulk-update - Bulk Update Exceptions
 
 **Given** exceptions ["exc-001", "exc-002", "exc-003"] have status OPEN
 **And** request body:
@@ -98,10 +98,35 @@
   "status": "ACKNOWLEDGED"
 }
 ```
-**When** POST request is sent to /api/exceptions/bulk-update
+**When** POST request is sent to /api/v1/exceptions/bulk-update
 **Then** HTTP status 200 OK is returned
 **And** response message is "3 exceptions updated successfully"
 **And** all 3 exceptions have status ACKNOWLEDGED
+
+---
+
+### TC-EC-006: POST /api/v1/exceptions/bulk-resolve - Bulk Resolve Exceptions
+
+**Given** exceptions ["exc-010", "exc-011"] have status OPEN
+**And** request body:
+```json
+{
+  "exceptionIds": ["exc-010", "exc-011"],
+  "status": "RESOLVED"
+}
+```
+**When** POST request is sent to /api/v1/exceptions/bulk-resolve
+**Then** HTTP status 200 OK is returned
+**And** exceptions are updated to RESOLVED
+
+---
+
+### TC-EC-007: GET /api/v1/exceptions/{id}/suggestions - AI Suggestion
+
+**Given** exception "exc-555" exists without cached AI suggestion
+**When** GET /api/v1/exceptions/exc-555/suggestions is called
+**Then** HTTP 200 OK is returned
+**And** response includes AI suggestion text
 
 ---
 
@@ -117,11 +142,11 @@
 - Seed exceptions with various types, severities, and statuses
 
 ### Required Endpoints
-- GET /api/reconciliations/{id}/exceptions
-- GET /api/exceptions/{id}
-- PUT /api/exceptions/{id}
-- POST /api/exceptions/bulk-update
-- GET /api/exceptions/{id}/ai-suggestion (optional)
+- GET /api/v1/reconciliations/{id}/exceptions
+- GET /api/v1/exceptions/{id}
+- PUT /api/v1/exceptions/{id}
+- POST /api/v1/exceptions/bulk-update
+- GET /api/v1/exceptions/{id}/suggestions
 
 ### Headers
 - `X-Organization-Id`: Organization identifier

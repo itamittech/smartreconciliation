@@ -3,7 +3,7 @@
 **Module**: Rule Management
 **Component**: RuleService
 **Test Level**: Unit Test
-**Total Test Cases**: 14
+**Total Test Cases**: 15
 
 ---
 
@@ -78,6 +78,15 @@
 **Then** matching rule tolerance is updated to 1.00
 **And** version is incremented
 **And** rule set is saved
+
+---
+
+### TC-RUS-015: Store Rule Set Version History
+
+**Given** an existing rule set with version 3
+**When** updateRuleSet() is called
+**Then** version is incremented to 4
+**And** a version history entry is stored for version 3
 
 ---
 

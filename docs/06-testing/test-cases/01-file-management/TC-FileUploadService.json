@@ -2,7 +2,7 @@
   "module": "File Management",
   "component": "FileUploadService",
   "testLevel": "Unit Test",
-  "totalTestCases": 12,
+  "totalTestCases": 15,
   "testCases": [
     {
       "id": "TC-FUS-001",
@@ -70,6 +70,14 @@
     },
     {
       "id": "TC-FUS-009",
+      "title": "Schema Analytics Include Null and Unique Counts",
+      "category": "Schema Retrieval Tests",
+      "given": "a processed file with schema analytics",
+      "when": "getFileSchema() is called",
+      "then": "each column includes nullCount and uniqueCount and sampleValues are present for each column"
+    },
+    {
+      "id": "TC-FUS-010",
       "title": "Get File Status and Details",
       "category": "File Status Tracking Tests",
       "given": "an UploadedFile with status COMPLETED and file has 1,000 rows and 5 columns",
@@ -77,7 +85,7 @@
       "then": "FileStatusDTO is returned and DTO contains: id, filename, status, rowCount, columnCount, uploadDate and rowCount is 1,000 and columnCount is 5"
     },
     {
-      "id": "TC-FUS-010",
+      "id": "TC-FUS-011",
       "title": "List All Files for Organization",
       "category": "File Status Tracking Tests",
       "given": "organization \"org-123\" has uploaded 3 files and another organization \"org-456\" has uploaded 2 files",
@@ -85,7 +93,7 @@
       "then": "exactly 3 files are returned and all files belong to organization \"org-123\" and files are sorted by uploadDate descending"
     },
     {
-      "id": "TC-FUS-011",
+      "id": "TC-FUS-012",
       "title": "Delete Uploaded File",
       "category": "File Deletion Tests",
       "given": "an UploadedFile with ID \"file-789\" and file exists in database and file system",
@@ -93,12 +101,28 @@
       "then": "file is removed from file system and UploadedFile entity is deleted from database and no exception is thrown"
     },
     {
-      "id": "TC-FUS-012",
+      "id": "TC-FUS-013",
       "title": "Handle File Storage Failure",
       "category": "Error Handling Tests",
       "given": "a valid multipart file and file system has insufficient disk space",
       "when": "uploadFile() is called",
       "then": "an IOException is thrown and no UploadedFile entity is created and exception message indicates storage failure"
+    },
+    {
+      "id": "TC-FUS-014",
+      "title": "UUID-Prefixed File Naming",
+      "category": "File Naming & Status Tests",
+      "given": "a file named \"payments.csv\"",
+      "when": "uploadFile() is called",
+      "then": "the stored filename is prefixed with a UUID and the original filename is preserved in metadata"
+    },
+    {
+      "id": "TC-FUS-015",
+      "title": "Status Transitions During Async Processing",
+      "category": "File Naming & Status Tests",
+      "given": "an uploaded file with status UPLOADING",
+      "when": "upload completes and async processing starts",
+      "then": "status transitions UPLOADING -> UPLOADED -> PROCESSING and status ends in PROCESSED or FAILED"
     }
   ],
   "testDataRequirements": {

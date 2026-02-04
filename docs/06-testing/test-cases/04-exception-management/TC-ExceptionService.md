@@ -3,7 +3,7 @@
 **Module**: Exception Management
 **Component**: ExceptionService
 **Test Level**: Unit Test
-**Total Test Cases**: 15
+**Total Test Cases**: 18
 
 ---
 
@@ -192,6 +192,35 @@
   "ACKNOWLEDGED": 5
 }
 ```
+
+---
+
+## Severity and Workflow Tests
+
+### TC-ES-016: Assign Severity Based on Key Field
+
+**Given** a value mismatch on a key field
+**When** exception is created
+**Then** severity is CRITICAL
+**And** non-key field mismatches are MEDIUM by default
+
+---
+
+### TC-ES-017: Update Exception Status to IN_REVIEW
+
+**Given** exception "exc-901" has status OPEN
+**When** updateExceptionStatus() is called with status=IN_REVIEW
+**Then** status is updated to IN_REVIEW
+**And** reviewedDate is set
+
+---
+
+### TC-ES-018: Update Exception Status to IGNORED
+
+**Given** exception "exc-902" has status IN_REVIEW
+**When** updateExceptionStatus() is called with status=IGNORED
+**Then** status is updated to IGNORED
+**And** ignoredDate is set with resolver identity
 
 ---
 

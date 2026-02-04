@@ -527,3 +527,61 @@ static PostgreSQLContainer<?> postgres =
 ---
 
 This test data specification provides comprehensive coverage for all Smart Reconciliation backend testing scenarios.
+
+---
+
+## Additional Data Sets for TDD (Not Yet Implemented)
+
+### JSON Test Files
+
+**json_array_simple.json**
+```json
+[
+  {"id": 1, "name": "Alice", "amount": 100.0, "date": "2026-01-31"},
+  {"id": 2, "name": "Bob", "amount": 200.5, "date": "2026-02-01"}
+]
+```
+
+**json_nested_objects.json**
+```json
+[
+  {"id": 1, "customer": {"name": "Alice", "tier": "Gold"}, "amount": 100.0},
+  {"id": 2, "customer": {"name": "Bob", "tier": "Silver"}, "amount": 200.5}
+]
+```
+
+**Purpose**: Drive JSON parser implementation (flatten nested objects using dot notation).
+
+---
+
+### Data Source Connection Configs
+
+**PostgreSQL Config (valid)**
+```json
+{"type":"DATABASE","host":"localhost","port":5432,"dbName":"mydatabase","username":"myuser","password":"secret"}
+```
+
+**PostgreSQL Config (invalid)**
+```json
+{"type":"DATABASE","host":"localhost","port":5432,"dbName":"mydatabase","username":"bad","password":"bad"}
+```
+
+**API Config (bearer)**
+```json
+{"type":"API","baseUrl":"https://api.example.com","authType":"BEARER","token":"valid-token"}
+```
+
+**Purpose**: Connection test coverage for DATABASE and API types.
+
+---
+
+### Export Output Samples
+
+**CSV Export (matched + exceptions)**
+```csv
+reconciliationId,recordId,matchStatus,field,sourceValue,targetValue
+recon-123,1,MATCH,,,
+recon-123,2,VALUE_MISMATCH,amount,100.00,150.00
+```
+
+**Purpose**: Validate export schema and field coverage.

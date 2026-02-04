@@ -1,0 +1,63 @@
+{
+  "projectName": "Smart Reconciliation",
+  "generatedDate": "2026-02-04",
+  "moduleId": "08",
+  "moduleName": "Data Source Management",
+  "summary": {
+    "totalTestCases": 22,
+    "implementedTestCases": 0,
+    "pendingTestCases": 22,
+    "completionPercentage": 0.0
+  },
+  "components": [
+    {
+      "componentName": "DataSourceService",
+      "testLevel": "Unit Test",
+      "totalTestCases": 12,
+      "implemented": false,
+      "testFile": null,
+      "testCases": [
+        {"id": "TC-DSS-001", "title": "Create File Data Source", "implemented": false},
+        {"id": "TC-DSS-002", "title": "Create Database Data Source", "implemented": false},
+        {"id": "TC-DSS-003", "title": "Create API Data Source", "implemented": false},
+        {"id": "TC-DSS-004", "title": "Update Data Source", "implemented": false},
+        {"id": "TC-DSS-005", "title": "Delete Data Source", "implemented": false},
+        {"id": "TC-DSS-006", "title": "List Data Sources by Organization", "implemented": false},
+        {"id": "TC-DSS-007", "title": "Filter Data Sources by Type", "implemented": false},
+        {"id": "TC-DSS-008", "title": "Test Connection for FILE Source", "implemented": false},
+        {"id": "TC-DSS-009", "title": "Test Connection for DATABASE Source (Success)", "implemented": false},
+        {"id": "TC-DSS-010", "title": "Test Connection for DATABASE Source (Failure)", "implemented": false},
+        {"id": "TC-DSS-011", "title": "Test Connection for API Source (Success)", "implemented": false},
+        {"id": "TC-DSS-012", "title": "Test Connection for API Source (Failure)", "implemented": false}
+      ]
+    },
+    {
+      "componentName": "DataSourceController",
+      "testLevel": "Integration Test",
+      "totalTestCases": 8,
+      "implemented": false,
+      "testFile": null,
+      "testCases": [
+        {"id": "TC-DSC-001", "title": "POST /api/v1/datasources - Create FILE Source", "implemented": false},
+        {"id": "TC-DSC-002", "title": "POST /api/v1/datasources - Validation Error", "implemented": false},
+        {"id": "TC-DSC-003", "title": "GET /api/v1/datasources - List All", "implemented": false},
+        {"id": "TC-DSC-004", "title": "GET /api/v1/datasources?type=DATABASE - Filter by Type", "implemented": false},
+        {"id": "TC-DSC-005", "title": "GET /api/v1/datasources/{id} - Retrieve Details", "implemented": false},
+        {"id": "TC-DSC-006", "title": "PUT /api/v1/datasources/{id} - Update Source", "implemented": false},
+        {"id": "TC-DSC-007", "title": "DELETE /api/v1/datasources/{id} - Delete Source", "implemented": false},
+        {"id": "TC-DSC-008", "title": "POST /api/v1/datasources/{id}/test - Test Connection", "implemented": false}
+      ]
+    },
+    {
+      "componentName": "DataSourceRepository",
+      "testLevel": "Repository Test",
+      "totalTestCases": 2,
+      "implemented": false,
+      "testFile": null,
+      "testCases": [
+        {"id": "TC-DSR-001", "title": "Find Data Sources by Organization", "implemented": false},
+        {"id": "TC-DSR-002", "title": "Find Data Sources by Organization and Type", "implemented": false}
+      ]
+    }
+  ]
+}

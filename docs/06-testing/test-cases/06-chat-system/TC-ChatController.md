@@ -3,13 +3,13 @@
 **Module**: Chat System
 **Component**: ChatController
 **Test Level**: Integration Test
-**Total Test Cases**: 6
+**Total Test Cases**: 7
 
 ---
 
 ## Session Creation Tests
 
-### TC-CC-001: POST /api/chat/sessions - Create Chat Session
+### TC-CC-001: POST /api/v1/chat/sessions - Create Chat Session
 
 **Given** request body:
 ```json
@@ -19,7 +19,7 @@
 }
 ```
 **And** request header "X-Organization-Id: org-789"
-**When** POST request is sent to /api/chat/sessions
+**When** POST request is sent to /api/v1/chat/sessions
 **Then** HTTP status 201 Created is returned
 **And** response body contains:
 ```json
@@ -36,7 +36,7 @@
 
 ## Message Sending Tests
 
-### TC-CC-002: POST /api/chat/sessions/{sessionId}/messages - Send Message
+### TC-CC-002: POST /api/v1/chat/sessions/{sessionId}/messages - Send Message
 
 **Given** active session "session-111" exists
 **And** request body:
@@ -45,7 +45,7 @@
   "content": "What is the current match rate?"
 }
 ```
-**When** POST request is sent to /api/chat/sessions/session-111/messages
+**When** POST request is sent to /api/v1/chat/sessions/session-111/messages
 **Then** HTTP status 200 OK is returned
 **And** response contains user message and AI response:
 ```json
@@ -69,11 +69,11 @@
 
 ## Streaming Tests
 
-### TC-CC-003: GET /api/chat/sessions/{sessionId}/stream - Stream AI Response
+### TC-CC-003: GET /api/v1/chat/sessions/{sessionId}/stream - Stream AI Response
 
 **Given** active session "session-222" exists
 **And** query parameter: message="Explain fuzzy matching algorithm"
-**When** GET request is sent to /api/chat/sessions/session-222/stream?message=Explain%20fuzzy%20matching%20algorithm
+**When** GET request is sent to /api/v1/chat/sessions/session-222/stream?message=Explain%20fuzzy%20matching%20algorithm
 **Then** HTTP status 200 OK is returned
 **And** response header "Content-Type: text/event-stream"
 **And** Server-Sent Events (SSE) stream is opened
@@ -84,11 +84,11 @@
 
 ## Message History Tests
 
-### TC-CC-004: GET /api/chat/sessions/{sessionId}/messages - Get Message History
+### TC-CC-004: GET /api/v1/chat/sessions/{sessionId}/messages - Get Message History
 
 **Given** session "session-333" has 20 messages
 **And** query parameters: page=0, size=10
-**When** GET request is sent to /api/chat/sessions/session-333/messages?page=0&size=10
+**When** GET request is sent to /api/v1/chat/sessions/session-333/messages?page=0&size=10
 **Then** HTTP status 200 OK is returned
 **And** response contains paginated message list:
 ```json
@@ -106,23 +106,31 @@
 
 ## Session Listing Tests
 
-### TC-CC-005: GET /api/chat/sessions - List User Sessions
+### TC-CC-005: GET /api/v1/chat/sessions - List User Sessions
 
 **Given** user "user-777" has 3 active sessions
 **And** request header "X-User-Id: user-777"
-**When** GET request is sent to /api/chat/sessions
+**When** GET request is sent to /api/v1/chat/sessions
 **Then** HTTP status 200 OK is returned
 **And** response contains array of 3 sessions
 **And** each session includes: sessionId, reconciliationId, status, createdDate, lastMessageDate
 
 ---
 
+### TC-CC-007: GET /api/v1/chat/sessions - Exclude Deleted Sessions
+
+**Given** user "user-777" has 2 ACTIVE sessions and 1 DELETED session
+**When** GET /api/v1/chat/sessions is called
+**Then** only ACTIVE sessions are returned
+
+---
+
 ## Session Deletion Tests
 
-### TC-CC-006: DELETE /api/chat/sessions/{sessionId} - Delete Session
+### TC-CC-006: DELETE /api/v1/chat/sessions/{sessionId} - Delete Session
 
 **Given** session "session-999" exists with ACTIVE status
-**When** DELETE request is sent to /api/chat/sessions/session-999
+**When** DELETE request is sent to /api/v1/chat/sessions/session-999
 **Then** HTTP status 204 No Content is returned
 **And** session status is updated to CLOSED (soft delete)
 **And** messages are preserved but session is no longer active
@@ -143,12 +151,12 @@
 - Create test reconciliations for context
 
 ### Required Endpoints
-- POST /api/chat/sessions
-- POST /api/chat/sessions/{sessionId}/messages
-- GET /api/chat/sessions/{sessionId}/stream
-- GET /api/chat/sessions/{sessionId}/messages
-- GET /api/chat/sessions
-- DELETE /api/chat/sessions/{sessionId}
+- POST /api/v1/chat/sessions
+- POST /api/v1/chat/sessions/{sessionId}/messages
+- GET /api/v1/chat/sessions/{sessionId}/stream
+- GET /api/v1/chat/sessions/{sessionId}/messages
+- GET /api/v1/chat/sessions
+- DELETE /api/v1/chat/sessions/{sessionId}
 
 ### Headers
 - `X-Organization-Id`: Organization identifier

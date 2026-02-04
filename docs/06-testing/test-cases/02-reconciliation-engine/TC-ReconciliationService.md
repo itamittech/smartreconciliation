@@ -3,7 +3,7 @@
 **Module**: Reconciliation Engine
 **Component**: ReconciliationService
 **Test Level**: Unit Test
-**Total Test Cases**: 30
+**Total Test Cases**: 33
 
 ---
 
@@ -376,6 +376,41 @@
 **When** match rate is calculated
 **Then** matchRate = (850 / 1,000) * 100 = 85.0
 **And** matchRate is stored with 2 decimal precision
+
+---
+
+## Statistics Output Tests
+
+### TC-RS-031: Store Reconciliation Statistics JSONB
+
+**Given** a completed reconciliation
+**When** statistics are persisted
+**Then** statistics include totalSourceRecords, totalTargetRecords, matchedRecords
+**And** unmatchedSourceRecords, unmatchedTargetRecords, exceptionCount are stored
+
+---
+
+## Progress Milestone Tests
+
+### TC-RS-032: Progress Updates at Milestones
+
+**Given** a reconciliation with parsed source and target files
+**When** executeReconciliation() is called
+**Then** progress updates at 20% after source parse
+**And** progress updates at 40% after target parse
+**And** progress updates at 90% during matching
+**And** progress updates to 100% on completion
+
+---
+
+## Cancellation Status Tests
+
+### TC-RS-033: Cancellation Sets Status to CANCELLED
+
+**Given** a reconciliation in PENDING or IN_PROGRESS status
+**When** cancelReconciliation() is called
+**Then** status becomes CANCELLED
+**And** cancelledAt timestamp is recorded
 
 ---
 

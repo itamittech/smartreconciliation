@@ -94,21 +94,21 @@ class ReconciliationRepositoryTest {
                 .description("Org 456")
                 .active(true)
                 .build();
-        org123 = organizationRepository.saveAndFlush(org123);
-        org456 = organizationRepository.saveAndFlush(org456);
+        Organization org123Saved = organizationRepository.saveAndFlush(org123);
+        Organization org456Saved = organizationRepository.saveAndFlush(org456);
 
-        reconciliationRepository.saveAndFlush(buildReconciliation("Recon-1", org123));
-        reconciliationRepository.saveAndFlush(buildReconciliation("Recon-2", org123));
-        reconciliationRepository.saveAndFlush(buildReconciliation("Recon-3", org123));
-        reconciliationRepository.saveAndFlush(buildReconciliation("Recon-4", org456));
-        reconciliationRepository.saveAndFlush(buildReconciliation("Recon-5", org456));
+        reconciliationRepository.saveAndFlush(buildReconciliation("Recon-1", org123Saved));
+        reconciliationRepository.saveAndFlush(buildReconciliation("Recon-2", org123Saved));
+        reconciliationRepository.saveAndFlush(buildReconciliation("Recon-3", org123Saved));
+        reconciliationRepository.saveAndFlush(buildReconciliation("Recon-4", org456Saved));
+        reconciliationRepository.saveAndFlush(buildReconciliation("Recon-5", org456Saved));
 
         // When
-        var results = reconciliationRepository.findByOrganizationId(org123.getId());
+        var results = reconciliationRepository.findByOrganizationId(org123Saved.getId());
 
         // Then
         assertThat(results).hasSize(3);
-        assertThat(results).allMatch(r -> r.getOrganization().getId().equals(org123.getId()));
+        assertThat(results).allMatch(r -> r.getOrganization().getId().equals(org123Saved.getId()));
     }
 
     @Test

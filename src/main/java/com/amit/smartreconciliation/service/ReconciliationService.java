@@ -281,6 +281,25 @@ public class ReconciliationService {
             Object sourceValue = sourceRecord.get(mapping.getSourceField());
             Object targetValue = targetRecord.get(mapping.getTargetField());
 
+            if (Boolean.TRUE.equals(mapping.getIsKey()) && (sourceValue == null || targetValue == null)) {
+                ExceptionType type = sourceValue == null
+                        ? ExceptionType.MISSING_SOURCE
+                        : ExceptionType.MISSING_TARGET;
+                ReconciliationException exception = ReconciliationException.builder()
+                        .type(type)
+                        .severity(ExceptionSeverity.CRITICAL)
+                        .status(ExceptionStatus.OPEN)
+                        .description(String.format("Key field '%s' is null", mapping.getSourceField()))
+                        .fieldName(mapping.getSourceField())
+                        .sourceValue(sourceValue != null ? sourceValue.toString() : null)
+                        .targetValue(targetValue != null ? targetValue.toString() : null)
+                        .sourceData(sourceRecord)
+                        .targetData(targetRecord)
+                        .build();
+                exceptions.add(exception);
+                continue;
+            }
+
             MatchingRule matchingRule = ruleSet.getMatchingRules().stream()
                     .filter(r -> r.getSourceField().equals(mapping.getSourceField()) && r.getActive())
                     .findFirst()

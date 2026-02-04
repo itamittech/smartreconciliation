@@ -112,6 +112,7 @@ public class ReconciliationService {
             stats.put("unmatchedTargetRecords", result.unmatchedTargetCount);
             stats.put("exceptionCount", result.exceptions.size());
             reconciliation.setStatistics(stats);
+            reconciliationRepository.save(reconciliation);
 
             for (ReconciliationException exception : result.exceptions) {
                 exception.setReconciliation(reconciliation);
@@ -145,8 +146,8 @@ public class ReconciliationService {
                 .filter(FieldMapping::getIsKey)
                 .collect(Collectors.toList());
 
-        if (keyMappings.isEmpty() && !ruleSet.getFieldMappings().isEmpty()) {
-            keyMappings = List.of(ruleSet.getFieldMappings().get(0));
+        if (keyMappings.isEmpty()) {
+            throw new IllegalStateException("Rule set must have at least one key field");
         }
 
         Map<String, List<Map<String, Object>>> sourceByKey = indexByKey(sourceData, keyMappings, true);
@@ -191,7 +192,7 @@ public class ReconciliationService {
                     } else {
                         ReconciliationException exception = ReconciliationException.builder()
                                 .type(ExceptionType.DUPLICATE)
-                                .severity(ExceptionSeverity.MEDIUM)
+                                .severity(ExceptionSeverity.HIGH)
                                 .status(ExceptionStatus.OPEN)
                                 .description("Duplicate key in source with no matching target record")
                                 .sourceData(sourceRecord)
@@ -203,6 +204,22 @@ public class ReconciliationService {
         }
 
         for (Map.Entry<String, List<Map<String, Object>>> targetEntry : targetByKey.entrySet()) {
+            if (sourceByKey.containsKey(targetEntry.getKey())) {
+                List<Map<String, Object>> sourceRecords = sourceByKey.get(targetEntry.getKey());
+                List<Map<String, Object>> targetRecords = targetEntry.getValue();
+                if (targetRecords.size() > sourceRecords.size()) {
+                    for (int i = sourceRecords.size(); i < targetRecords.size(); i++) {
+                        ReconciliationException exception = ReconciliationException.builder()
+                                .type(ExceptionType.DUPLICATE)
+                                .severity(ExceptionSeverity.HIGH)
+                                .status(ExceptionStatus.OPEN)
+                                .description("Duplicate key in target with no matching source record")
+                                .targetData(targetRecords.get(i))
+                                .build();
+                        exceptions.add(exception);
+                    }
+                }
+            }
             if (!matchedTargetKeys.contains(targetEntry.getKey())) {
                 for (Map<String, Object> targetRecord : targetEntry.getValue()) {
                     ReconciliationException exception = ReconciliationException.builder()
@@ -397,6 +414,8 @@ public class ReconciliationService {
             reconciliation.setStatus(ReconciliationStatus.CANCELLED);
             reconciliationRepository.save(reconciliation);
             log.info("Cancelled reconciliation: {}", id);
+        } else if (reconciliation.getStatus() == ReconciliationStatus.COMPLETED) {
+            throw new IllegalStateException("Cannot cancel completed reconciliation");
         }
     }
 

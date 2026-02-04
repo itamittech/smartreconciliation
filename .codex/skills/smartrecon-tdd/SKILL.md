@@ -15,6 +15,13 @@ Follow the repository’s TDD workflow on every change.
 4. Refactor without changing behavior.
 5. Update the same module’s `progress.json` for that test case.
 
+## Batch Requests (Module Completion)
+
+If the user asks to complete all pending test cases for a module:
+1. Continue executing the required steps in strict one-test-per-cycle order without asking between cycles.
+2. Keep iterating until the module has zero pending test cases.
+3. Only after the module is fully complete, ask the user what to do next.
+
 ## Must-Use Conventions
 
 - Use `/api/v1` for all API tests and references.

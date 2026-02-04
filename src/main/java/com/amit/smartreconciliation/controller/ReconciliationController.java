@@ -4,9 +4,15 @@ import com.amit.smartreconciliation.dto.request.ReconciliationRequest;
 import com.amit.smartreconciliation.dto.response.ApiResponse;
 import com.amit.smartreconciliation.dto.response.ReconciliationExceptionResponse;
 import com.amit.smartreconciliation.dto.response.ReconciliationResponse;
+import com.amit.smartreconciliation.enums.ExceptionSeverity;
+import com.amit.smartreconciliation.enums.ExceptionStatus;
+import com.amit.smartreconciliation.enums.ExceptionType;
 import com.amit.smartreconciliation.service.ExceptionService;
 import com.amit.smartreconciliation.service.ReconciliationService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -59,9 +65,16 @@ public class ReconciliationController {
     }
 
     @GetMapping("/{id}/exceptions")
-    public ResponseEntity<ApiResponse<List<ReconciliationExceptionResponse>>> getExceptions(
-            @PathVariable Long id) {
-        List<ReconciliationExceptionResponse> response = exceptionService.getAllByReconciliationId(id);
+    public ResponseEntity<ApiResponse<Page<ReconciliationExceptionResponse>>> getExceptions(
+            @PathVariable Long id,
+            @RequestParam(required = false) ExceptionType type,
+            @RequestParam(required = false) ExceptionSeverity severity,
+            @RequestParam(required = false) ExceptionStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ReconciliationExceptionResponse> response =
+                exceptionService.getByReconciliationId(id, type, severity, status, pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

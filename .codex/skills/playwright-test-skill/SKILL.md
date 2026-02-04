@@ -29,6 +29,13 @@ Write Playwright tests, execute them individually, fix failures, and re-run unti
    - Repeat step 2 until green.
    - Then move to the next failing test.
 
+5. **When running against the real backend**
+   - Do not mock API routes.
+   - Create fixtures via API before UI steps (upload files, create rule sets, create reconciliations).
+   - Use unique names to avoid collisions.
+   - Clean up created data after each test (delete reconciliation, rule set, and files).
+   - If a backend precondition cannot be created (e.g., status transitions), make the assertion conditional or document a skip.
+
 ## Repo-Specific Notes
 
 - Frontend path: `frontend/`
@@ -42,3 +49,11 @@ Write Playwright tests, execute them individually, fix failures, and re-run unti
 cd frontend
 cmd /c npx playwright test tests/e2e/frontend-application.spec.ts -g "TC-FE-006" --reporter=line
 ```
+
+## Lessons Learned (Delete Flow)
+
+- Mocked tests can hide real backend gaps; flip to real backend for critical flows.
+- Ensure backend endpoints exist for UI actions (e.g., `DELETE /api/v1/reconciliations/{id}`).
+- Confirm dialogs must be accepted or requests never fire.
+- Scope action buttons to their row to avoid strict mode collisions.
+- Add API-level assertions (`waitForRequest`) to verify requests are actually sent.

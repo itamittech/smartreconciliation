@@ -1,0 +1,64 @@
+{
+  "module": "reconciliation-management",
+  "testFile": "frontend/test-specs/reconciliation-management.tests.md",
+  "lastUpdated": "2026-02-04",
+  "summary": {
+    "totalCases": 10,
+    "implementedCases": 5,
+    "passedCases": 5,
+    "skippedCases": 0,
+    "failedCases": 0
+  },
+  "cases": [
+    {
+      "id": "REC-001",
+      "title": "Create New Reconciliation via Wizard",
+      "status": "passed"
+    },
+    {
+      "id": "REC-002",
+      "title": "Filter Reconciliations by Status",
+      "status": "passed"
+    },
+    {
+      "id": "REC-003",
+      "title": "Search Reconciliations",
+      "status": "passed"
+    },
+    {
+      "id": "REC-004",
+      "title": "Start Reconciliation",
+      "status": "passed"
+    },
+    {
+      "id": "REC-005",
+      "title": "Delete Reconciliation",
+      "status": "passed"
+    },
+    {
+      "id": "REC-006",
+      "title": "View Reconciliation Details",
+      "status": "pending"
+    },
+    {
+      "id": "REC-007",
+      "title": "Reconciliation List Pagination",
+      "status": "pending"
+    },
+    {
+      "id": "REC-008",
+      "title": "Sort Reconciliations",
+      "status": "pending"
+    },
+    {
+      "id": "REC-009",
+      "title": "Reconciliation Status Real-Time Updates",
+      "status": "pending"
+    },
+    {
+      "id": "REC-010",
+      "title": "Bulk Operations on Reconciliations",
+      "status": "pending"
+    }
+  ]
+}

@@ -438,6 +438,15 @@ public class ReconciliationService {
         }
     }
 
+    @Transactional
+    public void delete(Long id) {
+        Reconciliation reconciliation = reconciliationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Reconciliation", id));
+
+        reconciliationRepository.delete(reconciliation);
+        log.info("Deleted reconciliation: {}", id);
+    }
+
     private record ReconciliationResult(
             int matchedCount,
             int unmatchedSourceCount,

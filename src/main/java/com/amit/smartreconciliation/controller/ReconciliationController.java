@@ -83,4 +83,10 @@ public class ReconciliationController {
         reconciliationService.cancel(id);
         return ResponseEntity.ok(ApiResponse.success("Reconciliation cancelled", null));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
+        reconciliationService.delete(id);
+        return ResponseEntity.ok(ApiResponse.success("Reconciliation deleted successfully", null));
+    }
 }

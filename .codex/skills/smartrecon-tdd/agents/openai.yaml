@@ -1,0 +1,4 @@
+interface:
+  display_name: "SmartReconciliation TDD"
+  short_description: "Enforce repo TDD workflow steps"
+  default_prompt: "Use $smartrecon-tdd to follow the Smart Reconciliation TDD workflow."

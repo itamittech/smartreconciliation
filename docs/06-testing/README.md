@@ -6,6 +6,7 @@ Comprehensive testing documentation for the Smart Reconciliation platform.
 
 Use the standard TDD workflow for every session:
 - [TDD Workflow](tdd-workflow.md)
+- Project skill: `$smartrecon-tdd` (repo-scoped automation of the workflow)
 
 ## Overview
 

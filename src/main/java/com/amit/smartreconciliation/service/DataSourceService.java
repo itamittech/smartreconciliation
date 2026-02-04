@@ -119,6 +119,12 @@ public class DataSourceService {
     }
 
     private boolean performConnectionTest(DataSource dataSource) {
+        if (dataSource.getConfig() != null) {
+            Object simulateFailure = dataSource.getConfig().get("simulateFailure");
+            if (simulateFailure instanceof Boolean && (Boolean) simulateFailure) {
+                return false;
+            }
+        }
         switch (dataSource.getType()) {
             case FILE:
                 return true;

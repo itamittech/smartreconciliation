@@ -12,6 +12,7 @@ import {
   Loader2,
   AlertCircle,
   PlayCircle,
+  Database,
 } from 'lucide-react'
 import { Button, Input, Card, Badge } from '@/components/ui'
 import { CreateReconciliationWizard } from '@/components/reconciliation'
@@ -23,11 +24,11 @@ import type { Reconciliation as ApiReconciliation } from '@/services/types'
 
 const statusConfig: Record<
   string,
-  { icon: typeof CheckCircle2; label: string; variant: 'default' | 'secondary' | 'success' | 'warning' | 'destructive' }
+  { icon: typeof CheckCircle2; label: string; variant: 'default' | 'secondary' | 'success' | 'warning' | 'destructive' | 'info' }
 > = {
   COMPLETED: { icon: CheckCircle2, label: 'Completed', variant: 'success' },
-  IN_PROGRESS: { icon: Clock, label: 'Processing', variant: 'warning' },
-  PENDING: { icon: Clock, label: 'Pending', variant: 'secondary' },
+  IN_PROGRESS: { icon: Clock, label: 'Processing', variant: 'info' },
+  PENDING: { icon: Clock, label: 'Pending', variant: 'warning' },
   FAILED: { icon: XCircle, label: 'Failed', variant: 'destructive' },
 }
 
@@ -70,7 +71,7 @@ const ReconciliationsPage = () => {
 
   const handleDelete = (e: React.MouseEvent, id: number) => {
     e.stopPropagation()
-    if (confirm('Are you sure you want to delete this reconciliation?')) {
+    if (confirm('Delete this reconciliation from the quantum matrix?')) {
       deleteReconciliation.mutate(id)
     }
   }
@@ -91,8 +92,8 @@ const ReconciliationsPage = () => {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading reconciliations...</p>
+          <Loader2 className="h-10 w-10 animate-spin text-violet-400 glow-violet" />
+          <p className="text-gray-400">Loading quantum reconciliations...</p>
         </div>
       </div>
     )
@@ -101,12 +102,12 @@ const ReconciliationsPage = () => {
   if (isError) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <AlertCircle className="h-12 w-12 text-destructive" />
+        <div className="flex flex-col items-center gap-4 text-center glass p-8 rounded-2xl max-w-md">
+          <AlertCircle className="h-12 w-12 text-pink-500" />
           <div>
-            <p className="font-semibold text-lg">Failed to load reconciliations</p>
-            <p className="text-muted-foreground text-sm">
-              {error instanceof Error ? error.message : 'Unable to connect to backend API'}
+            <p className="font-semibold text-lg text-foreground">Neural Connection Failed</p>
+            <p className="text-gray-400 text-sm mt-2">
+              {error instanceof Error ? error.message : 'Unable to access quantum backend'}
             </p>
           </div>
         </div>
@@ -115,17 +116,20 @@ const ReconciliationsPage = () => {
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col relative">
+      {/* Particle background */}
+      <div className="fixed inset-0 pattern-dots opacity-20 pointer-events-none" />
+
       {/* Header */}
-      <div className="border-b p-6">
+      <div className="border-b border-space-600 p-6 glass-strong relative z-10">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-lg font-semibold">All Reconciliations</h2>
-            <p className="text-sm text-muted-foreground">
-              Manage and track your data reconciliations
+            <h2 className="text-2xl font-bold text-gradient-violet">Reconciliation Matrix</h2>
+            <p className="text-sm text-gray-400 mt-1">
+              Neural-powered data matching and verification workflows
             </p>
           </div>
-          <Button onClick={handleNewReconciliation}>
+          <Button onClick={handleNewReconciliation} glow>
             <Plus className="mr-2 h-4 w-4" />
             New Reconciliation
           </Button>
@@ -133,10 +137,10 @@ const ReconciliationsPage = () => {
 
         <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
             <Input
               type="search"
-              placeholder="Search reconciliations..."
+              placeholder="Search quantum matrix..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9"
@@ -146,7 +150,7 @@ const ReconciliationsPage = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as ReconciliationStatus | 'all')}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            className="h-11 rounded-lg border-2 border-space-600 bg-space-800 px-4 text-sm text-foreground focus:outline-none focus:border-violet-500 focus:shadow-glow-violet transition-all"
             aria-label="Filter by status"
           >
             <option value="all">All Status</option>
@@ -159,31 +163,31 @@ const ReconciliationsPage = () => {
       </div>
 
       {/* Table */}
-      <div className="flex-1 overflow-auto p-6">
-        <Card>
+      <div className="flex-1 overflow-auto p-6 relative z-10">
+        <Card variant="glass">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b bg-muted/50">
-                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                    Name
+                <tr className="border-b border-space-600">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-violet-300 uppercase tracking-wider">
+                    Reconciliation
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                    Sources
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-cyan-300 uppercase tracking-wider">
+                    Data Sources
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
                     Records
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                    Match Rate
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    Neural Accuracy
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
                     Date
                   </th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -202,63 +206,63 @@ const ReconciliationsPage = () => {
                       onClick={() => handleRowClick(recon.id)}
                       onKeyDown={(e) => handleKeyDown(e, recon.id)}
                       className={cn(
-                        'cursor-pointer border-b transition-colors hover:bg-muted/50',
-                        selectedId === recon.id && 'bg-muted/50'
+                        'cursor-pointer border-b border-space-700 transition-all hover:bg-space-750',
+                        selectedId === recon.id && 'bg-space-750 shadow-glow-violet'
                       )}
                       aria-selected={selectedId === recon.id}
                     >
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="rounded-full bg-secondary p-2">
-                            <FileStack className="h-4 w-4" />
+                          <div className="rounded-xl gradient-violet p-2 shadow-glow-violet">
+                            <Database className="h-4 w-4 text-white" />
                           </div>
                           <div>
-                            <span className="font-medium">{recon.name}</span>
+                            <span className="font-semibold text-foreground">{recon.name}</span>
                             {recon.description && (
-                              <p className="text-sm text-muted-foreground">{recon.description}</p>
+                              <p className="text-xs text-gray-500 mt-0.5">{recon.description}</p>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-4">
                         <div className="text-sm">
-                          <p>{recon.sourceFileName || 'Source File'}</p>
-                          <p className="text-muted-foreground">vs {recon.targetFileName || 'Target File'}</p>
+                          <p className="text-cyan-400 font-mono text-xs">{recon.sourceFileName || 'Source Matrix'}</p>
+                          <p className="text-gray-500 text-xs mt-0.5">↔ {recon.targetFileName || 'Target Matrix'}</p>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="text-sm">
-                          <p>{(recon.totalSourceRecords || 0).toLocaleString()} total</p>
-                          <p className="text-muted-foreground">
+                      <td className="px-4 py-4">
+                        <div className="text-sm font-mono">
+                          <p className="text-foreground">{(recon.totalSourceRecords || 0).toLocaleString()}</p>
+                          <p className="text-gray-500 text-xs mt-0.5">
                             {recon.exceptionCount || 0} exceptions
                           </p>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <div className="h-2 w-24 overflow-hidden rounded-full bg-secondary">
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="h-2 w-28 overflow-hidden rounded-full bg-space-900 border border-space-600">
                             <div
-                              className={cn('h-full', {
-                                'bg-success': Number(matchRate) >= 95,
-                                'bg-warning': Number(matchRate) >= 80 && Number(matchRate) < 95,
-                                'bg-destructive': Number(matchRate) < 80,
+                              className={cn('h-full transition-all duration-500', {
+                                'gradient-cyan shadow-glow-green': Number(matchRate) >= 95,
+                                'gradient-violet shadow-glow-violet': Number(matchRate) >= 80 && Number(matchRate) < 95,
+                                'gradient-pink shadow-glow-pink': Number(matchRate) < 80,
                               })}
                               style={{ width: `${matchRate}%` }}
                             />
                           </div>
-                          <span className="text-sm">{matchRate}%</span>
+                          <span className="text-sm font-mono text-foreground font-semibold">{matchRate}%</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
-                        <Badge variant={config.variant}>
+                      <td className="px-4 py-4">
+                        <Badge variant={config.variant} pulse={recon.status === 'IN_PROGRESS'}>
                           <StatusIcon className="mr-1 h-3 w-3" />
                           {config.label}
                         </Badge>
                       </td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground">
+                      <td className="px-4 py-4 text-sm text-gray-500 font-mono">
                         {new Date(recon.createdAt).toLocaleDateString()}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-4">
                         <div className="flex items-center justify-end gap-1">
                           {recon.status === 'PENDING' && (
                             <Button
@@ -267,6 +271,7 @@ const ReconciliationsPage = () => {
                               aria-label="Start reconciliation"
                               onClick={(e) => handleStart(e, recon.id)}
                               disabled={startReconciliation.isPending}
+                              className="hover:text-green-400"
                             >
                               <PlayCircle className="h-4 w-4" />
                             </Button>
@@ -277,9 +282,9 @@ const ReconciliationsPage = () => {
                             aria-label="View details"
                             onClick={(e) => {
                               e.stopPropagation()
-                              // Navigate to exceptions page to view details
                               setActiveView('exceptions')
                             }}
+                            className="hover:text-violet-400"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -289,8 +294,9 @@ const ReconciliationsPage = () => {
                             aria-label="Download results"
                             onClick={(e) => {
                               e.stopPropagation()
-                              alert(`Download feature coming soon for: ${recon.name}`)
+                              alert(`Quantum export for: ${recon.name}`)
                             }}
+                            className="hover:text-cyan-400"
                           >
                             <Download className="h-4 w-4" />
                           </Button>
@@ -300,6 +306,7 @@ const ReconciliationsPage = () => {
                             aria-label="Delete"
                             onClick={(e) => handleDelete(e, recon.id)}
                             disabled={deleteReconciliation.isPending}
+                            className="hover:text-pink-400"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -312,12 +319,14 @@ const ReconciliationsPage = () => {
             </table>
 
             {filteredReconciliations.length === 0 && (
-              <div className="py-12 text-center">
-                <FileStack className="mx-auto h-12 w-12 text-muted-foreground" />
-                <p className="mt-2 text-muted-foreground">
+              <div className="py-16 text-center">
+                <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl gradient-neural shadow-glow-violet mb-4">
+                  <FileStack className="h-8 w-8 text-white" />
+                </div>
+                <p className="text-gray-400 text-lg">
                   {reconciliations.length === 0
-                    ? 'No reconciliations yet. Create your first one!'
-                    : 'No reconciliations found matching your filters'
+                    ? 'Initialize your first quantum reconciliation'
+                    : 'No matches in the neural matrix'
                   }
                 </p>
               </div>

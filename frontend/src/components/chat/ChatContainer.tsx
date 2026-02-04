@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react'
-import { Sparkles, AlertCircle } from 'lucide-react'
+import { Sparkles, AlertCircle, Brain, Zap } from 'lucide-react'
 import { ChatMessage } from './ChatMessage'
 import { ChatInput } from './ChatInput'
 import { useAppStore } from '@/store'
@@ -49,11 +49,10 @@ const ChatContainer = () => {
       const errorMessage = err instanceof Error ? err.message : 'Failed to get AI response'
       setError(errorMessage)
 
-      // Add error as assistant message
       const errorResponse: ChatMessageType = {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: `Sorry, I encountered an error: ${errorMessage}. Please make sure the backend is running.`,
+        content: `Neural network error: ${errorMessage}. Verify backend connectivity.`,
         timestamp: new Date().toISOString(),
       }
       addChatMessage(errorResponse)
@@ -70,7 +69,7 @@ const ChatContainer = () => {
       const userMessage: ChatMessageType = {
         id: crypto.randomUUID(),
         role: 'user',
-        content: `Uploading file: ${file.name}`,
+        content: `📁 Uploading: ${file.name}`,
         timestamp: new Date().toISOString(),
       }
       addChatMessage(userMessage)
@@ -83,11 +82,12 @@ const ChatContainer = () => {
         const successMessage: ChatMessageType = {
           id: crypto.randomUUID(),
           role: 'assistant',
-          content: `File "${uploadedFile?.originalFilename || file.name}" uploaded successfully!\n\n` +
-            `- **Rows:** ${uploadedFile?.rowCount || 'Analyzing...'}\n` +
-            `- **Columns:** ${uploadedFile?.columnCount || 'Analyzing...'}\n` +
-            `- **Size:** ${(file.size / 1024).toFixed(1)} KB\n\n` +
-            `You can now use this file for reconciliation.`,
+          content: `✨ File "${uploadedFile?.originalFilename || file.name}" analyzed successfully!\n\n` +
+            `📊 **Data Matrix:**\n` +
+            `• Rows: ${uploadedFile?.rowCount || 'Computing...'}\n` +
+            `• Columns: ${uploadedFile?.columnCount || 'Computing...'}\n` +
+            `• Size: ${(file.size / 1024).toFixed(1)} KB\n\n` +
+            `Ready for quantum reconciliation processing.`,
           timestamp: new Date().toISOString(),
         }
         addChatMessage(successMessage)
@@ -98,7 +98,7 @@ const ChatContainer = () => {
         const errorResponse: ChatMessageType = {
           id: crypto.randomUUID(),
           role: 'assistant',
-          content: `Failed to upload "${file.name}": ${errorMessage}`,
+          content: `❌ Upload failed for "${file.name}": ${errorMessage}`,
           timestamp: new Date().toISOString(),
         }
         addChatMessage(errorResponse)
@@ -109,15 +109,18 @@ const ChatContainer = () => {
   }
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Error Banner */}
+    <div className="flex h-full flex-col relative">
+      {/* Particle background */}
+      <div className="absolute inset-0 particles opacity-40 pointer-events-none" />
+
+      {/* Error Banner with glow */}
       {error && (
-        <div className="flex items-center gap-2 bg-destructive/10 px-4 py-2 text-sm text-destructive">
+        <div className="flex items-center gap-2 bg-pink-500/20 border-b border-pink-500/50 px-4 py-2 text-sm text-pink-300 backdrop-blur-md relative z-10">
           <AlertCircle className="h-4 w-4" />
           <span>{error}</span>
           <button
             onClick={() => setError(null)}
-            className="ml-auto text-xs underline"
+            className="ml-auto text-xs underline hover:text-pink-200"
           >
             Dismiss
           </button>
@@ -125,52 +128,52 @@ const ChatContainer = () => {
       )}
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto relative z-10">
         {chatMessages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center p-8 text-center">
-            <div className="mb-4 rounded-full bg-primary/10 p-4">
-              <Sparkles className="h-8 w-8 text-primary" />
+            <div className="mb-6 rounded-2xl gradient-neural p-6 shadow-glow-violet animate-pulse-glow">
+              <Brain className="h-12 w-12 text-white" />
             </div>
-            <h2 className="mb-2 text-xl font-semibold">
-              Welcome to Smart Reconciliation
+            <h2 className="mb-2 text-2xl font-bold text-gradient-neural">
+              Quantum AI Intelligence
             </h2>
-            <p className="mb-6 max-w-md text-muted-foreground">
-              I'm your AI-powered reconciliation assistant. Upload your data files
-              or describe what you need, and I'll help you match and verify
-              transactions across systems.
+            <p className="mb-8 max-w-md text-gray-400 leading-relaxed">
+              Neural network-powered reconciliation assistant. Upload data matrices
+              or describe your requirements—I'll process transactions with quantum precision.
             </p>
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2 w-full max-w-xl">
               {[
-                'Reconcile my bank statement with accounting',
-                'Show me pending exceptions',
-                'Help me create a matching rule',
-                'What can you do?',
-              ].map((prompt) => (
+                { icon: Zap, text: 'Reconcile bank statement with ledger' },
+                { icon: AlertCircle, text: 'Analyze pending exceptions' },
+                { icon: Brain, text: 'Create intelligent matching rule' },
+                { icon: Sparkles, text: 'What are your capabilities?' },
+              ].map(({ icon: Icon, text }) => (
                 <button
-                  key={prompt}
-                  onClick={() => handleSendMessage(prompt)}
-                  className="rounded-lg border p-3 text-left text-sm transition-colors hover:bg-secondary"
-                  aria-label={`Start conversation with: ${prompt}`}
+                  key={text}
+                  onClick={() => handleSendMessage(text)}
+                  className="glass border border-violet-500/30 rounded-xl p-4 text-left text-sm transition-all hover:border-violet-400 hover:shadow-glow-violet hover:-translate-y-1 group"
+                  aria-label={`Start conversation with: ${text}`}
                   disabled={isLoading}
                 >
-                  {prompt}
+                  <Icon className="h-5 w-5 text-violet-400 mb-2 group-hover:text-violet-300" />
+                  <span className="text-gray-300 group-hover:text-white">{text}</span>
                 </button>
               ))}
             </div>
           </div>
         ) : (
-          <div className="divide-y">
+          <div className="space-y-1 p-4">
             {chatMessages.map((message) => (
               <ChatMessage key={message.id} message={message} />
             ))}
             {isLoading && (
-              <div className="flex gap-3 p-4">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary">
-                  <Sparkles className="h-4 w-4 animate-pulse text-primary" />
+              <div className="flex gap-3 p-4 glass rounded-xl border border-violet-500/30 animate-pulse-glow">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full gradient-neural shadow-glow-violet">
+                  <Sparkles className="h-5 w-5 text-white" />
                 </div>
                 <div className="flex items-center">
-                  <span className="text-sm text-muted-foreground">
-                    AI is thinking...
+                  <span className="text-sm text-gray-400 font-mono">
+                    Neural processing...
                   </span>
                 </div>
               </div>

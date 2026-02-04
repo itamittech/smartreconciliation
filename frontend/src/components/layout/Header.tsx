@@ -8,17 +8,19 @@ const Header = () => {
   const getPageTitle = () => {
     switch (activeView) {
       case 'home':
-        return 'Dashboard'
+        return 'Quantum Dashboard'
       case 'chat':
-        return 'AI Assistant'
+        return 'AI Intelligence'
       case 'reconciliations':
         return 'Reconciliations'
       case 'exceptions':
-        return 'Exception Queue'
+        return 'Exception Matrix'
       case 'rules':
-        return 'Rule Builder'
+        return 'Rule Engine'
+      case 'files':
+        return 'Data Sources'
       case 'settings':
-        return 'Settings'
+        return 'Configuration'
       default:
         return 'Dashboard'
     }
@@ -27,74 +29,80 @@ const Header = () => {
   const getPageDescription = () => {
     switch (activeView) {
       case 'home':
-        return 'AI-powered reconciliation insights'
+        return 'Real-time intelligence and insights'
       case 'chat':
-        return 'Chat with your reconciliation AI'
+        return 'Conversational AI assistant'
       case 'reconciliations':
-        return 'Manage and track all reconciliations'
+        return 'Track and manage reconciliation workflows'
       case 'exceptions':
-        return 'Review and resolve exceptions'
+        return 'Resolve discrepancies with AI guidance'
       case 'rules':
-        return 'Configure intelligent matching rules'
+        return 'Configure intelligent matching algorithms'
+      case 'files':
+        return 'Manage your data sources'
       case 'settings':
-        return 'Customize your experience'
+        return 'Customize your quantum experience'
       default:
-        return 'AI-powered reconciliation insights'
+        return 'AI-powered reconciliation intelligence'
     }
   }
 
   return (
-    <header className="sticky top-0 z-50 flex h-20 items-center justify-between border-b border-[var(--color-neutral-200)] px-6 shadow-sm glass">
+    <header className="sticky top-0 z-50 flex h-20 items-center justify-between border-b border-space-600 px-6 glass-strong backdrop-blur-xl">
       <div className="flex items-center gap-4">
-        {/* AI Icon with gradient background */}
-        <div className="hidden md:flex items-center justify-center h-11 w-11 rounded-xl gradient-primary shadow-brand">
+        {/* AI Icon with animated gradient */}
+        <div className="hidden md:flex items-center justify-center h-11 w-11 rounded-xl gradient-neural shadow-glow-violet animate-pulse-glow">
           <Sparkles className="h-5 w-5 text-white" />
         </div>
         <div>
-          {/* Page title with brand gradient */}
-          <h1 className="text-xl font-bold text-gradient">
+          {/* Page title with gradient */}
+          <h1 className="text-xl font-bold text-gradient-neural">
             {getPageTitle()}
           </h1>
-          <p className="text-xs text-[var(--color-neutral-600)] hidden md:block mt-0.5">
+          <p className="text-xs text-gray-400 hidden md:block mt-0.5">
             {getPageDescription()}
           </p>
         </div>
       </div>
 
       <div className="flex items-center gap-4">
-        {/* Search with enhanced styling */}
+        {/* Search with glowing focus */}
         <div className="relative hidden lg:block">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-neutral-500)]" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
           <Input
             type="search"
-            placeholder="Search reconciliations..."
-            className="w-80 pl-10 bg-white/80 backdrop-blur-sm border-[var(--color-neutral-200)] focus:border-[var(--color-brand-400)] shadow-[var(--shadow-xs)]"
+            placeholder="Search intelligence..."
+            className="w-80 pl-10 bg-space-800/80 backdrop-blur-sm border-space-600 focus:border-violet-500 focus:shadow-glow-violet"
             aria-label="Search"
           />
         </div>
 
-        {/* Notifications with refined styling */}
+        {/* Notifications with glowing badge */}
         <Button
           variant="ghost"
           size="icon"
           aria-label="View notifications"
-          className="relative hover:bg-[var(--color-brand-50)] hover:text-[var(--color-brand-600)] rounded-lg"
+          className="relative hover:bg-space-750 hover:text-violet-400 rounded-lg"
         >
           <Bell className="h-5 w-5" />
-          <Badge className="absolute -right-1 -top-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-[var(--color-brand-500)] border-2 border-white">
+          <Badge
+            variant="glow"
+            pulse
+            className="absolute -right-1 -top-1 h-5 w-5 flex items-center justify-center p-0 text-xs border-2 border-background"
+          >
             3
           </Badge>
         </Button>
 
-        {/* User Menu with enhanced styling */}
-        <div className="flex items-center gap-3 pl-4 border-l border-[var(--color-neutral-200)]">
+        {/* User Menu with glowing border */}
+        <div className="flex items-center gap-3 pl-4 border-l border-space-600">
           <div className="hidden md:block text-right">
-            <p className="text-sm font-semibold text-[var(--color-neutral-900)]">John Doe</p>
-            <p className="text-xs text-[var(--color-neutral-600)]">Finance Analyst</p>
+            <p className="text-sm font-semibold text-foreground">John Doe</p>
+            <p className="text-xs text-cyan-400">Quantum Analyst</p>
           </div>
           <Avatar
             fallback="JD"
-            className="h-10 w-10 ring-2 ring-[var(--color-brand-500)]/20 hover:ring-[var(--color-brand-500)]/40 transition-all cursor-pointer"
+            className="h-10 w-10 ring-2 ring-violet-500/50 hover:ring-violet-400 hover:shadow-glow-violet transition-all cursor-pointer"
           />
         </div>
       </div>

@@ -2,30 +2,41 @@ import { forwardRef, type HTMLAttributes } from 'react'
 import { cn } from '@/lib/utils'
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'elevated' | 'interactive' | 'outline'
+  variant?: 'default' | 'glass' | 'interactive' | 'glow' | 'solid'
+  glowColor?: 'violet' | 'cyan' | 'pink' | 'green'
 }
 
 const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ className, variant = 'default', ...props }, ref) => (
+  ({ className, variant = 'default', glowColor = 'violet', ...props }, ref) => (
     <div
       ref={ref}
       className={cn(
-        // Base styles from brand guidelines
-        'rounded-xl bg-card text-card-foreground border transition-all duration-200',
+        // Base styles - Quantum design
+        'rounded-xl transition-glow overflow-hidden',
         // Variant styles
         {
-          // Default - subtle shadow
-          'border-[var(--color-neutral-200)] shadow-[var(--shadow-sm)]': variant === 'default',
+          // Default - Solid dark card
+          'bg-card border border-space-600 shadow-lg': variant === 'default',
 
-          // Elevated - medium shadow for prominence
-          'border-[var(--color-neutral-200)] shadow-[var(--shadow-md)]': variant === 'elevated',
+          // Glass - Glassmorphism
+          'glass shadow-xl': variant === 'glass',
 
-          // Interactive - hover effects
-          'border-[var(--color-neutral-200)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] hover:-translate-y-1 cursor-pointer':
+          // Interactive - Hover with glow
+          'bg-card border border-space-600 shadow-lg hover:shadow-glow-violet hover:-translate-y-1 hover:border-violet-500/50 cursor-pointer transition-all duration-300':
             variant === 'interactive',
 
-          // Outline - minimal shadow, prominent border
-          'border-2 border-[var(--color-brand-200)] shadow-[var(--shadow-xs)]': variant === 'outline',
+          // Glow - Always glowing
+          'bg-card border-2 shadow-xl': variant === 'glow',
+
+          // Solid - Strong background
+          'bg-space-750 border border-space-600 shadow-md': variant === 'solid',
+        },
+        // Glow color variants
+        variant === 'glow' && {
+          'border-violet-500/50 shadow-glow-violet': glowColor === 'violet',
+          'border-cyan-500/50 shadow-glow-cyan': glowColor === 'cyan',
+          'border-pink-500/50 shadow-glow-pink': glowColor === 'pink',
+          'border-green-500/50 shadow-glow-green': glowColor === 'green',
         },
         className
       )}
@@ -39,7 +50,7 @@ const CardHeader = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn('flex flex-col space-y-1.5 p-6', className)}
+      className={cn('flex flex-col space-y-2 p-6', className)}
       {...props}
     />
   )
@@ -51,7 +62,7 @@ const CardTitle = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLHeadingEle
     <h3
       ref={ref}
       className={cn(
-        'text-xl font-semibold leading-tight tracking-tight text-[var(--color-neutral-900)]',
+        'text-xl font-semibold leading-tight tracking-tight text-foreground',
         className
       )}
       {...props}
@@ -64,7 +75,7 @@ const CardDescription = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLPara
   ({ className, ...props }, ref) => (
     <p
       ref={ref}
-      className={cn('text-sm text-[var(--color-neutral-600)] leading-relaxed', className)}
+      className={cn('text-sm text-gray-400 leading-relaxed', className)}
       {...props}
     />
   )
@@ -82,7 +93,7 @@ const CardFooter = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn('flex items-center p-6 pt-0', className)}
+      className={cn('flex items-center p-6 pt-0 gap-4', className)}
       {...props}
     />
   )

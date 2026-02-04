@@ -13,39 +13,41 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
   return (
     <div
       className={cn(
-        'flex gap-3 p-4',
+        'flex gap-3 p-4 rounded-xl transition-all',
         isUser ? 'flex-row-reverse' : 'flex-row'
       )}
     >
       <Avatar
         fallback={isUser ? 'U' : 'AI'}
         className={cn(
-          'h-8 w-8 shrink-0',
-          isUser ? 'bg-primary' : 'bg-secondary'
+          'h-10 w-10 shrink-0 ring-2',
+          isUser
+            ? 'bg-gradient-to-br from-cyan-500 to-cyan-600 ring-cyan-500/50'
+            : 'gradient-neural ring-violet-500/50 shadow-glow-violet'
         )}
       >
         <div className="flex h-full w-full items-center justify-center">
           {isUser ? (
-            <User className="h-4 w-4 text-primary-foreground" />
+            <User className="h-5 w-5 text-white" />
           ) : (
-            <Bot className="h-4 w-4 text-secondary-foreground" />
+            <Bot className="h-5 w-5 text-white" />
           )}
         </div>
       </Avatar>
 
       <div
         className={cn(
-          'max-w-[70%] rounded-lg px-4 py-2',
+          'max-w-[70%] rounded-xl px-4 py-3 transition-all',
           isUser
-            ? 'bg-primary text-primary-foreground'
-            : 'bg-secondary text-secondary-foreground'
+            ? 'bg-gradient-to-br from-cyan-600/30 to-cyan-700/30 border border-cyan-500/50 text-white'
+            : 'glass border border-violet-500/30 text-gray-100 hover:border-violet-400/50 hover:shadow-glow-violet'
         )}
       >
-        <p className="whitespace-pre-wrap text-sm">{message.content}</p>
+        <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
         <p
           className={cn(
-            'mt-1 text-xs',
-            isUser ? 'text-primary-foreground/70' : 'text-muted-foreground'
+            'mt-2 text-xs font-mono',
+            isUser ? 'text-cyan-300/70' : 'text-gray-500'
           )}
         >
           {new Date(message.timestamp).toLocaleTimeString()}

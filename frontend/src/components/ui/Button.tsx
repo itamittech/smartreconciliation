@@ -2,57 +2,64 @@ import { forwardRef, type ButtonHTMLAttributes } from 'react'
 import { cn } from '@/lib/utils'
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link' | 'accent'
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link' | 'accent' | 'glass'
   size?: 'default' | 'sm' | 'lg' | 'icon'
+  glow?: boolean
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'default', size = 'default', ...props }, ref) => {
+  ({ className, variant = 'default', size = 'default', glow = false, ...props }, ref) => {
     return (
       <button
         className={cn(
-          // Base styles - enhanced with brand guidelines
-          'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg font-semibold',
-          'transition-all duration-200 ease-out',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-500)] focus-visible:ring-offset-2',
-          'disabled:pointer-events-none disabled:opacity-50',
-          // Variant styles
+          // Base styles - Quantum design
+          'inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold',
+          'transition-glow relative overflow-hidden',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+          'disabled:pointer-events-none disabled:opacity-40 disabled:grayscale',
+          // Variant styles with glowing effects
           {
-            // Primary - Brand Blue (#4D65FF)
-            'bg-[var(--color-brand-500)] text-white shadow-sm hover:bg-[var(--color-brand-600)] hover:shadow-md hover:-translate-y-0.5 active:translate-y-0':
+            // Primary - Electric Violet Gradient
+            'bg-gradient-to-br from-violet-500 to-violet-600 text-white shadow-lg hover:shadow-glow-violet hover:-translate-y-1 active:translate-y-0 active:shadow-md rounded-lg':
               variant === 'default',
 
-            // Destructive - Error color
-            'bg-[var(--color-error-500)] text-white shadow-sm hover:bg-[var(--color-error-600)] hover:shadow-md hover:-translate-y-0.5 active:translate-y-0':
+            // Destructive - Neural Pink
+            'bg-gradient-to-br from-pink-500 to-pink-600 text-white shadow-lg hover:shadow-glow-pink hover:-translate-y-1 active:translate-y-0 active:shadow-md rounded-lg':
               variant === 'destructive',
 
-            // Outline - Border with brand color
-            'border-2 border-[var(--color-brand-200)] bg-white text-[var(--color-brand-600)] hover:bg-[var(--color-brand-50)] hover:border-[var(--color-brand-300)]':
+            // Outline - Glowing border
+            'border-2 border-violet-500/50 bg-transparent text-violet-400 hover:bg-violet-500/10 hover:border-violet-400 hover:text-violet-300 hover:shadow-glow-violet rounded-lg':
               variant === 'outline',
 
-            // Secondary - Light brand tint
-            'bg-[var(--color-brand-50)] text-[var(--color-brand-700)] hover:bg-[var(--color-brand-100)]':
+            // Secondary - Cyber Cyan
+            'bg-gradient-to-br from-cyan-600 to-cyan-700 text-white shadow-lg hover:shadow-glow-cyan hover:-translate-y-1 active:translate-y-0 active:shadow-md rounded-lg':
               variant === 'secondary',
 
-            // Ghost - Transparent with hover
-            'text-[var(--color-neutral-700)] hover:bg-[var(--color-neutral-100)] hover:text-[var(--color-neutral-900)]':
+            // Ghost - Subtle hover
+            'text-gray-300 hover:bg-space-750 hover:text-white rounded-lg':
               variant === 'ghost',
 
-            // Link - Text only
-            'text-[var(--color-brand-600)] underline-offset-4 hover:underline hover:text-[var(--color-brand-700)]':
+            // Link - Text with gradient
+            'text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-cyan-400 hover:from-violet-300 hover:to-cyan-300 underline-offset-4 hover:underline':
               variant === 'link',
 
-            // Accent - Purple for AI features
-            'bg-[var(--color-accent-purple-500)] text-white shadow-sm hover:bg-[var(--color-accent-purple-600)] hover:shadow-md hover:-translate-y-0.5 active:translate-y-0':
+            // Accent - Neural gradient
+            'bg-gradient-to-br from-violet-500 via-cyan-500 to-pink-500 text-white shadow-lg hover:shadow-glow-violet hover:-translate-y-1 active:translate-y-0 active:shadow-md rounded-lg bg-[length:200%_200%] hover:bg-[position:100%_100%] transition-all duration-500':
               variant === 'accent',
+
+            // Glass - Glassmorphism
+            'glass text-white backdrop-blur-md hover:bg-space-750/80 hover:shadow-glow-violet rounded-lg':
+              variant === 'glass',
           },
-          // Size styles - enhanced spacing
+          // Size styles
           {
-            'h-10 px-6 py-2.5 text-sm': size === 'default',
-            'h-9 px-4 py-2 text-sm rounded-md': size === 'sm',
-            'h-12 px-8 py-3 text-base rounded-lg': size === 'lg',
-            'h-10 w-10 p-0': size === 'icon',
+            'h-11 px-6 py-2.5 text-sm': size === 'default',
+            'h-9 px-4 py-2 text-xs': size === 'sm',
+            'h-14 px-8 py-3.5 text-base': size === 'lg',
+            'h-11 w-11 p-0': size === 'icon',
           },
+          // Optional extra glow
+          glow && 'animate-pulse-glow',
           className
         )}
         ref={ref}

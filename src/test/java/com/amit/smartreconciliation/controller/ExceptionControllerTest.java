@@ -7,6 +7,7 @@ import com.amit.smartreconciliation.enums.ExceptionSeverity;
 import com.amit.smartreconciliation.enums.ExceptionStatus;
 import com.amit.smartreconciliation.enums.ExceptionType;
 import com.amit.smartreconciliation.service.ExceptionService;
+import com.amit.smartreconciliation.service.ReconciliationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,7 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Test Level: Integration Test
  * Total Test Cases: 7
  */
-@WebMvcTest(controllers = {ExceptionController.class, ReconciliationExceptionController.class})
+@WebMvcTest(controllers = {ExceptionController.class, ReconciliationController.class})
 @DisplayName("ExceptionController Integration Tests")
 class ExceptionControllerTest {
 
@@ -52,6 +53,9 @@ class ExceptionControllerTest {
 
     @MockBean
     private ExceptionService exceptionService;
+
+    @MockBean
+    private ReconciliationService reconciliationService;
 
     @Test
     @DisplayName("TC-EC-001: GET /api/v1/reconciliations/{id}/exceptions - List with Filters")

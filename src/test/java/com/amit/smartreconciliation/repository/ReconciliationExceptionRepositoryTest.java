@@ -63,10 +63,11 @@ class ReconciliationExceptionRepositoryTest {
 
         // When
         var results = exceptionRepository.findByReconciliationId(reconciliation.getId());
+        Long reconciliationId = reconciliation.getId();
 
         // Then
         assertThat(results).hasSize(3);
-        assertThat(results).allMatch(e -> e.getReconciliation().getId().equals(reconciliation.getId()));
+        assertThat(results).allMatch(e -> e.getReconciliation().getId().equals(reconciliationId));
     }
 
     @Test

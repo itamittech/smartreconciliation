@@ -1,0 +1,4 @@
+interface:
+  display_name: "Playwright Test Loop"
+  short_description: "Write and iteratively run Playwright tests one by one."
+  default_prompt: "Use the Playwright test loop: write the test, run it individually, fix failures, and re-run until it passes before moving to the next."

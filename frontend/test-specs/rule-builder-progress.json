@@ -4,8 +4,8 @@
   "lastUpdated": "2026-02-05",
   "summary": {
     "totalCases": 9,
-    "implementedCases": 1,
-    "passedCases": 1,
+    "implementedCases": 2,
+    "passedCases": 2,
     "skippedCases": 0,
     "failedCases": 0
   },
@@ -18,7 +18,7 @@
     {
       "id": "RULE-002",
       "title": "Search Rule Library",
-      "status": "pending"
+      "status": "passed"
     },
     {
       "id": "RULE-003",

@@ -164,4 +164,80 @@ test.describe('Rule Builder', () => {
       }
     }
   })
+
+  test('RULE-002: Search Rule Library', async ({ page }) => {
+    const api = page.request
+    const suffix = Date.now()
+
+    // Create rule sets with varied names for search testing
+    const ruleSets = []
+    const ruleSetConfigs = [
+      { name: `Bank Reconciliation Rules ${suffix}`, description: 'Rules for bank statement reconciliation' },
+      { name: `Invoice Processing Rules ${suffix}`, description: 'Rules for invoice data processing' },
+      { name: `Payment Matching Rules ${suffix}`, description: 'Rules for payment matching' },
+      { name: `General Ledger Rules ${suffix}`, description: 'Rules for general ledger reconciliation' },
+      { name: `Vendor Statement Rules ${suffix}`, description: 'Rules for vendor statement matching' },
+    ]
+
+    for (const config of ruleSetConfigs) {
+      const ruleSet = await createRuleSet(api, config.name, config.description)
+      // Add at least one mapping to each
+      await createFieldMapping(api, ruleSet.id, 'SourceField1', 'TargetField1', true)
+      ruleSets.push(ruleSet)
+    }
+
+    try {
+      // Navigate to Rules page
+      await openRulesPage(page)
+
+      // Locate search input
+      const searchInput = page.getByPlaceholder('Search rules...')
+      await expect(searchInput).toBeVisible()
+
+      // Verify all rules are initially visible
+      for (const config of ruleSetConfigs) {
+        await expect(page.getByText(config.name)).toBeVisible()
+      }
+
+      // Test search filtering - search for "bank"
+      await searchInput.fill('bank')
+
+      // Verify only matching rules are shown
+      await expect(page.getByText(`Bank Reconciliation Rules ${suffix}`)).toBeVisible()
+      await expect(page.getByText(`Invoice Processing Rules ${suffix}`)).not.toBeVisible()
+      await expect(page.getByText(`Payment Matching Rules ${suffix}`)).not.toBeVisible()
+
+      // Test case-insensitive search
+      await searchInput.fill('BANK')
+      await expect(page.getByText(`Bank Reconciliation Rules ${suffix}`)).toBeVisible()
+
+      // Test search by description
+      await searchInput.fill('invoice')
+      await expect(page.getByText(`Invoice Processing Rules ${suffix}`)).toBeVisible()
+      await expect(page.getByText(`Bank Reconciliation Rules ${suffix}`)).not.toBeVisible()
+
+      // Test no results
+      await searchInput.fill('xyz123nonexistent')
+      await expect(page.getByText('No matching rules')).toBeVisible()
+
+      // Clear search - verify all rules reappear
+      await searchInput.clear()
+      for (const config of ruleSetConfigs) {
+        await expect(page.getByText(config.name)).toBeVisible()
+      }
+
+      // Test partial match
+      await searchInput.fill('Rules')
+      // Should show all rules since they all contain "Rules" in the name
+      for (const config of ruleSetConfigs) {
+        await expect(page.getByText(config.name)).toBeVisible()
+      }
+
+    } finally {
+      // Cleanup: delete all created rule sets
+      for (const ruleSet of ruleSets) {
+        await deleteRuleSet(api, ruleSet.id)
+      }
+    }
+  })
 })

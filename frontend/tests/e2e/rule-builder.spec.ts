@@ -327,4 +327,65 @@ test.describe('Rule Builder', () => {
       await deleteRuleSet(api, ruleSet.id)
     }
   })
+
+  test('RULE-008: Delete Rule Set', async ({ page }) => {
+    const api = page.request
+    const suffix = Date.now()
+
+    // Create a rule set to delete
+    const ruleSet = await createRuleSet(
+      api,
+      `Delete Test Rule ${suffix}`,
+      'Rule set for deletion testing'
+    )
+
+    // Add a mapping so it's a valid rule set
+    await createFieldMapping(api, ruleSet.id, 'Field1', 'Field2', true)
+
+    // Navigate to Rules page
+    await openRulesPage(page)
+
+    // Select the rule
+    const ruleCard = page.locator('div[role="button"]').filter({
+      hasText: `Delete Test Rule ${suffix}`
+    })
+    await expect(ruleCard).toBeVisible()
+    await ruleCard.click()
+
+    // Get details panel and click delete button
+    const detailsPanel = page.locator('div.flex-1.overflow-auto').last()
+    const deleteButton = detailsPanel.getByRole('button', { name: 'Delete' })
+    await expect(deleteButton).toBeVisible()
+
+    // Set up dialog handler to cancel first
+    page.once('dialog', async (dialog) => {
+      expect(dialog.type()).toBe('confirm')
+      expect(dialog.message()).toContain('Are you sure you want to delete this rule set?')
+      await dialog.dismiss()
+    })
+
+    await deleteButton.click()
+
+    // Wait a bit to ensure dialog was handled
+    await page.waitForTimeout(500)
+
+    // Verify rule still exists after canceling
+    await expect(ruleCard).toBeVisible()
+
+    // Now delete for real - set up dialog handler to accept
+    page.once('dialog', async (dialog) => {
+      expect(dialog.type()).toBe('confirm')
+      await dialog.accept()
+    })
+
+    await deleteButton.click()
+
+    // Wait for the rule to be removed from the list
+    await expect(ruleCard).not.toBeVisible({ timeout: 10000 })
+
+    // Verify the rule is no longer in the list
+    await expect(page.getByText(`Delete Test Rule ${suffix}`)).not.toBeVisible()
+
+    // Note: No cleanup needed since we deleted the rule in the test
+  })
 })

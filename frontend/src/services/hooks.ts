@@ -111,10 +111,15 @@ export function useDeleteFile() {
 // ============================================
 // Reconciliations
 // ============================================
-export function useReconciliations() {
+export function useReconciliations(params?: {
+  page?: number
+  size?: number
+  sort?: string
+  order?: 'asc' | 'desc'
+}) {
   return useQuery({
-    queryKey: queryKeys.reconciliations,
-    queryFn: () => reconciliationsApi.getAll(),
+    queryKey: [...queryKeys.reconciliations, params],
+    queryFn: () => reconciliationsApi.getAll(params),
   })
 }
 
@@ -170,6 +175,17 @@ export function useDeleteReconciliation() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: number) => reconciliationsApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.reconciliations })
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard })
+    },
+  })
+}
+
+export function useBulkDeleteReconciliations() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (ids: number[]) => reconciliationsApi.bulkDelete(ids),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.reconciliations })
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard })

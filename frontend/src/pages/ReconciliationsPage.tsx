@@ -20,7 +20,7 @@ import { Button, Input, Card, Badge } from '@/components/ui'
 import { CreateReconciliationWizard, ReconciliationDetailsModal } from '@/components/reconciliation'
 import type { ReconciliationStatus } from '@/types'
 import { cn } from '@/lib/utils'
-import { useReconciliations, useDeleteReconciliation, useStartReconciliation } from '@/services/hooks'
+import { useReconciliations, useDeleteReconciliation, useStartReconciliation, useBulkDeleteReconciliations } from '@/services/hooks'
 import { useAppStore } from '@/store'
 import type { Reconciliation as ApiReconciliation } from '@/services/types'
 
@@ -51,14 +51,27 @@ const ReconciliationsPage = () => {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
 
   const { setActiveView } = useAppStore()
-  const { data: reconciliationsResponse, isLoading, isError, error } = useReconciliations()
+  const { data: reconciliationsResponse, isLoading, isError, error } = useReconciliations({
+    page: currentPage - 1, // Backend uses 0-based indexing
+    size: ITEMS_PER_PAGE,
+    sort: sortField,
+    order: sortDirection,
+  })
   const deleteReconciliation = useDeleteReconciliation()
+  const bulkDeleteReconciliations = useBulkDeleteReconciliations()
   const startReconciliation = useStartReconciliation()
 
-  const reconciliations = reconciliationsResponse?.data || []
+  // Handle both paginated and non-paginated responses
+  const isPaginated = reconciliationsResponse?.data && 'content' in reconciliationsResponse.data
+  const reconciliations = isPaginated
+    ? (reconciliationsResponse.data as any).content || []
+    : (reconciliationsResponse?.data as any) || []
+  const totalElements = isPaginated ? (reconciliationsResponse.data as any).totalElements : reconciliations.length
+  const totalPages = isPaginated ? (reconciliationsResponse.data as any).totalPages : 1
 
+  // Client-side filtering for search and status (could be moved to backend later)
   const filteredReconciliations = reconciliations.filter((recon) => {
-    const matchesSearch = recon.name.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesSearch = searchQuery ? recon.name.toLowerCase().includes(searchQuery.toLowerCase()) : true
     const backendStatus = recon.status?.toString().toLowerCase()
     const filterStatus = statusFilter === 'all' ? true :
       (statusFilter === 'processing' && backendStatus === 'in_progress') ||
@@ -66,39 +79,9 @@ const ReconciliationsPage = () => {
     return matchesSearch && filterStatus
   })
 
-  // Sort reconciliations
-  const sortedReconciliations = [...filteredReconciliations].sort((a, b) => {
-    let comparison = 0
-
-    switch (sortField) {
-      case 'name':
-        comparison = a.name.localeCompare(b.name)
-        break
-      case 'status':
-        comparison = (a.status || '').localeCompare(b.status || '')
-        break
-      case 'matchRate': {
-        const rateA = getMatchRate(a)
-        const rateB = getMatchRate(b)
-        comparison = Number(rateA) - Number(rateB)
-        break
-      }
-      case 'createdAt':
-        comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-        break
-      case 'completedAt':
-        comparison = (a.completedAt ? new Date(a.completedAt).getTime() : 0) -
-          (b.completedAt ? new Date(b.completedAt).getTime() : 0)
-        break
-    }
-
-    return sortDirection === 'asc' ? comparison : -comparison
-  })
-
-  const totalPages = Math.ceil(sortedReconciliations.length / ITEMS_PER_PAGE)
+  const paginatedReconciliations = filteredReconciliations
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
-  const endIndex = startIndex + ITEMS_PER_PAGE
-  const paginatedReconciliations = sortedReconciliations.slice(startIndex, endIndex)
+  const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, totalElements)
 
   // Reset to page 1 when search or filter changes
   const handleSearchChange = (value: string) => {
@@ -150,10 +133,18 @@ const ReconciliationsPage = () => {
   const handleBulkDelete = () => {
     if (selectedIds.size === 0) return
     if (confirm(`Delete ${selectedIds.size} selected reconciliation(s)?`)) {
-      selectedIds.forEach((id) => {
-        deleteReconciliation.mutate(id)
+      bulkDeleteReconciliations.mutate(Array.from(selectedIds), {
+        onSuccess: (response) => {
+          const result = response.data
+          if (result.failedCount > 0) {
+            alert(`Deleted ${result.successCount} items. ${result.failedCount} failed.`)
+          }
+          setSelectedIds(new Set())
+        },
+        onError: () => {
+          alert('Bulk delete failed. Please try again.')
+        }
       })
-      setSelectedIds(new Set())
     }
   }
 
@@ -245,10 +236,10 @@ const ReconciliationsPage = () => {
                   variant="destructive"
                   size="sm"
                   onClick={handleBulkDelete}
-                  disabled={deleteReconciliation.isPending}
+                  disabled={bulkDeleteReconciliations.isPending}
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Delete Selected
+                  {bulkDeleteReconciliations.isPending ? 'Deleting...' : 'Delete Selected'}
                 </Button>
               </div>
             )}
@@ -498,7 +489,7 @@ const ReconciliationsPage = () => {
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-6 py-4 border-t border-space-600">
               <div className="text-sm text-gray-400">
-                Showing {startIndex + 1}-{Math.min(endIndex, sortedReconciliations.length)} of {sortedReconciliations.length}
+                Showing {startIndex + 1}-{endIndex} of {totalElements}
               </div>
               <div className="flex items-center gap-2">
                 <Button

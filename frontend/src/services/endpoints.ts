@@ -45,13 +45,41 @@ export const filesApi = {
 // Reconciliations
 // ============================================
 export const reconciliationsApi = {
-  getAll: () => get<Reconciliation[]>('/reconciliations'),
+  getAll: (params?: {
+    page?: number
+    size?: number
+    sort?: string
+    order?: 'asc' | 'desc'
+  }) => {
+    if (params && (params.page !== undefined || params.size !== undefined)) {
+      const queryParams = new URLSearchParams()
+      if (params.page !== undefined) queryParams.append('page', params.page.toString())
+      if (params.size !== undefined) queryParams.append('size', params.size.toString())
+      if (params.sort) queryParams.append('sort', params.sort)
+      if (params.order) queryParams.append('order', params.order)
+      return get<{
+        content: Reconciliation[]
+        totalElements: number
+        totalPages: number
+        size: number
+        number: number
+      }>(`/reconciliations?${queryParams.toString()}`)
+    }
+    return get<Reconciliation[]>('/reconciliations')
+  },
   getById: (id: number) => get<Reconciliation>(`/reconciliations/${id}`),
   create: (data: CreateReconciliationRequest) =>
     post<Reconciliation>('/reconciliations', data),
   start: (id: number) => post<Reconciliation>(`/reconciliations/${id}/start`),
   cancel: (id: number) => post<Reconciliation>(`/reconciliations/${id}/cancel`),
   delete: (id: number) => del<void>(`/reconciliations/${id}`),
+  bulkDelete: (ids: number[]) =>
+    post<{
+      totalRequested: number
+      successCount: number
+      failedCount: number
+      errors?: string[]
+    }>('/reconciliations/bulk', ids),
 }
 
 // ============================================

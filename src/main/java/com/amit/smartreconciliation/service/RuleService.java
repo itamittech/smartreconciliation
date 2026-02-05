@@ -175,10 +175,8 @@ public class RuleService {
         RuleSet duplicate = RuleSet.builder()
                 .name(original.getName() + " (Copy)")
                 .description(original.getDescription())
-                .sourceFileId(original.getSourceFileId())
-                .targetFileId(original.getTargetFileId())
                 .metadata(original.getMetadata())
-                .active(original.isActive())
+                .active(original.getActive())
                 .organization(org)
                 .build();
 
@@ -191,7 +189,7 @@ public class RuleService {
                     .targetField(originalMapping.getTargetField())
                     .transform(originalMapping.getTransform())
                     .confidence(originalMapping.getConfidence())
-                    .isKey(originalMapping.isKey())
+                    .isKey(originalMapping.getIsKey())
                     .transformConfig(originalMapping.getTransformConfig())
                     .ruleSet(saved)
                     .build();
@@ -210,7 +208,7 @@ public class RuleService {
                     .fuzzyThreshold(originalRule.getFuzzyThreshold())
                     .priority(originalRule.getPriority())
                     .config(originalRule.getConfig())
-                    .active(originalRule.isActive())
+                    .active(originalRule.getActive())
                     .ruleSet(saved)
                     .build();
             saved.getMatchingRules().add(newRule);

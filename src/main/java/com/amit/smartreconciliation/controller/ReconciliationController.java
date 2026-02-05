@@ -13,11 +13,14 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/reconciliations")
@@ -47,7 +50,34 @@ public class ReconciliationController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<ReconciliationResponse>>> getAll() {
+    public ResponseEntity<ApiResponse<?>> getAll(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) String order) {
+
+        // If pagination parameters provided, return paginated result
+        if (page != null || size != null) {
+            int pageNumber = page != null ? page : 0;
+            int pageSize = size != null ? size : 20;
+
+            Sort sortOrder = Sort.unsorted();
+            if (sort != null) {
+                Sort.Direction direction = "desc".equalsIgnoreCase(order)
+                    ? Sort.Direction.DESC
+                    : Sort.Direction.ASC;
+                sortOrder = Sort.by(direction, sort);
+            } else {
+                // Default sort by createdAt descending
+                sortOrder = Sort.by(Sort.Direction.DESC, "createdAt");
+            }
+
+            Pageable pageable = PageRequest.of(pageNumber, pageSize, sortOrder);
+            Page<ReconciliationResponse> response = reconciliationService.getAll(pageable);
+            return ResponseEntity.ok(ApiResponse.success(response));
+        }
+
+        // Otherwise return all as list (backward compatibility)
         List<ReconciliationResponse> response = reconciliationService.getAll();
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -88,5 +118,11 @@ public class ReconciliationController {
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
         reconciliationService.delete(id);
         return ResponseEntity.ok(ApiResponse.success("Reconciliation deleted successfully", null));
+    }
+
+    @DeleteMapping("/bulk")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> bulkDelete(@RequestBody List<Long> ids) {
+        Map<String, Object> result = reconciliationService.deleteAll(ids);
+        return ResponseEntity.ok(ApiResponse.success("Bulk delete completed", result));
     }
 }

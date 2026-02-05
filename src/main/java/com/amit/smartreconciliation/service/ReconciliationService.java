@@ -9,6 +9,8 @@ import com.amit.smartreconciliation.repository.ReconciliationExceptionRepository
 import com.amit.smartreconciliation.repository.ReconciliationRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -419,6 +421,12 @@ public class ReconciliationService {
                 .collect(Collectors.toList());
     }
 
+    public Page<ReconciliationResponse> getAll(Pageable pageable) {
+        Organization org = organizationService.getDefaultOrganization();
+        return reconciliationRepository.findByOrganizationId(org.getId(), pageable)
+                .map(ReconciliationResponse::fromEntity);
+    }
+
     public ReconciliationResponse getStatus(Long id) {
         return getById(id);
     }
@@ -445,6 +453,37 @@ public class ReconciliationService {
 
         reconciliationRepository.delete(reconciliation);
         log.info("Deleted reconciliation: {}", id);
+    }
+
+    @Transactional
+    public Map<String, Object> deleteAll(List<Long> ids) {
+        int successCount = 0;
+        int failedCount = 0;
+        List<String> errors = new ArrayList<>();
+
+        for (Long id : ids) {
+            try {
+                Reconciliation reconciliation = reconciliationRepository.findById(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("Reconciliation", id));
+                reconciliationRepository.delete(reconciliation);
+                successCount++;
+                log.info("Bulk deleted reconciliation: {}", id);
+            } catch (Exception e) {
+                failedCount++;
+                errors.add(String.format("Failed to delete ID %d: %s", id, e.getMessage()));
+                log.error("Failed to bulk delete reconciliation: {} - {}", id, e.getMessage());
+            }
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("totalRequested", ids.size());
+        result.put("successCount", successCount);
+        result.put("failedCount", failedCount);
+        if (!errors.isEmpty()) {
+            result.put("errors", errors);
+        }
+
+        return result;
     }
 
     private record ReconciliationResult(

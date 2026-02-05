@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, ArrowRight } from 'lucide-react'
-import { Modal, Button, Input, Badge } from '@/components/ui'
-import type { RuleSet, MatchType } from '@/services/types'
+import { Modal, Button, Input } from '@/components/ui'
+import type { RuleSet } from '@/services/types'
 
 interface EditRuleSetModalProps {
   isOpen: boolean

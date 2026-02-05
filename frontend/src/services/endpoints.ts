@@ -133,6 +133,14 @@ export const rulesApi = {
     put<MatchingRule>(`/rules/${ruleSetId}/matching-rules/${ruleId}`, data),
   deleteMatchingRule: (ruleSetId: number, ruleId: number) =>
     del<void>(`/rules/${ruleSetId}/matching-rules/${ruleId}`),
+
+  // Test Rule Set
+  testRuleSet: (id: number, data: { sampleSize: number }) =>
+    post<{
+      fieldMappings: Array<{ sourceField: string; targetField: string; success: boolean }>
+      matchingRules: Array<{ name: string; matchType: string }>
+      stats: { validMappings: number; validRules: number }
+    }>(`/rules/${id}/test`, data),
 }
 
 // ============================================

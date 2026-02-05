@@ -324,6 +324,13 @@ export function useDuplicateRuleSet() {
   })
 }
 
+export function useTestRuleSet() {
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: { sampleSize: number } }) =>
+      rulesApi.testRuleSet(id, data),
+  })
+}
+
 export function useAddFieldMapping() {
   const queryClient = useQueryClient()
   return useMutation({

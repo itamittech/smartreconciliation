@@ -605,4 +605,81 @@ test.describe('Rule Builder', () => {
       throw error
     }
   })
+
+  test('RULE-009: Test Rule Set (Preview)', async ({ page }) => {
+    const api = page.request
+    const suffix = Date.now()
+
+    // Create a rule set with mappings and rules for testing
+    const ruleSet = await createRuleSet(api, `Test Preview Rule ${suffix}`, 'Rule for testing preview')
+
+    // Add field mappings
+    await createFieldMapping(api, ruleSet.id, 'Date', 'TransactionDate', true)
+    await createFieldMapping(api, ruleSet.id, 'Amount', 'DebitAmount', false)
+
+    // Add matching rules
+    await createMatchingRule(api, ruleSet.id, 'Exact Match', 'Date', 'TransactionDate', 'EXACT')
+    await createMatchingRule(api, ruleSet.id, 'Fuzzy Match', 'Reference', 'RefNumber', 'FUZZY')
+
+    try {
+      // Navigate to Rules page
+      await openRulesPage(page)
+
+      // Select the rule set
+      await page.getByText(`Test Preview Rule ${suffix}`).first().click()
+
+      // Click "Test Rule" button
+      const detailsPanel = page.locator('div.flex-1.overflow-auto').last()
+      const testButton = detailsPanel.getByRole('button', { name: 'Test Rule' })
+      await expect(testButton).toBeVisible()
+      await testButton.click()
+
+      // Verify test modal opens
+      const modal = page.locator('[role="dialog"]').last()
+      await expect(modal.getByRole('heading', { name: 'Test Rule Set' })).toBeVisible()
+
+      // Verify rule summary is shown
+      await expect(modal.getByText(`Test Preview Rule ${suffix}`).first()).toBeVisible()
+      await expect(modal.getByText('Field Mappings: 2')).toBeVisible()
+      await expect(modal.getByText('Matching Rules: 2')).toBeVisible()
+
+      // Click "Run Test" button
+      const runTestButton = page.getByRole('button', { name: 'Run Test' })
+      await expect(runTestButton).toBeVisible()
+      await runTestButton.click()
+
+      // Wait for test to complete and results to appear
+      await expect(modal.getByText('Test Passed')).toBeVisible({ timeout: 10000 })
+
+      // Verify Field Mappings Test section
+      await expect(modal.getByRole('heading', { name: 'Field Mappings Test' })).toBeVisible()
+      await expect(modal.getByText('Date → TransactionDate')).toBeVisible()
+      await expect(modal.getByText('Amount → DebitAmount')).toBeVisible()
+
+      // Verify Matching Rules Test section
+      await expect(modal.getByRole('heading', { name: 'Matching Rules Test' })).toBeVisible()
+      await expect(modal.getByText('Exact Match')).toBeVisible()
+      await expect(modal.getByText('Fuzzy Match')).toBeVisible()
+
+      // Verify Overall Statistics section
+      await expect(modal.getByRole('heading', { name: 'Overall Statistics' })).toBeVisible()
+      const statsRegion = modal.getByRole('region', { name: 'Test results' })
+      await expect(statsRegion.getByText('2').first()).toBeVisible() // Valid Mappings
+      await expect(statsRegion.getByText('2').last()).toBeVisible() // Valid Rules
+
+      // Verify "Run Again" button appears
+      await expect(modal.getByRole('button', { name: 'Run Again' })).toBeVisible()
+
+      // Close the modal
+      await modal.getByRole('button', { name: 'Close', exact: true }).click()
+      await expect(page.getByRole('heading', { name: 'Test Rule Set' })).not.toBeVisible()
+
+      // Cleanup
+      await deleteRuleSet(api, ruleSet.id)
+    } catch (error) {
+      // Cleanup on error
+      await deleteRuleSet(api, ruleSet.id)
+      throw error
+    }
+  })
 })

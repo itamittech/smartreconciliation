@@ -10,19 +10,22 @@ import {
   Check,
   Loader2,
   AlertCircle,
+  Play,
 } from 'lucide-react'
 import { Button, Input, Card, CardHeader, CardTitle, CardContent, Badge } from '@/components/ui'
 import { cn } from '@/lib/utils'
-import { useRuleSets, useDeleteRuleSet, useCreateRuleSet, useAddFieldMapping, useAddMatchingRule, useDuplicateRuleSet, useUpdateRuleSet } from '@/services/hooks'
+import { useRuleSets, useDeleteRuleSet, useCreateRuleSet, useAddFieldMapping, useAddMatchingRule, useDuplicateRuleSet, useUpdateRuleSet, useTestRuleSet } from '@/services/hooks'
 import type { RuleSet as ApiRuleSet } from '@/services/types'
 import { CreateRuleSetModal } from '@/components/rules/CreateRuleSetModal'
 import { EditRuleSetModal } from '@/components/rules/EditRuleSetModal'
+import { TestRuleSetModal } from '@/components/rules/TestRuleSetModal'
 
 const RulesPage = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedRuleId, setSelectedRuleId] = useState<number | null>(null)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isTestModalOpen, setIsTestModalOpen] = useState(false)
 
   const { data: ruleSetsResponse, isLoading, isError, error } = useRuleSets()
   const deleteRuleSet = useDeleteRuleSet()
@@ -31,6 +34,7 @@ const RulesPage = () => {
   const createRuleSet = useCreateRuleSet()
   const addFieldMapping = useAddFieldMapping()
   const addMatchingRule = useAddMatchingRule()
+  const testRuleSet = useTestRuleSet()
 
   const ruleSets = ruleSetsResponse?.data || []
   const selectedRule = ruleSets.find(r => r.id === selectedRuleId) || null
@@ -83,7 +87,7 @@ const RulesPage = () => {
           sourceField: rule.sourceField,
           targetField: rule.targetField,
           matchType: rule.matchType as 'EXACT' | 'FUZZY' | 'RANGE' | 'CONTAINS' | 'STARTS_WITH' | 'ENDS_WITH',
-          threshold: rule.threshold,
+          threshold: rule.threshold ?? undefined,
         },
       })
     }
@@ -127,6 +131,19 @@ const RulesPage = () => {
         description: data.description,
       },
     })
+  }
+
+  const handleTestRule = () => {
+    setIsTestModalOpen(true)
+  }
+
+  const handleTestRuleSubmit = async (data: { sampleSize: number }) => {
+    if (!selectedRuleId) throw new Error('No rule selected')
+    const result = await testRuleSet.mutateAsync({
+      id: selectedRuleId,
+      data,
+    })
+    return result.data
   }
 
   const handleKeyDown = (e: React.KeyboardEvent, rule: ApiRuleSet) => {
@@ -175,6 +192,12 @@ const RulesPage = () => {
         onClose={() => setIsEditModalOpen(false)}
         ruleSet={selectedRule}
         onSubmit={handleEditRuleSubmit}
+      />
+      <TestRuleSetModal
+        isOpen={isTestModalOpen}
+        onClose={() => setIsTestModalOpen(false)}
+        ruleSet={selectedRule}
+        onTest={handleTestRuleSubmit}
       />
       <div className="flex h-full">
       {/* Rule List */}
@@ -269,6 +292,10 @@ const RulesPage = () => {
                 )}
               </div>
               <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={handleTestRule}>
+                  <Play className="mr-1 h-4 w-4" />
+                  Test Rule
+                </Button>
                 <Button variant="outline" size="sm" onClick={handleEditRule}>
                   <Edit2 className="mr-1 h-4 w-4" />
                   Edit

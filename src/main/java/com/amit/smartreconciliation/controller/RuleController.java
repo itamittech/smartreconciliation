@@ -64,6 +64,14 @@ public class RuleController {
                 .body(ApiResponse.success("Rule set duplicated successfully", response));
     }
 
+    @PostMapping("/{id}/test")
+    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> testRuleSet(
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, Integer> request) {
+        java.util.Map<String, Object> testResults = ruleService.testRuleSet(id, request.get("sampleSize"));
+        return ResponseEntity.ok(ApiResponse.success("Rule set test completed successfully", testResults));
+    }
+
     @PostMapping("/{id}/mappings")
     public ResponseEntity<ApiResponse<RuleSetResponse>> addFieldMapping(
             @PathVariable Long id,

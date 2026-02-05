@@ -116,6 +116,7 @@ export const rulesApi = {
   updateRuleSet: (id: number, data: Partial<CreateRuleSetRequest>) =>
     put<RuleSet>(`/rules/${id}`, data),
   deleteRuleSet: (id: number) => del<void>(`/rules/${id}`),
+  duplicateRuleSet: (id: number) => post<RuleSet>(`/rules/${id}/duplicate`, {}),
 
   // Field Mappings
   addFieldMapping: (ruleSetId: number, data: CreateFieldMappingRequest) =>

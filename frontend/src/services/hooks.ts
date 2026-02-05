@@ -314,6 +314,16 @@ export function useDeleteRuleSet() {
   })
 }
 
+export function useDuplicateRuleSet() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => rulesApi.duplicateRuleSet(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.ruleSets })
+    },
+  })
+}
+
 export function useAddFieldMapping() {
   const queryClient = useQueryClient()
   return useMutation({

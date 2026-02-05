@@ -165,6 +165,63 @@ public class RuleService {
     }
 
     @Transactional
+    public RuleSetResponse duplicate(Long id) {
+        RuleSet original = ruleSetRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("RuleSet", id));
+
+        Organization org = organizationService.getDefaultOrganization();
+
+        // Create new rule set with duplicated data
+        RuleSet duplicate = RuleSet.builder()
+                .name(original.getName() + " (Copy)")
+                .description(original.getDescription())
+                .sourceFileId(original.getSourceFileId())
+                .targetFileId(original.getTargetFileId())
+                .metadata(original.getMetadata())
+                .active(original.isActive())
+                .organization(org)
+                .build();
+
+        RuleSet saved = ruleSetRepository.save(duplicate);
+
+        // Copy field mappings
+        for (FieldMapping originalMapping : original.getFieldMappings()) {
+            FieldMapping newMapping = FieldMapping.builder()
+                    .sourceField(originalMapping.getSourceField())
+                    .targetField(originalMapping.getTargetField())
+                    .transform(originalMapping.getTransform())
+                    .confidence(originalMapping.getConfidence())
+                    .isKey(originalMapping.isKey())
+                    .transformConfig(originalMapping.getTransformConfig())
+                    .ruleSet(saved)
+                    .build();
+            saved.getFieldMappings().add(newMapping);
+        }
+
+        // Copy matching rules
+        for (MatchingRule originalRule : original.getMatchingRules()) {
+            MatchingRule newRule = MatchingRule.builder()
+                    .name(originalRule.getName())
+                    .description(originalRule.getDescription())
+                    .sourceField(originalRule.getSourceField())
+                    .targetField(originalRule.getTargetField())
+                    .matchType(originalRule.getMatchType())
+                    .tolerance(originalRule.getTolerance())
+                    .fuzzyThreshold(originalRule.getFuzzyThreshold())
+                    .priority(originalRule.getPriority())
+                    .config(originalRule.getConfig())
+                    .active(originalRule.isActive())
+                    .ruleSet(saved)
+                    .build();
+            saved.getMatchingRules().add(newRule);
+        }
+
+        saved = ruleSetRepository.save(saved);
+        log.info("Duplicated rule set {} to {} (id: {})", original.getId(), saved.getId(), saved.getName());
+        return RuleSetResponse.fromEntity(saved);
+    }
+
+    @Transactional
     public RuleSetResponse addFieldMapping(Long ruleSetId, FieldMappingRequest request) {
         RuleSet ruleSet = ruleSetRepository.findById(ruleSetId)
                 .orElseThrow(() -> new ResourceNotFoundException("RuleSet", ruleSetId));

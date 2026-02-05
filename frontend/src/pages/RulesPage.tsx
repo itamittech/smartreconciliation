@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import { Button, Input, Card, CardHeader, CardTitle, CardContent, Badge } from '@/components/ui'
 import { cn } from '@/lib/utils'
-import { useRuleSets, useDeleteRuleSet, useCreateRuleSet, useAddFieldMapping, useAddMatchingRule } from '@/services/hooks'
+import { useRuleSets, useDeleteRuleSet, useCreateRuleSet, useAddFieldMapping, useAddMatchingRule, useDuplicateRuleSet } from '@/services/hooks'
 import type { RuleSet as ApiRuleSet } from '@/services/types'
 import { CreateRuleSetModal } from '@/components/rules/CreateRuleSetModal'
 
@@ -24,6 +24,7 @@ const RulesPage = () => {
 
   const { data: ruleSetsResponse, isLoading, isError, error } = useRuleSets()
   const deleteRuleSet = useDeleteRuleSet()
+  const duplicateRuleSet = useDuplicateRuleSet()
   const createRuleSet = useCreateRuleSet()
   const addFieldMapping = useAddFieldMapping()
   const addMatchingRule = useAddMatchingRule()
@@ -98,6 +99,15 @@ const RulesPage = () => {
       if (selectedRuleId === id) {
         setSelectedRuleId(null)
       }
+    }
+  }
+
+  const handleDuplicateRule = async (id: number) => {
+    try {
+      const result = await duplicateRuleSet.mutateAsync(id)
+      setSelectedRuleId(result.data.id ?? null)
+    } catch (error) {
+      console.error('Failed to duplicate rule set:', error)
     }
   }
 
@@ -239,7 +249,12 @@ const RulesPage = () => {
                   <Edit2 className="mr-1 h-4 w-4" />
                   Edit
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDuplicateRule(selectedRule.id)}
+                  disabled={duplicateRuleSet.isPending}
+                >
                   <Copy className="mr-1 h-4 w-4" />
                   Duplicate
                 </Button>

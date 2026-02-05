@@ -462,4 +462,74 @@ test.describe('Rule Builder', () => {
       await deleteRuleSet(api, createdRule.id)
     }
   })
+
+  test('RULE-007: Duplicate Rule Set', async ({ page }) => {
+    const api = page.request
+    const suffix = Date.now()
+
+    // Create a rule set to duplicate
+    const ruleSet = await createRuleSet(
+      api,
+      `Original Rule ${suffix}`,
+      'Original description for duplication test'
+    )
+
+    // Add field mappings
+    await createFieldMapping(api, ruleSet.id, 'SourceA', 'TargetA', true)
+    await createFieldMapping(api, ruleSet.id, 'SourceB', 'TargetB', false)
+
+    // Add matching rules
+    await createMatchingRule(api, ruleSet.id, 'Match Rule 1', 'SourceA', 'TargetA', 'EXACT')
+    await createMatchingRule(api, ruleSet.id, 'Match Rule 2', 'SourceB', 'TargetB', 'FUZZY')
+
+    try {
+      // Navigate to Rules page
+      await openRulesPage(page)
+
+      // Select the original rule
+      const originalRuleCard = page.locator('div[role="button"]').filter({
+        hasText: `Original Rule ${suffix}`
+      })
+      await expect(originalRuleCard).toBeVisible()
+      await originalRuleCard.click()
+
+      // Test duplicate via API directly first
+      const duplicateResponse = await api.post(`${API_BASE_URL}/rules/${ruleSet.id}/duplicate`, {})
+      if (!duplicateResponse.ok()) {
+        const errorBody = await duplicateResponse.text()
+        console.log(`Duplicate API failed with status ${duplicateResponse.status()}: ${errorBody}`)
+      }
+      expect(duplicateResponse.ok()).toBeTruthy()
+      const duplicateBody = await duplicateResponse.json()
+      const duplicatedRule = duplicateBody.data
+
+      // Reload page to see the duplicate
+      await page.reload()
+      await expect(page.getByText('Rule Library')).toBeVisible()
+
+      // Verify duplicate appears in list
+      await expect(page.getByText(`Original Rule ${suffix} (Copy)`).first()).toBeVisible()
+
+      // Verify field mappings and matching rules were copied
+      expect(duplicatedRule.fieldMappings).toHaveLength(2)
+      expect(duplicatedRule.matchingRules).toHaveLength(2)
+      expect(duplicatedRule.name).toBe(`Original Rule ${suffix} (Copy)`)
+      expect(duplicatedRule.id).not.toBe(ruleSet.id)
+
+      // Cleanup - delete both original and duplicate
+      await deleteRuleSet(api, ruleSet.id)
+      await deleteRuleSet(api, duplicatedRule.id)
+    } catch (error) {
+      // Cleanup on error
+      const rulesResponse = await api.get(`${API_BASE_URL}/rules`)
+      const rulesBody = await rulesResponse.json()
+      const rules = rulesBody.data.filter((r: { name: string }) =>
+        r.name.includes(`Original Rule ${suffix}`)
+      )
+      for (const rule of rules) {
+        await deleteRuleSet(api, rule.id)
+      }
+      throw error
+    }
+  })
 })

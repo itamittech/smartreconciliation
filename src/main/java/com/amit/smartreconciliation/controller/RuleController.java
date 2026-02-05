@@ -57,6 +57,13 @@ public class RuleController {
         return ResponseEntity.ok(ApiResponse.success("Rule set deleted successfully", null));
     }
 
+    @PostMapping("/{id}/duplicate")
+    public ResponseEntity<ApiResponse<RuleSetResponse>> duplicate(@PathVariable Long id) {
+        RuleSetResponse response = ruleService.duplicate(id);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Rule set duplicated successfully", response));
+    }
+
     @PostMapping("/{id}/mappings")
     public ResponseEntity<ApiResponse<RuleSetResponse>> addFieldMapping(
             @PathVariable Long id,

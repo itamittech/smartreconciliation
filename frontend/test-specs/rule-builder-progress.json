@@ -4,10 +4,10 @@
   "lastUpdated": "2026-02-05",
   "summary": {
     "totalCases": 9,
-    "implementedCases": 5,
+    "implementedCases": 6,
     "passedCases": 5,
     "skippedCases": 0,
-    "failedCases": 0
+    "failedCases": 1
   },
   "cases": [
     {
@@ -43,7 +43,8 @@
     {
       "id": "RULE-007",
       "title": "Duplicate Rule Set",
-      "status": "pending"
+      "status": "implemented",
+      "notes": "Backend restart required - endpoint returns 500 until backend is restarted to register new /duplicate endpoint"
     },
     {
       "id": "RULE-008",

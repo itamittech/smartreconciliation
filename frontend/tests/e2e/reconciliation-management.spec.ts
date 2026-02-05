@@ -430,4 +430,118 @@ test.describe('Reconciliation Management', () => {
     await deleteFile(api, fileA.id)
     await deleteFile(api, fileB.id)
   })
+
+  test('REC-009: Reconciliation Status Real-Time Updates', async ({ page }) => {
+    const api = page.request
+    const suffix = Date.now()
+    const fileA = await uploadFile(api, `polling_test_a_${suffix}.csv`, 'id,amount\n1,100')
+    const fileB = await uploadFile(api, `polling_test_b_${suffix}.csv`, 'id,amount\n2,200')
+    const ruleSet = await createRuleSet(api, `Polling Rules ${suffix}`, 'Polling test')
+    const pollingRecon = await createReconciliation(
+      api,
+      `Polling Test ${suffix}`,
+      null,
+      fileA.id,
+      fileB.id,
+      ruleSet.id
+    )
+
+    await openReconciliationsPage(page)
+
+    // Find the reconciliation row
+    const row = page.locator('tr', { hasText: pollingRecon.name })
+    await expect(row).toBeVisible()
+
+    // Verify some status is shown
+    await expect(row.getByText(/Pending|Processing|Completed|Failed/)).toBeVisible()
+
+    // Start the reconciliation if it's pending
+    const startButton = row.getByLabel('Start reconciliation')
+    if (await startButton.count() > 0) {
+      // Capture initial status
+      const initialStatus = await row.getByText(/Pending|Processing|Completed|Failed/).first().textContent()
+
+      await startButton.click()
+
+      // Wait for status to update (Processing or Completed)
+      await page.waitForTimeout(2000)
+
+      // Verify status has changed or is Processing/Completed
+      const updatedRow = page.locator('tr', { hasText: pollingRecon.name })
+      await expect(updatedRow.getByText(/Processing|Completed/)).toBeVisible({ timeout: 10000 })
+
+      // Verify it's different from initial or is now Processing/Completed
+      const newStatus = await updatedRow.getByText(/Pending|Processing|Completed|Failed/).first().textContent()
+      expect(['Processing', 'Completed'].some(s => newStatus?.includes(s))).toBeTruthy()
+    }
+
+    // Clean up
+    await deleteReconciliation(api, pollingRecon.id)
+    await deleteRuleSet(api, ruleSet.id)
+    await deleteFile(api, fileA.id)
+    await deleteFile(api, fileB.id)
+  })
+
+  test('REC-010: Bulk Operations on Reconciliations', async ({ page }) => {
+    const api = page.request
+    const suffix = Date.now()
+    const fileA = await uploadFile(api, `bulk_test_a_${suffix}.csv`, 'id,amount\n1,100')
+    const fileB = await uploadFile(api, `bulk_test_b_${suffix}.csv`, 'id,amount\n2,200')
+    const ruleSet = await createRuleSet(api, `Bulk Rules ${suffix}`, 'Bulk test')
+
+    // Create 5 reconciliations for bulk operations
+    const recons = []
+    for (let i = 1; i <= 5; i++) {
+      const recon = await createReconciliation(
+        api,
+        `Bulk Test ${suffix} ${i}`,
+        null,
+        fileA.id,
+        fileB.id,
+        ruleSet.id
+      )
+      recons.push(recon)
+    }
+
+    await openReconciliationsPage(page)
+
+    // Verify checkboxes exist
+    const firstCheckbox = page.locator('tbody tr').first().getByRole('checkbox')
+    await expect(firstCheckbox).toBeVisible()
+
+    // Select 3 reconciliations
+    await page.locator('tbody tr').nth(0).getByRole('checkbox').check()
+    await page.locator('tbody tr').nth(1).getByRole('checkbox').check()
+    await page.locator('tbody tr').nth(2).getByRole('checkbox').check()
+
+    // Verify selected count displays
+    await expect(page.getByText('3 selected')).toBeVisible()
+
+    // Verify bulk delete button appears
+    const deleteSelectedBtn = page.getByRole('button', { name: /Delete Selected/i })
+    await expect(deleteSelectedBtn).toBeVisible()
+
+    // Click delete selected
+    const dialogPromise = page.waitForEvent('dialog').then((dialog) => dialog.accept())
+    await deleteSelectedBtn.click()
+    await dialogPromise
+
+    // Wait for deletion to complete
+    await page.waitForTimeout(1000)
+
+    // Verify selection cleared
+    await expect(page.getByText('3 selected')).toHaveCount(0)
+
+    // Clean up remaining reconciliations
+    for (const recon of recons) {
+      try {
+        await deleteReconciliation(api, recon.id)
+      } catch {
+        // Already deleted via bulk operation
+      }
+    }
+    await deleteRuleSet(api, ruleSet.id)
+    await deleteFile(api, fileA.id)
+    await deleteFile(api, fileB.id)
+  })
 })

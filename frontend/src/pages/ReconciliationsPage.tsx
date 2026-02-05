@@ -48,6 +48,7 @@ const ReconciliationsPage = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [sortField, setSortField] = useState<SortField>('createdAt')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
 
   const { setActiveView } = useAppStore()
   const { data: reconciliationsResponse, isLoading, isError, error } = useReconciliations()
@@ -128,6 +129,38 @@ const ReconciliationsPage = () => {
     )
   }
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(new Set(paginatedReconciliations.map((r) => r.id)))
+    } else {
+      setSelectedIds(new Set())
+    }
+  }
+
+  const handleSelectOne = (id: number, checked: boolean) => {
+    const newSelected = new Set(selectedIds)
+    if (checked) {
+      newSelected.add(id)
+    } else {
+      newSelected.delete(id)
+    }
+    setSelectedIds(newSelected)
+  }
+
+  const handleBulkDelete = () => {
+    if (selectedIds.size === 0) return
+    if (confirm(`Delete ${selectedIds.size} selected reconciliation(s)?`)) {
+      selectedIds.forEach((id) => {
+        deleteReconciliation.mutate(id)
+      })
+      setSelectedIds(new Set())
+    }
+  }
+
+  const allSelected = paginatedReconciliations.length > 0 &&
+    paginatedReconciliations.every((r) => selectedIds.has(r.id))
+  const someSelected = paginatedReconciliations.some((r) => selectedIds.has(r.id)) && !allSelected
+
   const handleNewReconciliation = () => {
     setShowWizard(true)
   }
@@ -204,10 +237,26 @@ const ReconciliationsPage = () => {
               Neural-powered data matching and verification workflows
             </p>
           </div>
-          <Button onClick={handleNewReconciliation} glow>
-            <Plus className="mr-2 h-4 w-4" />
-            New Reconciliation
-          </Button>
+          <div className="flex items-center gap-2">
+            {selectedIds.size > 0 && (
+              <div className="flex items-center gap-2 mr-4">
+                <span className="text-sm text-gray-400">{selectedIds.size} selected</span>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleBulkDelete}
+                  disabled={deleteReconciliation.isPending}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete Selected
+                </Button>
+              </div>
+            )}
+            <Button onClick={handleNewReconciliation} glow>
+              <Plus className="mr-2 h-4 w-4" />
+              New Reconciliation
+            </Button>
+          </div>
         </div>
 
         <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -244,6 +293,18 @@ const ReconciliationsPage = () => {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-space-600">
+                  <th className="px-4 py-3 w-12">
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      ref={(input) => {
+                        if (input) input.indeterminate = someSelected
+                      }}
+                      onChange={(e) => handleSelectAll(e.target.checked)}
+                      className="rounded border-space-600 bg-space-800 text-violet-500 focus:ring-violet-500 focus:ring-offset-space-900"
+                      aria-label="Select all reconciliations"
+                    />
+                  </th>
                   <th
                     className="px-4 py-3 text-left text-xs font-semibold text-violet-300 uppercase tracking-wider cursor-pointer hover:text-violet-200 transition-colors"
                     onClick={() => handleSort('name')}
@@ -302,6 +363,15 @@ const ReconciliationsPage = () => {
                       )}
                       aria-selected={selectedId === recon.id}
                     >
+                      <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(recon.id)}
+                          onChange={(e) => handleSelectOne(recon.id, e.target.checked)}
+                          className="rounded border-space-600 bg-space-800 text-violet-500 focus:ring-violet-500 focus:ring-offset-space-900"
+                          aria-label={`Select ${recon.name}`}
+                        />
+                      </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
                           <div className="rounded-xl gradient-violet p-2 shadow-glow-violet">

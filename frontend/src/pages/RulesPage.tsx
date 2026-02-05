@@ -13,18 +13,21 @@ import {
 } from 'lucide-react'
 import { Button, Input, Card, CardHeader, CardTitle, CardContent, Badge } from '@/components/ui'
 import { cn } from '@/lib/utils'
-import { useRuleSets, useDeleteRuleSet, useCreateRuleSet, useAddFieldMapping, useAddMatchingRule, useDuplicateRuleSet } from '@/services/hooks'
+import { useRuleSets, useDeleteRuleSet, useCreateRuleSet, useAddFieldMapping, useAddMatchingRule, useDuplicateRuleSet, useUpdateRuleSet } from '@/services/hooks'
 import type { RuleSet as ApiRuleSet } from '@/services/types'
 import { CreateRuleSetModal } from '@/components/rules/CreateRuleSetModal'
+import { EditRuleSetModal } from '@/components/rules/EditRuleSetModal'
 
 const RulesPage = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedRuleId, setSelectedRuleId] = useState<number | null>(null)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
   const { data: ruleSetsResponse, isLoading, isError, error } = useRuleSets()
   const deleteRuleSet = useDeleteRuleSet()
   const duplicateRuleSet = useDuplicateRuleSet()
+  const updateRuleSet = useUpdateRuleSet()
   const createRuleSet = useCreateRuleSet()
   const addFieldMapping = useAddFieldMapping()
   const addMatchingRule = useAddMatchingRule()
@@ -111,6 +114,21 @@ const RulesPage = () => {
     }
   }
 
+  const handleEditRule = () => {
+    setIsEditModalOpen(true)
+  }
+
+  const handleEditRuleSubmit = async (data: { name: string; description: string }) => {
+    if (!selectedRuleId) return
+    await updateRuleSet.mutateAsync({
+      id: selectedRuleId,
+      data: {
+        name: data.name,
+        description: data.description,
+      },
+    })
+  }
+
   const handleKeyDown = (e: React.KeyboardEvent, rule: ApiRuleSet) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
@@ -151,6 +169,12 @@ const RulesPage = () => {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateRuleSubmit}
+      />
+      <EditRuleSetModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        ruleSet={selectedRule}
+        onSubmit={handleEditRuleSubmit}
       />
       <div className="flex h-full">
       {/* Rule List */}
@@ -245,7 +269,7 @@ const RulesPage = () => {
                 )}
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={handleEditRule}>
                   <Edit2 className="mr-1 h-4 w-4" />
                   Edit
                 </Button>

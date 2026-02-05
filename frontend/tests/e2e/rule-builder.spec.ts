@@ -531,4 +531,78 @@ test.describe('Rule Builder', () => {
       throw error
     }
   })
+
+  test('RULE-006: Edit Existing Rule Set', async ({ page }) => {
+    const api = page.request
+    const suffix = Date.now()
+
+    // Create a rule set to edit
+    const ruleSet = await createRuleSet(
+      api,
+      `Editable Rule ${suffix}`,
+      'Original description'
+    )
+
+    // Add some field mappings and matching rules
+    await createFieldMapping(api, ruleSet.id, 'Field1', 'Target1', true)
+    await createMatchingRule(api, ruleSet.id, 'Rule1', 'Field1', 'Target1', 'EXACT')
+
+    try {
+      // Navigate to Rules page
+      await openRulesPage(page)
+
+      // Select the rule
+      const ruleCard = page.locator('div[role="button"]').filter({
+        hasText: `Editable Rule ${suffix}`
+      })
+      await expect(ruleCard).toBeVisible()
+      await ruleCard.click()
+
+      // Click Edit button
+      const detailsPanel = page.locator('div.flex-1.overflow-auto').last()
+      const editButton = detailsPanel.getByRole('button', { name: 'Edit' })
+      await expect(editButton).toBeVisible()
+      await editButton.click()
+
+      // Verify edit modal opens
+      await expect(page.getByRole('heading', { name: 'Edit Rule Set' })).toBeVisible()
+
+      // Verify form is pre-filled with current values
+      const nameInput = page.getByLabel('Rule Set Name *')
+      await expect(nameInput).toHaveValue(`Editable Rule ${suffix}`)
+      const descInput = page.getByLabel('Description')
+      await expect(descInput).toHaveValue('Original description')
+
+      // Edit the name and description
+      await nameInput.fill(`Edited Rule ${suffix}`)
+      await descInput.fill('Updated description')
+
+      // Save changes
+      await page.getByRole('button', { name: 'Save Changes' }).click()
+
+      // Wait for modal to close
+      await expect(page.getByRole('heading', { name: 'Edit Rule Set' })).not.toBeVisible({ timeout: 5000 })
+
+      // Verify changes appear in the details panel
+      await expect(detailsPanel.getByRole('heading', { name: `Edited Rule ${suffix}` })).toBeVisible()
+      await expect(detailsPanel.getByText('Updated description').first()).toBeVisible()
+
+      // Verify changes appear in the rule card
+      await expect(page.getByText(`Edited Rule ${suffix}`).first()).toBeVisible()
+
+      // Verify changes persisted to backend
+      const updatedResponse = await api.get(`${API_BASE_URL}/rules/${ruleSet.id}`)
+      expect(updatedResponse.ok()).toBeTruthy()
+      const updatedBody = await updatedResponse.json()
+      expect(updatedBody.data.name).toBe(`Edited Rule ${suffix}`)
+      expect(updatedBody.data.description).toBe('Updated description')
+
+      // Cleanup
+      await deleteRuleSet(api, ruleSet.id)
+    } catch (error) {
+      // Cleanup on error
+      await deleteRuleSet(api, ruleSet.id)
+      throw error
+    }
+  })
 })

@@ -13,15 +13,20 @@ import {
 } from 'lucide-react'
 import { Button, Input, Card, CardHeader, CardTitle, CardContent, Badge } from '@/components/ui'
 import { cn } from '@/lib/utils'
-import { useRuleSets, useDeleteRuleSet } from '@/services/hooks'
+import { useRuleSets, useDeleteRuleSet, useCreateRuleSet, useAddFieldMapping, useAddMatchingRule } from '@/services/hooks'
 import type { RuleSet as ApiRuleSet } from '@/services/types'
+import { CreateRuleSetModal } from '@/components/rules/CreateRuleSetModal'
 
 const RulesPage = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedRuleId, setSelectedRuleId] = useState<number | null>(null)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
   const { data: ruleSetsResponse, isLoading, isError, error } = useRuleSets()
   const deleteRuleSet = useDeleteRuleSet()
+  const createRuleSet = useCreateRuleSet()
+  const addFieldMapping = useAddFieldMapping()
+  const addMatchingRule = useAddMatchingRule()
 
   const ruleSets = ruleSetsResponse?.data || []
   const selectedRule = ruleSets.find(r => r.id === selectedRuleId) || null
@@ -31,8 +36,56 @@ const RulesPage = () => {
   )
 
   const handleCreateRule = () => {
-    console.log('Create new rule')
-    // TODO: Open create rule modal
+    setIsCreateModalOpen(true)
+  }
+
+  const handleCreateRuleSubmit = async (data: {
+    name: string
+    description: string
+    fieldMappings: Array<{ sourceField: string; targetField: string; isKeyField: boolean }>
+    matchingRules: Array<{
+      name: string
+      sourceField: string
+      targetField: string
+      matchType: string
+      threshold: number | null
+    }>
+  }) => {
+    // Create the rule set first
+    const response = await createRuleSet.mutateAsync({
+      name: data.name,
+      description: data.description,
+    })
+    const ruleSet = response.data
+
+    // Add field mappings
+    for (const mapping of data.fieldMappings) {
+      await addFieldMapping.mutateAsync({
+        ruleSetId: ruleSet.id,
+        data: {
+          sourceField: mapping.sourceField,
+          targetField: mapping.targetField,
+          isKeyField: mapping.isKeyField,
+        },
+      })
+    }
+
+    // Add matching rules
+    for (const rule of data.matchingRules) {
+      await addMatchingRule.mutateAsync({
+        ruleSetId: ruleSet.id,
+        data: {
+          name: rule.name,
+          sourceField: rule.sourceField,
+          targetField: rule.targetField,
+          matchType: rule.matchType as 'EXACT' | 'FUZZY' | 'RANGE' | 'CONTAINS' | 'STARTS_WITH' | 'ENDS_WITH',
+          threshold: rule.threshold,
+        },
+      })
+    }
+
+    // Select the newly created rule
+    setSelectedRuleId(ruleSet.id ?? null)
   }
 
   const handleSelectRule = (rule: ApiRuleSet) => {
@@ -83,7 +136,13 @@ const RulesPage = () => {
   }
 
   return (
-    <div className="flex h-full">
+    <>
+      <CreateRuleSetModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSubmit={handleCreateRuleSubmit}
+      />
+      <div className="flex h-full">
       {/* Rule List */}
       <div className="flex w-96 flex-col border-r">
         <div className="border-b p-4">
@@ -313,6 +372,7 @@ const RulesPage = () => {
         )}
       </div>
     </div>
+    </>
   )
 }
 

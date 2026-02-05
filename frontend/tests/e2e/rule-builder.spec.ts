@@ -388,4 +388,78 @@ test.describe('Rule Builder', () => {
 
     // Note: No cleanup needed since we deleted the rule in the test
   })
+
+  test('RULE-004: Create New Rule Set (Manual)', async ({ page }) => {
+    const api = page.request
+    const suffix = Date.now()
+
+    // Navigate to Rules page
+    await openRulesPage(page)
+
+    // Click "New" button to open create modal (use first one in the header)
+    const newButton = page.getByRole('button', { name: 'New' }).first()
+    await expect(newButton).toBeVisible()
+    await newButton.click()
+
+    // Verify modal opens
+    await expect(page.getByRole('heading', { name: 'Create Rule Set' })).toBeVisible()
+
+    // Fill in basic info
+    await page.getByLabel('Rule Set Name *').fill(`Test Create Rule ${suffix}`)
+    await page.getByLabel('Description').fill('Created via E2E test')
+
+    // Add field mappings (use first() for field mapping section)
+    await page.getByLabel('Source Field').first().fill('TransactionDate')
+    await page.getByLabel('Target Field').first().fill('Date')
+    await page.getByLabel('Key').check()
+    await page.getByRole('button', { name: 'Add field mapping' }).click()
+
+    // Verify mapping was added
+    await expect(page.getByText('TransactionDate').first()).toBeVisible()
+    await expect(page.getByText('Date').first()).toBeVisible()
+    await expect(page.getByText('Key').first()).toBeVisible()
+
+    // Add another field mapping
+    await page.getByLabel('Source Field').first().fill('Amount')
+    await page.getByLabel('Target Field').first().fill('DebitAmount')
+    await page.getByRole('button', { name: 'Add field mapping' }).click()
+
+    // Add matching rule (use nth(1) for matching rule section)
+    await page.getByLabel('Rule Name').fill('Exact Date Match')
+    await page.getByLabel('Match Type').selectOption('EXACT')
+    await page.getByLabel('Source Field').nth(1).fill('TransactionDate')
+    await page.getByLabel('Target Field').nth(1).fill('Date')
+    await page.getByRole('button', { name: 'Add Matching Rule' }).click()
+
+    // Verify matching rule was added
+    await expect(page.getByText('Exact Date Match')).toBeVisible()
+    await expect(page.getByText('EXACT').first()).toBeVisible()
+
+    // Submit the form (scroll into view first)
+    const submitButton = page.getByRole('button', { name: 'Create Rule Set' })
+    await submitButton.scrollIntoViewIfNeeded()
+    await submitButton.click()
+
+    // Wait for modal to close and rule to appear in list
+    await expect(page.getByRole('heading', { name: 'Create Rule Set' })).not.toBeVisible({ timeout: 10000 })
+    await expect(page.getByText(`Test Create Rule ${suffix}`).first()).toBeVisible()
+
+    // Verify the rule is auto-selected and shows details
+    const detailsPanel = page.locator('div.flex-1.overflow-auto').last()
+    await expect(detailsPanel.getByRole('heading', { name: `Test Create Rule ${suffix}` })).toBeVisible()
+
+    // Verify rule details sections are visible
+    await expect(detailsPanel.getByRole('heading', { name: 'Field Mappings' })).toBeVisible()
+    await expect(detailsPanel.getByRole('heading', { name: 'Matching Rules' })).toBeVisible()
+
+    // Cleanup - find the created rule and delete it
+    const response = await api.get(`${API_BASE_URL}/rules`)
+    const body = await response.json()
+    const createdRule = body.data.find((r: { name: string }) =>
+      r.name === `Test Create Rule ${suffix}`
+    )
+    if (createdRule) {
+      await deleteRuleSet(api, createdRule.id)
+    }
+  })
 })

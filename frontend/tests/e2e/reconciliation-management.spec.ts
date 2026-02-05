@@ -101,7 +101,8 @@ test.describe('Reconciliation Management', () => {
     await page.getByRole('button', { name: 'New Reconciliation' }).click()
     await expect(page.getByRole('heading', { name: 'New Reconciliation' })).toBeVisible()
 
-    const nextButton = page.getByRole('button', { name: 'Next' })
+    const wizard = page.locator('.fixed.inset-0.z-50')
+    const nextButton = wizard.getByRole('button', { name: 'Next' })
     await expect(nextButton).toBeDisabled()
 
     const reconciliationName = `January 2026 Bank Reconciliation ${suffix}`
@@ -412,7 +413,7 @@ test.describe('Reconciliation Management', () => {
     await openReconciliationsPage(page)
 
     // Verify sortable column headers exist
-    const nameHeader = page.getByRole('columnheader', { name: /Reconciliation|Name/i })
+    const nameHeader = page.getByRole('columnheader', { name: 'Reconciliation', exact: true })
     await expect(nameHeader).toBeVisible()
 
     // Click to sort by name

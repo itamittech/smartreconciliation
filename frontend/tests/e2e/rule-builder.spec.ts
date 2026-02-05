@@ -240,4 +240,91 @@ test.describe('Rule Builder', () => {
       }
     }
   })
+
+  test('RULE-003: Select and View Rule Details', async ({ page }) => {
+    const api = page.request
+    const suffix = Date.now()
+
+    // Create a comprehensive rule set with field mappings and matching rules
+    const ruleSet = await createRuleSet(
+      api,
+      `Comprehensive Test Rules ${suffix}`,
+      'Complete rule set for detailed testing'
+    )
+
+    // Add multiple field mappings
+    await createFieldMapping(api, ruleSet.id, 'TransactionDate', 'Date', true)
+    await createFieldMapping(api, ruleSet.id, 'Amount', 'DebitAmount', false)
+    await createFieldMapping(api, ruleSet.id, 'Reference', 'ReferenceNumber', false)
+    await createFieldMapping(api, ruleSet.id, 'Description', 'TransactionDescription', false)
+
+    // Add multiple matching rules
+    await createMatchingRule(api, ruleSet.id, 'Exact ID Match', 'TransactionDate', 'Date', 'EXACT')
+    await createMatchingRule(api, ruleSet.id, 'Amount Match', 'Amount', 'DebitAmount', 'EXACT')
+    await createMatchingRule(api, ruleSet.id, 'Fuzzy Reference', 'Reference', 'ReferenceNumber', 'FUZZY')
+
+    try {
+      // Navigate to Rules page
+      await openRulesPage(page)
+
+      // Click on the rule to select it
+      const ruleCard = page.locator('div[role="button"]').filter({
+        hasText: `Comprehensive Test Rules ${suffix}`
+      })
+      await expect(ruleCard).toBeVisible()
+      await ruleCard.click()
+
+      // Verify rule is selected
+      await expect(ruleCard).toHaveAttribute('aria-selected', 'true')
+
+      // Get details panel
+      const detailsPanel = page.locator('div.flex-1.overflow-auto').last()
+
+      // Verify Overview section
+      await expect(detailsPanel.getByRole('heading', { name: `Comprehensive Test Rules ${suffix}` })).toBeVisible()
+      await expect(detailsPanel.getByText('Complete rule set for detailed testing')).toBeVisible()
+
+      // Verify action buttons
+      await expect(detailsPanel.getByRole('button', { name: 'Edit' })).toBeVisible()
+      await expect(detailsPanel.getByRole('button', { name: 'Duplicate' })).toBeVisible()
+      await expect(detailsPanel.getByRole('button', { name: 'Delete' })).toBeVisible()
+
+      // Verify Field Mappings section
+      await expect(detailsPanel.getByRole('heading', { name: 'Field Mappings' })).toBeVisible()
+
+      // Verify specific field mappings are displayed
+      await expect(detailsPanel.getByText('TransactionDate').first()).toBeVisible()
+      await expect(detailsPanel.getByText('Date').first()).toBeVisible()
+      await expect(detailsPanel.getByText('Amount').first()).toBeVisible()
+      await expect(detailsPanel.getByText('DebitAmount').first()).toBeVisible()
+      await expect(detailsPanel.getByText('Reference').first()).toBeVisible()
+      await expect(detailsPanel.getByText('ReferenceNumber').first()).toBeVisible()
+
+      // Verify key field badge is shown for the first mapping
+      await expect(detailsPanel.getByText('Key')).toBeVisible()
+
+      // Verify Matching Rules section
+      await expect(detailsPanel.getByRole('heading', { name: 'Matching Rules' })).toBeVisible()
+
+      // Verify specific matching rules are displayed
+      await expect(detailsPanel.getByText('Exact ID Match')).toBeVisible()
+      await expect(detailsPanel.getByText('Amount Match')).toBeVisible()
+      await expect(detailsPanel.getByText('Fuzzy Reference')).toBeVisible()
+
+      // Verify match types are shown
+      const matchTypeBadges = detailsPanel.locator('text=EXACT')
+      await expect(matchTypeBadges.first()).toBeVisible()
+      await expect(detailsPanel.getByText('FUZZY').first()).toBeVisible()
+
+      // Verify Summary section with counts
+      await expect(detailsPanel.getByRole('heading', { name: 'Summary' })).toBeVisible()
+      const summarySection = detailsPanel.locator('text=Summary').locator('..').locator('..')
+      await expect(summarySection.getByText('4').first()).toBeVisible() // 4 field mappings
+      await expect(summarySection.getByText('3').first()).toBeVisible() // 3 matching rules
+
+    } finally {
+      // Cleanup
+      await deleteRuleSet(api, ruleSet.id)
+    }
+  })
 })

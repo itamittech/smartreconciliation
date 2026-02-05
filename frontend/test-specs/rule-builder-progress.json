@@ -4,8 +4,8 @@
   "lastUpdated": "2026-02-05",
   "summary": {
     "totalCases": 9,
-    "implementedCases": 2,
-    "passedCases": 2,
+    "implementedCases": 3,
+    "passedCases": 3,
     "skippedCases": 0,
     "failedCases": 0
   },
@@ -23,7 +23,7 @@
     {
       "id": "RULE-003",
       "title": "Select and View Rule Details",
-      "status": "pending"
+      "status": "passed"
     },
     {
       "id": "RULE-004",

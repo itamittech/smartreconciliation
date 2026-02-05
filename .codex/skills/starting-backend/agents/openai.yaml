@@ -1,3 +1,4 @@
 interface:
   display_name: "Starting Backend"
-  short_description: "Help with Starting Backend tasks"
+  short_description: "Start and verify the SmartReconciliation backend."
+  default_prompt: "Start the SmartReconciliation backend, monitor logs for the Started line, and confirm when it is running."

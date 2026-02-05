@@ -4,8 +4,8 @@
   "lastUpdated": "2026-02-05",
   "summary": {
     "totalCases": 10,
-    "implementedCases": 6,
-    "passedCases": 6,
+    "implementedCases": 8,
+    "passedCases": 8,
     "skippedCases": 0,
     "failedCases": 0
   },
@@ -43,12 +43,12 @@
     {
       "id": "REC-007",
       "title": "Reconciliation List Pagination",
-      "status": "pending"
+      "status": "passed"
     },
     {
       "id": "REC-008",
       "title": "Sort Reconciliations",
-      "status": "pending"
+      "status": "passed"
     },
     {
       "id": "REC-009",

@@ -13,6 +13,8 @@ import {
   AlertCircle,
   PlayCircle,
   Database,
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react'
 import { Button, Input, Card, Badge } from '@/components/ui'
 import { CreateReconciliationWizard, ReconciliationDetailsModal } from '@/components/reconciliation'
@@ -32,12 +34,20 @@ const statusConfig: Record<
   FAILED: { icon: XCircle, label: 'Failed', variant: 'destructive' },
 }
 
+const ITEMS_PER_PAGE = 20
+
+type SortField = 'name' | 'status' | 'matchRate' | 'createdAt' | 'completedAt'
+type SortDirection = 'asc' | 'desc'
+
 const ReconciliationsPage = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<ReconciliationStatus | 'all'>('all')
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [showWizard, setShowWizard] = useState(false)
   const [showDetailsModal, setShowDetailsModal] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [sortField, setSortField] = useState<SortField>('createdAt')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
 
   const { setActiveView } = useAppStore()
   const { data: reconciliationsResponse, isLoading, isError, error } = useReconciliations()
@@ -54,6 +64,69 @@ const ReconciliationsPage = () => {
       backendStatus === statusFilter
     return matchesSearch && filterStatus
   })
+
+  // Sort reconciliations
+  const sortedReconciliations = [...filteredReconciliations].sort((a, b) => {
+    let comparison = 0
+
+    switch (sortField) {
+      case 'name':
+        comparison = a.name.localeCompare(b.name)
+        break
+      case 'status':
+        comparison = (a.status || '').localeCompare(b.status || '')
+        break
+      case 'matchRate': {
+        const rateA = getMatchRate(a)
+        const rateB = getMatchRate(b)
+        comparison = Number(rateA) - Number(rateB)
+        break
+      }
+      case 'createdAt':
+        comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        break
+      case 'completedAt':
+        comparison = (a.completedAt ? new Date(a.completedAt).getTime() : 0) -
+          (b.completedAt ? new Date(b.completedAt).getTime() : 0)
+        break
+    }
+
+    return sortDirection === 'asc' ? comparison : -comparison
+  })
+
+  const totalPages = Math.ceil(sortedReconciliations.length / ITEMS_PER_PAGE)
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const endIndex = startIndex + ITEMS_PER_PAGE
+  const paginatedReconciliations = sortedReconciliations.slice(startIndex, endIndex)
+
+  // Reset to page 1 when search or filter changes
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value)
+    setCurrentPage(1)
+  }
+
+  const handleFilterChange = (value: ReconciliationStatus | 'all') => {
+    setStatusFilter(value)
+    setCurrentPage(1)
+  }
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+  }
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) return null
+    return sortDirection === 'asc' ? (
+      <ChevronUp className="h-3 w-3 inline ml-1" />
+    ) : (
+      <ChevronDown className="h-3 w-3 inline ml-1" />
+    )
+  }
 
   const handleNewReconciliation = () => {
     setShowWizard(true)
@@ -144,14 +217,14 @@ const ReconciliationsPage = () => {
               type="search"
               placeholder="Search quantum matrix..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="pl-9"
               aria-label="Search reconciliations"
             />
           </div>
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as ReconciliationStatus | 'all')}
+            onChange={(e) => handleFilterChange(e.target.value as ReconciliationStatus | 'all')}
             className="h-11 rounded-lg border-2 border-space-600 bg-space-800 px-4 text-sm text-foreground focus:outline-none focus:border-violet-500 focus:shadow-glow-violet transition-all"
             aria-label="Filter by status"
           >
@@ -171,8 +244,12 @@ const ReconciliationsPage = () => {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-space-600">
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-violet-300 uppercase tracking-wider">
-                    Reconciliation
+                  <th
+                    className="px-4 py-3 text-left text-xs font-semibold text-violet-300 uppercase tracking-wider cursor-pointer hover:text-violet-200 transition-colors"
+                    onClick={() => handleSort('name')}
+                    role="columnheader"
+                  >
+                    Reconciliation <SortIcon field="name" />
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-cyan-300 uppercase tracking-wider">
                     Data Sources
@@ -180,14 +257,26 @@ const ReconciliationsPage = () => {
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
                     Records
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Neural Accuracy
+                  <th
+                    className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-300 transition-colors"
+                    onClick={() => handleSort('matchRate')}
+                    role="columnheader"
+                  >
+                    Neural Accuracy <SortIcon field="matchRate" />
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Status
+                  <th
+                    className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-300 transition-colors"
+                    onClick={() => handleSort('status')}
+                    role="columnheader"
+                  >
+                    Status <SortIcon field="status" />
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Date
+                  <th
+                    className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-300 transition-colors"
+                    onClick={() => handleSort('createdAt')}
+                    role="columnheader"
+                  >
+                    Date <SortIcon field="createdAt" />
                   </th>
                   <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
                     Actions
@@ -195,7 +284,7 @@ const ReconciliationsPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredReconciliations.map((recon) => {
+                {paginatedReconciliations.map((recon) => {
                   const config = statusConfig[recon.status] || statusConfig.PENDING
                   const StatusIcon = config.icon
                   const matchRate = getMatchRate(recon)
@@ -334,6 +423,47 @@ const ReconciliationsPage = () => {
               </div>
             )}
           </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-6 py-4 border-t border-space-600">
+              <div className="text-sm text-gray-400">
+                Showing {startIndex + 1}-{Math.min(endIndex, sortedReconciliations.length)} of {sortedReconciliations.length}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <Button
+                    key={page}
+                    variant={page === currentPage ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setCurrentPage(page)}
+                    className={cn(
+                      'min-w-[2.5rem]',
+                      page === currentPage && 'gradient-violet shadow-glow-violet'
+                    )}
+                  >
+                    {page}
+                  </Button>
+                ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </Card>
       </div>
 

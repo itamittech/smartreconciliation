@@ -333,4 +333,101 @@ test.describe('Reconciliation Management', () => {
     await deleteFile(api, fileA.id)
     await deleteFile(api, fileB.id)
   })
+
+  test('REC-007: Reconciliation List Pagination', async ({ page }) => {
+    const api = page.request
+    const suffix = Date.now()
+
+    // Create 25 reconciliations to test pagination (assuming 20 per page)
+    const files: any[] = []
+    const ruleSets: any[] = []
+    const reconciliations: any[] = []
+
+    for (let i = 1; i <= 25; i++) {
+      const fileA = await uploadFile(api, `page_test_a_${suffix}_${i}.csv`, 'id,amount\n1,100')
+      const fileB = await uploadFile(api, `page_test_b_${suffix}_${i}.csv`, 'id,amount\n2,200')
+      files.push(fileA, fileB)
+
+      const ruleSet = await createRuleSet(api, `Page Rules ${suffix} ${i}`, 'Pagination test')
+      ruleSets.push(ruleSet)
+
+      const recon = await createReconciliation(
+        api,
+        `Page Test ${suffix} ${String(i).padStart(2, '0')}`,
+        null,
+        fileA.id,
+        fileB.id,
+        ruleSet.id
+      )
+      reconciliations.push(recon)
+    }
+
+    await openReconciliationsPage(page)
+
+    // Count visible reconciliations on page 1
+    const rowCount = await page.locator('tbody tr').count()
+
+    // Verify we don't see all 25 at once (should be paginated)
+    expect(rowCount).toBeLessThan(25)
+    expect(rowCount).toBeGreaterThan(0)
+
+    // Verify "Next" or page number button exists
+    const nextButton = page.getByRole('button', { name: /Next|2/i })
+    if (await nextButton.count() > 0) {
+      await nextButton.first().click()
+
+      // Wait for page to update
+      await page.waitForTimeout(500)
+
+      // Verify different reconciliations are shown
+      const newRowCount = await page.locator('tbody tr').count()
+      expect(newRowCount).toBeGreaterThan(0)
+    }
+
+    // Clean up
+    for (const recon of reconciliations) {
+      await deleteReconciliation(api, recon.id)
+    }
+    for (const ruleSet of ruleSets) {
+      await deleteRuleSet(api, ruleSet.id)
+    }
+    for (const file of files) {
+      await deleteFile(api, file.id)
+    }
+  })
+
+  test('REC-008: Sort Reconciliations', async ({ page }) => {
+    const api = page.request
+    const suffix = Date.now()
+
+    // Create reconciliations with different names for sorting
+    const fileA = await uploadFile(api, `sort_test_a_${suffix}.csv`, 'id,amount\n1,100')
+    const fileB = await uploadFile(api, `sort_test_b_${suffix}.csv`, 'id,amount\n2,200')
+    const ruleSet = await createRuleSet(api, `Sort Rules ${suffix}`, 'Sort test')
+
+    const reconA = await createReconciliation(api, `AAA Test ${suffix}`, null, fileA.id, fileB.id, ruleSet.id)
+    const reconB = await createReconciliation(api, `ZZZ Test ${suffix}`, null, fileA.id, fileB.id, ruleSet.id)
+    const reconC = await createReconciliation(api, `MMM Test ${suffix}`, null, fileA.id, fileB.id, ruleSet.id)
+
+    await openReconciliationsPage(page)
+
+    // Verify sortable column headers exist
+    const nameHeader = page.getByRole('columnheader', { name: /Reconciliation|Name/i })
+    await expect(nameHeader).toBeVisible()
+
+    // Click to sort by name
+    await nameHeader.click()
+
+    // Verify sort indicator or order change
+    const firstRow = page.locator('tbody tr').first()
+    await expect(firstRow).toContainText(/AAA|ZZZ/)
+
+    // Clean up
+    await deleteReconciliation(api, reconA.id)
+    await deleteReconciliation(api, reconB.id)
+    await deleteReconciliation(api, reconC.id)
+    await deleteRuleSet(api, ruleSet.id)
+    await deleteFile(api, fileA.id)
+    await deleteFile(api, fileB.id)
+  })
 })

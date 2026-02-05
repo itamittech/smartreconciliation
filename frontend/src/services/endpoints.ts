@@ -74,7 +74,7 @@ export const reconciliationsApi = {
   cancel: (id: number) => post<Reconciliation>(`/reconciliations/${id}/cancel`),
   delete: (id: number) => del<void>(`/reconciliations/${id}`),
   bulkDelete: (ids: number[]) =>
-    post<{
+    del<{
       totalRequested: number
       successCount: number
       failedCount: number

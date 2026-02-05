@@ -73,9 +73,10 @@ export async function put<T>(endpoint: string, data?: unknown): Promise<ApiRespo
 }
 
 // DELETE request
-export async function del<T>(endpoint: string): Promise<ApiResponse<T>> {
+export async function del<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
   return fetchApi<ApiResponse<T>>(endpoint, {
     method: 'DELETE',
+    body: data ? JSON.stringify(data) : undefined,
   })
 }
 

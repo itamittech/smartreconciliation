@@ -276,11 +276,10 @@ test.describe('Reconciliation Management', () => {
     const deleteBody = await deleteResponse?.json()
     expect(deleteBody?.success).toBe(true)
 
-    const listResponsePromise = page.waitForResponse((response) =>
-      response.request().method() === 'GET' &&
-      response.url().includes('/api/v1/reconciliations')
-    )
-    await listResponsePromise
+    // Wait for list to refresh (with pagination params in URL)
+    await page.waitForTimeout(1000)
+
+    // Verify reconciliation is removed from the list
     await expect(page.getByText(deletableRecon.name)).toHaveCount(0)
 
     await deleteRuleSet(api, ruleSet.id)
@@ -522,16 +521,24 @@ test.describe('Reconciliation Management', () => {
     const deleteSelectedBtn = page.getByRole('button', { name: /Delete Selected/i })
     await expect(deleteSelectedBtn).toBeVisible()
 
-    // Click delete selected
+    // Click delete selected and accept confirmation
     const dialogPromise = page.waitForEvent('dialog').then((dialog) => dialog.accept())
     await deleteSelectedBtn.click()
     await dialogPromise
 
-    // Wait for deletion to complete
+    // Wait for bulk delete API call to complete
+    await page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/v1/reconciliations/bulk') &&
+        response.request().method() === 'DELETE',
+      { timeout: 10000 }
+    )
+
+    // Wait for UI to update
     await page.waitForTimeout(1000)
 
-    // Verify selection cleared
-    await expect(page.getByText('3 selected')).toHaveCount(0)
+    // Verify Delete Selected button is gone (selection cleared)
+    await expect(page.getByRole('button', { name: /Delete Selected/i })).toHaveCount(0)
 
     // Clean up remaining reconciliations
     for (const recon of recons) {

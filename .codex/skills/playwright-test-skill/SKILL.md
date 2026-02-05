@@ -29,7 +29,13 @@ Write Playwright tests, execute them individually, fix failures, and re-run unti
    - Repeat step 2 until green.
    - Then move to the next failing test.
 
-5. **When running against the real backend**
+5. **Update test progress tracking**
+   - Record the completed/updated test case in `frontend/test-specs/progress.json`.
+
+6. **Commit the changes to git**
+   - Use a clear commit message following repo conventions (e.g., `test: add TC-FE-006 Playwright coverage`).
+
+7. **When running against the real backend**
    - Do not mock API routes.
    - Create fixtures via API before UI steps (upload files, create rule sets, create reconciliations).
    - Use unique names to avoid collisions.

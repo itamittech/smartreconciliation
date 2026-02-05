@@ -15,7 +15,7 @@ import {
   Database,
 } from 'lucide-react'
 import { Button, Input, Card, Badge } from '@/components/ui'
-import { CreateReconciliationWizard } from '@/components/reconciliation'
+import { CreateReconciliationWizard, ReconciliationDetailsModal } from '@/components/reconciliation'
 import type { ReconciliationStatus } from '@/types'
 import { cn } from '@/lib/utils'
 import { useReconciliations, useDeleteReconciliation, useStartReconciliation } from '@/services/hooks'
@@ -37,6 +37,7 @@ const ReconciliationsPage = () => {
   const [statusFilter, setStatusFilter] = useState<ReconciliationStatus | 'all'>('all')
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [showWizard, setShowWizard] = useState(false)
+  const [showDetailsModal, setShowDetailsModal] = useState(false)
 
   const { setActiveView } = useAppStore()
   const { data: reconciliationsResponse, isLoading, isError, error } = useReconciliations()
@@ -59,7 +60,8 @@ const ReconciliationsPage = () => {
   }
 
   const handleRowClick = (id: number) => {
-    setSelectedId(id === selectedId ? null : id)
+    setSelectedId(id)
+    setShowDetailsModal(true)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent, id: number) => {
@@ -339,6 +341,17 @@ const ReconciliationsPage = () => {
       {showWizard && (
         <CreateReconciliationWizard
           onClose={() => setShowWizard(false)}
+        />
+      )}
+
+      {/* Reconciliation Details Modal */}
+      {showDetailsModal && selectedId && (
+        <ReconciliationDetailsModal
+          reconciliation={reconciliations.find((r) => r.id === selectedId)!}
+          onClose={() => {
+            setShowDetailsModal(false)
+            setSelectedId(null)
+          }}
         />
       )}
     </div>

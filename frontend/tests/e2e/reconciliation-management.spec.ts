@@ -286,4 +286,51 @@ test.describe('Reconciliation Management', () => {
     await deleteFile(api, fileA.id)
     await deleteFile(api, fileB.id)
   })
+
+  test('REC-006: View Reconciliation Details', async ({ page }) => {
+    const api = page.request
+    const suffix = Date.now()
+    const fileA = await uploadFile(api, `details_file_a_${suffix}.csv`, 'id,amount\n1,100\n2,200')
+    const fileB = await uploadFile(api, `details_file_b_${suffix}.csv`, 'id,amount\n1,100\n3,300')
+    const ruleSet = await createRuleSet(api, `Details Rules ${suffix}`, 'Details rule set')
+    const detailsRecon = await createReconciliation(
+      api,
+      `Details Recon ${suffix}`,
+      'Test reconciliation for viewing details',
+      fileA.id,
+      fileB.id,
+      ruleSet.id
+    )
+
+    await openReconciliationsPage(page)
+
+    // Click on reconciliation row to open details modal
+    const row = page.locator('tr', { hasText: detailsRecon.name })
+    await row.click()
+
+    // Verify details modal opens
+    const modal = page.locator('.fixed.inset-0.z-50')
+    await expect(modal).toBeVisible()
+    await expect(modal.getByRole('heading', { name: detailsRecon.name })).toBeVisible()
+
+    // Verify status badge is displayed in modal
+    await expect(modal.getByText(/Pending|Processing|Completed|Failed/).first()).toBeVisible()
+
+    // Verify source files section in modal
+    await expect(modal.getByText(fileA.originalFilename)).toBeVisible()
+    await expect(modal.getByText(fileB.originalFilename)).toBeVisible()
+
+    // Verify rule set name is displayed in modal
+    await expect(modal.getByText(ruleSet.name)).toBeVisible()
+
+    // Close details modal
+    const closeButton = modal.getByRole('button', { name: /Close/i }).first()
+    await closeButton.click()
+    await expect(modal).toHaveCount(0)
+
+    await deleteReconciliation(api, detailsRecon.id)
+    await deleteRuleSet(api, ruleSet.id)
+    await deleteFile(api, fileA.id)
+    await deleteFile(api, fileB.id)
+  })
 })

@@ -9,6 +9,15 @@ description: Write Playwright E2E tests, run them one by one, and iteratively fi
 
 Write Playwright tests, execute them individually, fix failures, and re-run until each test passes before moving to the next.
 
+## Core Principle: Tests Drive Implementation
+
+**CRITICAL: DO NOT skip tests just because features are missing. Implement the features instead.**
+
+- The purpose of E2E tests is to verify features work end-to-end
+- If a test fails because a feature isn't implemented, IMPLEMENT THE FEATURE (frontend or backend)
+- Skipping tests defeats the entire purpose of the exercise
+- Only skip tests if the feature is explicitly out of scope or impossible to implement
+
 ## Workflow
 
 1. **Write or update the Playwright test case**
@@ -22,8 +31,9 @@ Write Playwright tests, execute them individually, fix failures, and re-run unti
 
 3. **If the test fails, fix the smallest cause**
    - Prefer narrowing selectors (e.g., `exact: true`, `getByLabel`, `getByRole` with clear names).
+   - **If a feature is missing: IMPLEMENT IT** (create UI components, add backend endpoints, etc.)
    - Update the test or UI only when needed; keep changes minimal.
-   - If a requirement is not implemented, mark that test as skipped with an inline `test.skip(true, "reason")` inside a `test(...)` block.
+   - **ONLY skip if**: Feature is explicitly out of scope, requires external dependencies not available, or user confirms it should be skipped.
 
 4. **Re-run the same test until it passes**
    - Repeat step 2 until green.
@@ -56,10 +66,32 @@ cd frontend
 cmd /c npx playwright test tests/e2e/frontend-application.spec.ts -g "TC-FE-006" --reporter=line
 ```
 
-## Lessons Learned (Delete Flow)
+## Lessons Learned
 
+### Critical Principles
+- **Never skip tests due to missing features** - implement the features instead. Skipping defeats the purpose of E2E testing.
+- Tests should drive feature implementation, not be adjusted to skip missing functionality.
+
+### Technical Details
 - Mocked tests can hide real backend gaps; flip to real backend for critical flows.
 - Ensure backend endpoints exist for UI actions (e.g., `DELETE /api/v1/reconciliations/{id}`).
 - Confirm dialogs must be accepted or requests never fire.
 - Scope action buttons to their row to avoid strict mode collisions.
 - Add API-level assertions (`waitForRequest`) to verify requests are actually sent.
+
+### Backend vs Frontend Implementation
+When implementing missing features, prefer **backend API** implementation for:
+- **Pagination**: `GET /api/resources?page=1&size=20` (use Spring Data `Pageable`)
+- **Sorting**: `GET /api/resources?sort=name,asc` (use Spring Data `Sort`)
+- **Filtering**: `GET /api/resources?status=completed` (query parameters)
+- **Bulk operations**: `DELETE /api/resources/bulk` (single API call with ID list)
+
+Benefits:
+- Scalability (doesn't break with large datasets)
+- Reusability (other clients can use the same API)
+- Performance (database handles sorting/filtering efficiently)
+- Standard REST practices
+
+Only implement in frontend when:
+- Pure UI interaction (modals, animations, client-state)
+- Feature is truly client-specific and has no backend relevance

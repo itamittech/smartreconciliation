@@ -5,9 +5,9 @@
   "summary": {
     "totalCases": 9,
     "implementedCases": 6,
-    "passedCases": 5,
+    "passedCases": 6,
     "skippedCases": 0,
-    "failedCases": 1
+    "failedCases": 0
   },
   "cases": [
     {
@@ -43,8 +43,7 @@
     {
       "id": "RULE-007",
       "title": "Duplicate Rule Set",
-      "status": "implemented",
-      "notes": "Backend restart required - endpoint returns 500 until backend is restarted to register new /duplicate endpoint"
+      "status": "passed"
     },
     {
       "id": "RULE-008",

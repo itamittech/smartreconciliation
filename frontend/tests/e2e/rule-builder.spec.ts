@@ -493,7 +493,7 @@ test.describe('Rule Builder', () => {
       await expect(originalRuleCard).toBeVisible()
       await originalRuleCard.click()
 
-      // Test duplicate via API directly first
+      // Test duplicate via API directly
       const duplicateResponse = await api.post(`${API_BASE_URL}/rules/${ruleSet.id}/duplicate`, {})
       if (!duplicateResponse.ok()) {
         const errorBody = await duplicateResponse.text()
@@ -503,9 +503,8 @@ test.describe('Rule Builder', () => {
       const duplicateBody = await duplicateResponse.json()
       const duplicatedRule = duplicateBody.data
 
-      // Reload page to see the duplicate
-      await page.reload()
-      await expect(page.getByText('Rule Library')).toBeVisible()
+      // Navigate back to rules page to see the duplicate
+      await openRulesPage(page)
 
       // Verify duplicate appears in list
       await expect(page.getByText(`Original Rule ${suffix} (Copy)`).first()).toBeVisible()

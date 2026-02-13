@@ -1,6 +1,8 @@
 # Smart Reconciliation Backend - Test Case Documentation
 
-This directory contains comprehensive test case documentation in plain English for the Smart Reconciliation backend and supporting UI flows. Each module folder includes a `progress.json` to track TDD readiness.
+This directory contains comprehensive test case documentation in plain English for the Smart Reconciliation **backend** (Java/Spring Boot). Each module folder includes a `progress.json` to track TDD readiness.
+
+> **Frontend E2E Tests**: The Playwright test specifications and progress tracking live in [`frontend/test-specs/`](../../../frontend/test-specs/). The previously maintained `09-frontend-application/` folder has been archived to `docs/99-archive/TC-FrontendApplication.md`.
 
 ## Overview
 
@@ -50,9 +52,6 @@ docs/06-testing/test-cases/
   - TC-DataSourceController.md       # Integration tests (8 test cases)
   - TC-DataSourceRepository.md       # Repository tests (2 test cases)
   - progress.json
-- 09-frontend-application/           # UI and E2E coverage
-  - TC-FrontendApplication.md        # E2E tests (32 test cases)
-  - progress.json
 - 10-cross-cutting/                  # Org scope, errors, CORS, health, async
   - TC-OrganizationService.md        # Unit tests (3 test cases)
   - TC-GlobalExceptionHandler.md     # Integration tests (6 test cases)
@@ -92,7 +91,7 @@ docs/06-testing/test-cases/
 | **Data Source Management** | DataSourceService | Unit | 12 |
 | | DataSourceController | Integration | 8 |
 | | DataSourceRepository | Repository | 2 |
-| **Frontend Application** | Frontend UI Flows | E2E / UI | 32 |
+| **Frontend E2E Tests** | Playwright specs (see `frontend/test-specs/`) | E2E / UI | 77+ |
 | **Cross-Cutting Concerns** | OrganizationService | Unit | 3 |
 | | GlobalExceptionHandler | Integration | 6 |
 | | HealthController | Integration | 2 |
@@ -100,7 +99,7 @@ docs/06-testing/test-cases/
 | | AsyncConfig | Unit | 2 |
 | | API Versioning | Integration | 2 |
 | **Future Improvements** | Multiple (see file) | Mixed | 55 |
-| **TOTAL** | | | **309** |
+| **TOTAL** | | | **277** (backend) + 77+ (frontend E2E) |
 
 ## Test Case Format
 

@@ -13,6 +13,8 @@ Use the standard TDD workflow for every session:
 This folder contains all testing-related documentation including test strategies, test data specifications, and detailed test cases for all system components.
 Each module folder under `test-cases/` contains its own `progress.json` for tracking TDD readiness.
 
+> **Frontend E2E Tests**: Playwright specifications (77+ scenarios) and progress tracking are in [`frontend/test-specs/`](../../frontend/test-specs/) — that is the source of truth for all frontend E2E tests.
+
 ## Structure
 
 ```
@@ -72,7 +74,7 @@ Test cases are organized by system module:
 | **06-chat-system** | Chat interface, message history, context | [View](test-cases/06-chat-system/) |
 | **07-dashboard** | Dashboard KPIs, statistics, aggregation | [View](test-cases/07-dashboard/) |
 | **08-data-source-management** | Data source CRUD and connectivity | [View](test-cases/08-data-source-management/) |
-| **09-frontend-application** | UI flows and E2E specs | [View](test-cases/09-frontend-application/) |
+| **Frontend E2E Tests** | UI flows and E2E specs (Playwright) | [View](../../frontend/test-specs/) |
 | **10-cross-cutting** | Multi-tenancy, error handling, CORS, health, async | [View](test-cases/10-cross-cutting/) |
 | **11-future-improvements** | TDD specs for not-yet-built features | [View](test-cases/11-future-improvements/) |
 

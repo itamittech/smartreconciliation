@@ -52,7 +52,7 @@ public class RuleService {
                 .metadata(request.getMetadata())
                 .active(true)
                 .version(1)
-                .isAiGenerated(false)
+                .isAiGenerated(Boolean.TRUE.equals(request.getIsAiGenerated()))
                 .fieldMappings(new ArrayList<>())
                 .matchingRules(new ArrayList<>())
                 .build();

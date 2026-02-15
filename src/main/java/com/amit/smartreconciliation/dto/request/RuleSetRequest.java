@@ -8,6 +8,7 @@ public class RuleSetRequest {
     @NotBlank(message = "Name is required")
     private String name;
     private String description;
+    private Boolean isAiGenerated;
     private List<FieldMappingRequest> fieldMappings;
     private List<MatchingRuleRequest> matchingRules;
     private Map<String, Object> metadata;
@@ -18,6 +19,8 @@ public class RuleSetRequest {
     public void setName(String name) { this.name = name; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+    public Boolean getIsAiGenerated() { return isAiGenerated; }
+    public void setIsAiGenerated(Boolean isAiGenerated) { this.isAiGenerated = isAiGenerated; }
     public List<FieldMappingRequest> getFieldMappings() { return fieldMappings; }
     public void setFieldMappings(List<FieldMappingRequest> fieldMappings) { this.fieldMappings = fieldMappings; }
     public List<MatchingRuleRequest> getMatchingRules() { return matchingRules; }

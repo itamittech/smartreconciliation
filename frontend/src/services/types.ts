@@ -125,6 +125,7 @@ export interface RuleSet {
   fieldMappings: FieldMapping[]
   matchingRules: MatchingRule[]
   isActive: boolean
+  isAiGenerated: boolean | null
   createdAt: string
   updatedAt: string
 }
@@ -183,6 +184,7 @@ export interface CreateRuleSetRequest {
   description?: string
   sourceFileId?: number
   targetFileId?: number
+  isAiGenerated?: boolean
 }
 
 export interface CreateFieldMappingRequest {

@@ -11,6 +11,7 @@ import {
   Loader2,
   AlertCircle,
   Play,
+  Sparkles,
 } from 'lucide-react'
 import { Button, Input, Card, CardHeader, CardTitle, CardContent, Badge } from '@/components/ui'
 import { cn } from '@/lib/utils'
@@ -58,11 +59,13 @@ const RulesPage = () => {
       matchType: string
       threshold: number | null
     }>
+    isAiGenerated?: boolean
   }) => {
     // Create the rule set first
     const response = await createRuleSet.mutateAsync({
       name: data.name,
       description: data.description,
+      isAiGenerated: data.isAiGenerated,
     })
     const ruleSet = response.data
 
@@ -252,11 +255,19 @@ const RulesPage = () => {
                     <GitBranch className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">{rule.name}</span>
                   </div>
-                  {rule.isActive && (
-                    <Badge variant="secondary" className="text-xs">
-                      Active
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-1">
+                    {rule.isAiGenerated && (
+                      <Badge variant="outline" className="text-xs flex items-center gap-1 border-primary/40 text-primary">
+                        <Sparkles className="h-2.5 w-2.5" />
+                        AI
+                      </Badge>
+                    )}
+                    {rule.isActive && (
+                      <Badge variant="secondary" className="text-xs">
+                        Active
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 {rule.description && (
                   <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
@@ -281,6 +292,12 @@ const RulesPage = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-xl font-semibold">{selectedRule.name}</h2>
+                  {selectedRule.isAiGenerated && (
+                    <Badge variant="outline" className="flex items-center gap-1 border-primary/40 text-primary">
+                      <Sparkles className="h-3 w-3" />
+                      AI-Generated
+                    </Badge>
+                  )}
                   {selectedRule.isActive && (
                     <Badge variant="secondary">Active</Badge>
                   )}

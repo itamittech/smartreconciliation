@@ -10,6 +10,11 @@ import com.amit.smartreconciliation.exception.ResourceNotFoundException;
 import com.amit.smartreconciliation.repository.ChatMessageRepository;
 import com.amit.smartreconciliation.repository.ChatSessionRepository;
 import com.amit.smartreconciliation.repository.ReconciliationRepository;
+import com.amit.smartreconciliation.service.tool.DashboardTools;
+import com.amit.smartreconciliation.service.tool.ExceptionTools;
+import com.amit.smartreconciliation.service.tool.FileTools;
+import com.amit.smartreconciliation.service.tool.ReconciliationTools;
+import com.amit.smartreconciliation.service.tool.RuleSetTools;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -69,6 +74,17 @@ class ChatServiceTest {
     @Mock
     private ChatContextService chatContextService;
 
+    @Mock
+    private DashboardTools dashboardTools;
+    @Mock
+    private ExceptionTools exceptionTools;
+    @Mock
+    private FileTools fileTools;
+    @Mock
+    private ReconciliationTools reconciliationTools;
+    @Mock
+    private RuleSetTools ruleSetTools;
+
     private ChatService chatService;
 
     private Organization testOrganization;
@@ -85,7 +101,12 @@ class ChatServiceTest {
             reconciliationRepository,
             organizationService,
             aiService,
-            chatContextService
+            chatContextService,
+            dashboardTools,
+            exceptionTools,
+            fileTools,
+            reconciliationTools,
+            ruleSetTools
         );
 
         // Setup test data

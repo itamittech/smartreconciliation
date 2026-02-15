@@ -16,6 +16,7 @@ import com.amit.smartreconciliation.enums.ReconciliationStatus;
 import com.amit.smartreconciliation.exception.FileProcessingException;
 import com.amit.smartreconciliation.repository.ReconciliationExceptionRepository;
 import com.amit.smartreconciliation.repository.ReconciliationRepository;
+import com.amit.smartreconciliation.service.AiService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -70,6 +71,9 @@ class ReconciliationServiceTest {
     @Mock
     private FileParserService fileParserService;
 
+    @Mock
+    private AiService aiService;
+
     private ReconciliationService reconciliationService;
 
     @BeforeEach
@@ -80,7 +84,8 @@ class ReconciliationServiceTest {
                 organizationService,
                 fileUploadService,
                 ruleService,
-                fileParserService
+                fileParserService,
+                aiService
         ));
     }
 

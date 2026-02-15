@@ -2,6 +2,7 @@ package com.amit.smartreconciliation.controller;
 
 import com.amit.smartreconciliation.dto.request.AiMappingSuggestionRequest;
 import com.amit.smartreconciliation.dto.response.AiMappingSuggestionResponse;
+import com.amit.smartreconciliation.dto.response.AiRuleSuggestionResponse;
 import com.amit.smartreconciliation.exception.AiServiceException;
 import com.amit.smartreconciliation.service.AiService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -140,26 +141,33 @@ class AiControllerTest {
     @DisplayName("TC-AIC-002: POST /api/v1/ai/suggest-rules - Get Matching Rule Suggestions")
     void testGetMatchingRuleSuggestions() throws Exception {
         // Given
-        String mockRuleSuggestions = """
-            Suggested Matching Rules:
+        AiRuleSuggestionResponse mockResponse = new AiRuleSuggestionResponse();
+        
+        AiRuleSuggestionResponse.SuggestedRule rule1 = new AiRuleSuggestionResponse.SuggestedRule();
+        rule1.setSourceField("customer_name");
+        rule1.setTargetField("client_name");
+        rule1.setMatchType("FUZZY");
+        rule1.setFuzzyThreshold(0.85);
+        rule1.setReason("Text field with potential typos");
 
-            1. **customer_name** (TEXT) → client_name:
-               - Rule Type: FUZZY
-               - Threshold: 0.85
-               - Reasoning: Text field with potential typos
+        AiRuleSuggestionResponse.SuggestedRule rule2 = new AiRuleSuggestionResponse.SuggestedRule();
+        rule2.setSourceField("total_amount");
+        rule2.setTargetField("amount");
+        rule2.setMatchType("RANGE");
+        rule2.setTolerance(0.50);
+        rule2.setReason("Currency field with potential rounding differences");
 
-            2. **total_amount** (CURRENCY) → amount:
-               - Rule Type: RANGE
-               - Tolerance: 0.50
-               - Reasoning: Currency field with potential rounding differences
+        AiRuleSuggestionResponse.SuggestedRule rule3 = new AiRuleSuggestionResponse.SuggestedRule();
+        rule3.setSourceField("invoice_ref");
+        rule3.setTargetField("reference");
+        rule3.setMatchType("EXACT");
+        rule3.setReason("Reference field requiring exact match");
 
-            3. **invoice_ref** (TEXT) → reference:
-               - Rule Type: EXACT
-               - Reasoning: Reference field requiring exact match
-            """;
+        mockResponse.setRules(Arrays.asList(rule1, rule2, rule3));
+        mockResponse.setExplanation("Suggested rules based on field mappings.");
 
         when(aiService.suggestRules(eq(1L), eq(2L), anyList()))
-            .thenReturn(mockRuleSuggestions);
+            .thenReturn(mockResponse);
 
         // When & Then
         mockMvc.perform(post("/api/v1/ai/suggest-rules")
@@ -171,27 +179,23 @@ class AiControllerTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.success").value(true))
             .andExpect(jsonPath("$.message").value("Rule suggestions generated"))
-            .andExpect(jsonPath("$.data").isString())
-            .andExpect(jsonPath("$.data", containsString("FUZZY")))
-            .andExpect(jsonPath("$.data", containsString("RANGE")))
-            .andExpect(jsonPath("$.data", containsString("EXACT")))
-            .andExpect(jsonPath("$.data", containsString("0.85")))
-            .andExpect(jsonPath("$.data", containsString("0.50")))
-            .andExpect(jsonPath("$.data", containsString("customer_name")))
-            .andExpect(jsonPath("$.data", containsString("total_amount")))
-            .andExpect(jsonPath("$.data", containsString("invoice_ref")));
+            .andExpect(jsonPath("$.data.rules", hasSize(3)))
+            .andExpect(jsonPath("$.data.rules[0].matchType").value("FUZZY"))
+            .andExpect(jsonPath("$.data.rules[1].matchType").value("RANGE"))
+            .andExpect(jsonPath("$.data.rules[2].matchType").value("EXACT"))
+            .andExpect(jsonPath("$.data.explanation").value("Suggested rules based on field mappings."));
     }
 
     @Test
     @DisplayName("TC-AIC-002b: POST /api/v1/ai/suggest-rules - Without Mapped Fields")
     void testGetMatchingRuleSuggestionsWithoutMappedFields() throws Exception {
         // Given
-        String mockRuleSuggestions = """
-            Please provide field mappings to generate matching rule suggestions.
-            """;
+        AiRuleSuggestionResponse mockResponse = new AiRuleSuggestionResponse();
+        mockResponse.setRules(List.of());
+        mockResponse.setExplanation("Please provide field mappings to generate matching rule suggestions.");
 
         when(aiService.suggestRules(eq(1L), eq(2L), eq(List.of())))
-            .thenReturn(mockRuleSuggestions);
+            .thenReturn(mockResponse);
 
         // When & Then
         mockMvc.perform(post("/api/v1/ai/suggest-rules")
@@ -202,7 +206,8 @@ class AiControllerTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.success").value(true))
             .andExpect(jsonPath("$.message").value("Rule suggestions generated"))
-            .andExpect(jsonPath("$.data").isString());
+            .andExpect(jsonPath("$.data.rules", hasSize(0)))
+            .andExpect(jsonPath("$.data.explanation").value("Please provide field mappings to generate matching rule suggestions."));
     }
 
     @Test

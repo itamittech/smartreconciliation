@@ -4,124 +4,108 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Smart Reconciliation is a Java Spring Boot 3.5.10 application that integrates AI capabilities (Anthropic Claude, OpenAI, DeepSeek) with PostgreSQL PGvector for vector database support. Built with Spring AI 1.1.2.
+Smart Reconciliation is a full-stack application: **Java Spring Boot 3.5.10 backend** + **React 19 TypeScript frontend**. It provides AI-powered data reconciliation, allowing users to upload files (CSV/Excel/JSON/XML), define rule sets, run reconciliations, and interact via AI chat (Claude, OpenAI, or DeepSeek).
 
 ## Build and Development Commands
 
-Uses Maven Wrapper (no Maven installation required).
-
-### Windows
+### Backend (Maven Wrapper — no Maven install required)
 ```bash
-mvnw.cmd spring-boot:run          # Run the application
-mvnw.cmd test                     # Run all tests
-mvnw.cmd test -Dtest=TestClassName#methodName  # Run single test
-mvnw.cmd clean package            # Full build
-mvnw.cmd dependency:tree          # View dependencies
+# Windows
+mvnw.cmd spring-boot:run                              # Run backend (port 8080)
+mvnw.cmd test                                         # Run all backend tests
+mvnw.cmd test -Dtest=TestClassName#methodName         # Run single test
+mvnw.cmd compile                                      # Compile only (sanity check)
+mvnw.cmd clean package                                # Full build
+
+# Unix/macOS
+./mvnw spring-boot:run
+./mvnw test
 ```
 
-### Unix/Linux/macOS
+### Frontend
 ```bash
-./mvnw spring-boot:run            # Run the application
-./mvnw test                       # Run all tests
-./mvnw test -Dtest=TestClassName#methodName  # Run single test
-./mvnw clean package              # Full build
+cd frontend
+npm install          # Install dependencies
+npm run dev          # Dev server at http://localhost:5173
+npm run build        # Production build
+npm run lint         # ESLint check
+npx playwright test  # Run E2E tests (requires running backend)
 ```
 
 ### Docker
 ```bash
-docker-compose up -d              # Start PostgreSQL PGvector
-docker-compose down               # Stop services
+docker-compose up -d   # Start PostgreSQL + PGVector (required for backend)
+docker-compose down    # Stop services
 ```
+
+Spring Boot Docker Compose support auto-starts the database when running the app.
 
 ## Architecture
 
-- **Framework**: Spring Boot 3.5.10 with Java 21
-- **Package**: `com.amit.smartreconciliation`
-- **Entry Point**: `SmartreconciliationApplication.java`
+### Backend Package Structure (`com.amit.smartreconciliation`)
+- **controller/** — REST endpoints (File, Reconciliation, Rule, Chat, AI, DataSource, Exception, Dashboard)
+- **service/** — Business logic; core services + `service/tool/` for AI context tools
+- **entity/** — JPA entities (Reconciliation, RuleSet, ChatMessage, ReconciliationException, etc.)
+- **repository/** — Spring Data JPA repositories
+- **dto/** — Request/response models in `dto/request/` and `dto/response/`
+- **config/** — Spring configuration (AiConfig, AsyncConfig, FileStorageConfig, WebConfig)
+- **enums/** — Status/type enums (ReconciliationStatus, ExceptionSeverity, FileStatus, etc.)
+- **exception/** — GlobalExceptionHandler + custom exceptions; all REST errors use `ApiResponse<T>`
 
 ### AI Integration (Spring AI 1.1.2)
-- Anthropic Claude via `spring-ai-starter-model-anthropic`
-- OpenAI via `spring-ai-starter-model-openai`
-- DeepSeek via `spring-ai-starter-model-deepseek`
-- Vector store via `spring-ai-starter-vector-store-pgvector`
+Provider is selected via `app.ai.provider=anthropic|openai|deepseek` in `application.properties`. `AiConfig` marks the configured provider's `ChatModel` as `@Primary`.
 
-### Database
-PostgreSQL with PGvector extension, configured via Docker Compose:
-- Port: 5432
-- User: `myuser` / Password: `secret` / Database: `mydatabase`
+**Tool services** in `service/tool/` expose `@Tool`-annotated methods that give the AI context about the current state (files, rule sets, reconciliations, dashboard metrics, exceptions). These are registered with `ChatClient` when building prompts.
 
-## Configuration
+Models configured:
+- Anthropic: `claude-sonnet-4-20250514`, max 4096 tokens
+- OpenAI: `gpt-4o`, max 4096 tokens
+- DeepSeek: `deepseek-chat`, max 4096 tokens
 
-- Application properties: `src/main/resources/application.properties`
-- Docker services: `compose.yaml`
-- AI API keys should be configured in application.properties or environment variables
+### Frontend Architecture (`frontend/src/`)
+- **State**: Zustand (`useAppStore`) manages global state — sidebar, active view, chat sessions, reconciliations, exceptions, files
+- **API Layer**: Centralized `services/api.ts` with a generic `fetchApi<T>()` helper; responses typed as `ApiResponse<T>` matching the backend wrapper
+- **Routing**: View-based (not URL-based) — active view in Zustand store, `App.tsx` renders the matching page
+- **Pages**: Home (dashboard), Chat, Reconciliations, Exceptions, Rules, Files, Settings
+- **Testing**: Playwright E2E tests in `frontend/tests/e2e/`; spec docs in `frontend/test-specs/`
 
-## Development
+### Data Flow
+- **Reconciliation**: Upload files → detect schema → create rule set → execute reconciliation (async) → view results/exceptions
+- **AI Chat**: Message → `ChatService` persists → `AiService` builds prompt with tool context → `ChatClient` calls LLM → response persisted
+- **File Processing**: `FileUploadService` saves → `FileParserService` parses CSV/Excel/JSON/XML → `SchemaDetectionService` auto-detects column types
 
-- DevTools enabled for hot-reload
-- Application runs on port 8080 by default
-- Spring Boot Docker Compose support auto-starts database when running the app
+### Key Infrastructure
+- PostgreSQL 16 with PGVector extension (Docker Compose, port 5432, user `myuser`/`secret`, db `mydatabase`)
+- Async processing: `@Async` on long-running tasks, thread pool configured in `AsyncConfig` (core=4, max=8)
+- CORS: allows `http://localhost:5173` (frontend dev) and `http://localhost:3000`
+- File uploads: max 100MB, stored locally via `FileStorageConfig`
+- `.env` file loaded at startup via Spring Dotenv
 
 ## Documentation Organization
 
-**CRITICAL: Follow this structure for ALL documentation. Never create docs in the root docs/ folder.**
-
-### Documentation Folder Structure
+**CRITICAL: Never create `.md` files directly in `docs/` root. Always use the appropriate subfolder.**
 
 ```
 docs/
-├── README.md                    # Navigation hub only - do not modify without review
-├── 01-product/                  # Product strategy, requirements, roadmap
-├── 02-architecture/             # System design, architecture decisions, database
-├── 03-development/              # Developer guides, API reference, tutorials
-├── 04-ai-integration/           # AI features, specifications, implementation
-├── 05-deployment/               # Deployment, configuration, operations
-├── 06-testing/                  # Test strategy, test cases, test data
-└── 99-archive/                  # Completed implementation docs (historical only)
+├── 01-product/      # Product strategy, requirements, roadmap
+├── 02-architecture/ # System design, architecture decisions, database schema
+├── 03-development/  # Developer guides, API reference
+├── 04-ai-integration/ # AI features, prompts, tool definitions
+├── 05-deployment/   # Deployment, configuration, operations
+├── 06-testing/      # Test strategy, test cases, test data
+└── 99-archive/      # Completed implementation docs (historical only)
 ```
 
-### Where to Place New Documentation
+Quick guide: product/features → `01-product/` | system design/DB → `02-architecture/` | dev guide/API → `03-development/` | AI features → `04-ai-integration/` | deployment/ops → `05-deployment/` | testing → `06-testing/` | completed implementation notes → `99-archive/`
 
-**BEFORE creating ANY new documentation, determine the correct folder:**
-
-| Document Type | Folder | Examples |
-|--------------|--------|----------|
-| Product features, PRDs, roadmap | `01-product/` | Feature specs, user stories |
-| Architecture diagrams, ADRs, database | `02-architecture/` | C4 diagrams, schema changes |
-| Development guides, API docs | `03-development/` | Setup guides, API endpoints |
-| AI features, prompts, tools | `04-ai-integration/` | AI specifications, prompts |
-| Deployment, config, operations | `05-deployment/` | Docker guides, runbooks |
-| Test plans, test cases | `06-testing/` | Test strategies, test data |
-| Completed implementation notes | `99-archive/` | Post-implementation summaries |
-
-### Documentation Rules
-
-1. **NEVER create .md files directly in `docs/` root** - Always use the appropriate subfolder
-2. **Check folder README first** - Each folder has a README explaining what belongs there
-3. **Use descriptive names** - File names should clearly indicate content (e.g., `api-endpoints.md`, not `notes.md`)
-4. **Update folder README** - If adding significant docs, update the folder's README to reference them
-5. **Implementation summaries go to archive** - Temporary implementation docs belong in `99-archive/`
-6. **Link to existing docs** - Cross-reference related documentation instead of duplicating
-
-### Quick Decision Guide
-
-**Ask yourself:**
-- Is this about product strategy or features? → `01-product/`
-- Is this about system design or database? → `02-architecture/`
-- Is this a developer guide or API doc? → `03-development/`
-- Is this about AI features or prompts? → `04-ai-integration/`
-- Is this about deployment or operations? → `05-deployment/`
-- Is this about testing? → `06-testing/`
-- Is this a completed implementation summary? → `99-archive/`
-
-**If unsure:** Read the README.md in the target folder to confirm it's the right place.
+When unsure, read the README in the target folder to confirm placement.
 
 ## Workflow Rules
 
-**IMPORTANT: Work in micro-steps to avoid losing progress in long sessions.**
+**Work in micro-steps to avoid losing progress in long sessions.**
 
 1. Complete one small task at a time
 2. Run build sanity check (`npm run build` for frontend, `mvnw.cmd compile` for backend)
 3. Commit with a relevant message
 4. Present next micro-step options to user
-6. Wait for user approval before proceeding to next task
+5. Wait for user approval before proceeding to next task

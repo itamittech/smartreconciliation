@@ -8,7 +8,7 @@ echo ============================================
 
 echo.
 echo [1/2] Compiling...
-mvnw.cmd compile
+call mvnw.cmd compile
 if errorlevel 1 (
     echo.
     echo [ERROR] Compilation failed. Fix errors before starting.
@@ -17,15 +17,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo [2/2] Starting backend on http://localhost:8080 ...
-echo       Press Ctrl+C to stop.
+echo [2/2] Starting backend in a new window on http://localhost:8080 ...
+echo       To stop the backend, press Ctrl+C in the new window.
 echo.
-mvnw.cmd spring-boot:run
-if errorlevel 1 (
-    echo.
-    echo [ERROR] Backend exited with an error.
-    pause
-    exit /b 1
-)
-
-pause
+start "Smart Reconciliation Backend" cmd /k "mvnw.cmd spring-boot:run"

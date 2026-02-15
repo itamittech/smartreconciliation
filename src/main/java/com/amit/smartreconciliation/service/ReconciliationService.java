@@ -25,25 +25,31 @@ public class ReconciliationService {
 
     private static final Logger log = LoggerFactory.getLogger(ReconciliationService.class);
 
+    private static final int AI_SUGGESTION_BATCH_SIZE = 10;
+    private static final int AI_SUGGESTION_MAX_EXCEPTIONS = 50;
+
     private final ReconciliationRepository reconciliationRepository;
     private final ReconciliationExceptionRepository exceptionRepository;
     private final OrganizationService organizationService;
     private final FileUploadService fileUploadService;
     private final RuleService ruleService;
     private final FileParserService fileParserService;
+    private final AiService aiService;
 
     public ReconciliationService(ReconciliationRepository reconciliationRepository,
                                 ReconciliationExceptionRepository exceptionRepository,
                                 OrganizationService organizationService,
                                 FileUploadService fileUploadService,
                                 RuleService ruleService,
-                                FileParserService fileParserService) {
+                                FileParserService fileParserService,
+                                AiService aiService) {
         this.reconciliationRepository = reconciliationRepository;
         this.exceptionRepository = exceptionRepository;
         this.organizationService = organizationService;
         this.fileUploadService = fileUploadService;
         this.ruleService = ruleService;
         this.fileParserService = fileParserService;
+        this.aiService = aiService;
     }
 
     @Transactional
@@ -116,10 +122,15 @@ public class ReconciliationService {
             reconciliation.setStatistics(stats);
             reconciliationRepository.save(reconciliation);
 
+            // Save all exceptions
+            List<ReconciliationException> savedExceptions = new ArrayList<>();
             for (ReconciliationException exception : result.exceptions) {
                 exception.setReconciliation(reconciliation);
-                exceptionRepository.save(exception);
+                savedExceptions.add(exceptionRepository.save(exception));
             }
+
+            // Populate AI suggestions for up to the first AI_SUGGESTION_MAX_EXCEPTIONS exceptions
+            populateAiSuggestions(savedExceptions, reconciliation.getName());
 
             reconciliation.setStatus(ReconciliationStatus.COMPLETED);
             reconciliation.setCompletedAt(LocalDateTime.now());
@@ -484,6 +495,30 @@ public class ReconciliationService {
         }
 
         return result;
+    }
+
+    private void populateAiSuggestions(List<ReconciliationException> exceptions, String reconciliationName) {
+        int limit = Math.min(exceptions.size(), AI_SUGGESTION_MAX_EXCEPTIONS);
+        log.info("Populating AI suggestions for {} exceptions (reconciliation: {})", limit, reconciliationName);
+
+        for (int i = 0; i < limit; i += AI_SUGGESTION_BATCH_SIZE) {
+            List<ReconciliationException> batch = exceptions.subList(i, Math.min(i + AI_SUGGESTION_BATCH_SIZE, limit));
+            for (ReconciliationException exception : batch) {
+                try {
+                    String suggestion = aiService.getExceptionSuggestion(
+                            exception.getType().name(),
+                            exception.getSourceValue() != null ? exception.getSourceValue() : "N/A",
+                            exception.getTargetValue() != null ? exception.getTargetValue() : "N/A",
+                            exception.getFieldName() != null ? exception.getFieldName() : "N/A",
+                            reconciliationName
+                    );
+                    exception.setAiSuggestion(suggestion);
+                    exceptionRepository.save(exception);
+                } catch (Exception e) {
+                    log.warn("AI suggestion failed for exception {}: {}", exception.getId(), e.getMessage());
+                }
+            }
+        }
     }
 
     private record ReconciliationResult(

@@ -7,7 +7,7 @@ echo ============================================
 
 echo.
 echo [1/3] Installing dependencies...
-npm install
+call npm install
 if errorlevel 1 (
     echo.
     echo [ERROR] npm install failed.
@@ -17,7 +17,7 @@ if errorlevel 1 (
 
 echo.
 echo [2/3] Type-checking...
-node_modules\.bin\tsc --noEmit
+call node_modules\.bin\tsc --noEmit
 if errorlevel 1 (
     echo.
     echo [ERROR] TypeScript errors found. Fix errors before starting.
@@ -26,15 +26,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo [3/3] Starting frontend on http://localhost:5173 ...
-echo       Press Ctrl+C to stop.
+echo [3/3] Starting frontend in a new window on http://localhost:5173 ...
+echo       To stop the frontend, press Ctrl+C in the new window.
 echo.
-npm run dev
-if errorlevel 1 (
-    echo.
-    echo [ERROR] Frontend exited with an error.
-    pause
-    exit /b 1
-)
-
-pause
+start "Smart Reconciliation Frontend" cmd /k "npm run dev"

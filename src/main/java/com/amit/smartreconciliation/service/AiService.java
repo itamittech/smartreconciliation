@@ -98,15 +98,17 @@ public class AiService {
     }
 
     public Flux<String> chat(String message, String context) {
+        return chat(message, context, new Object[0]);
+    }
+
+    public Flux<String> chat(String message, String context, Object... tools) {
         try {
             String systemPrompt = buildChatSystemPrompt(context);
-
-            // Use the chatClient with registered tools
-            return chatClient.prompt()
-                    .system(systemPrompt)
-                    .user(message)
-                    .stream()
-                    .content();
+            var prompt = chatClient.prompt().system(systemPrompt).user(message);
+            if (tools != null && tools.length > 0) {
+                prompt = prompt.tools(tools);
+            }
+            return prompt.stream().content();
         } catch (Exception e) {
             log.error("Error in AI chat: {}", e.getMessage(), e);
             return Flux.error(new AiServiceException("Chat error: " + e.getMessage(), e));
@@ -114,15 +116,17 @@ public class AiService {
     }
 
     public String chatSync(String message, String context) {
+        return chatSync(message, context, new Object[0]);
+    }
+
+    public String chatSync(String message, String context, Object... tools) {
         try {
             String systemPrompt = buildChatSystemPrompt(context);
-
-            // Use the chatClient with registered tools
-            return chatClient.prompt()
-                    .system(systemPrompt)
-                    .user(message)
-                    .call()
-                    .content();
+            var prompt = chatClient.prompt().system(systemPrompt).user(message);
+            if (tools != null && tools.length > 0) {
+                prompt = prompt.tools(tools);
+            }
+            return prompt.call().content();
         } catch (Exception e) {
             log.error("Error in AI chat: {}", e.getMessage(), e);
             throw new AiServiceException("Chat error: " + e.getMessage(), e);

@@ -12,6 +12,11 @@ import com.amit.smartreconciliation.exception.ResourceNotFoundException;
 import com.amit.smartreconciliation.repository.ChatMessageRepository;
 import com.amit.smartreconciliation.repository.ChatSessionRepository;
 import com.amit.smartreconciliation.repository.ReconciliationRepository;
+import com.amit.smartreconciliation.service.tool.DashboardTools;
+import com.amit.smartreconciliation.service.tool.ExceptionTools;
+import com.amit.smartreconciliation.service.tool.FileTools;
+import com.amit.smartreconciliation.service.tool.ReconciliationTools;
+import com.amit.smartreconciliation.service.tool.RuleSetTools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -32,19 +37,34 @@ public class ChatService {
     private final OrganizationService organizationService;
     private final AiService aiService;
     private final ChatContextService chatContextService;
+    private final DashboardTools dashboardTools;
+    private final ExceptionTools exceptionTools;
+    private final FileTools fileTools;
+    private final ReconciliationTools reconciliationTools;
+    private final RuleSetTools ruleSetTools;
 
     public ChatService(ChatSessionRepository sessionRepository,
                       ChatMessageRepository messageRepository,
                       ReconciliationRepository reconciliationRepository,
                       OrganizationService organizationService,
                       AiService aiService,
-                      ChatContextService chatContextService) {
+                      ChatContextService chatContextService,
+                      DashboardTools dashboardTools,
+                      ExceptionTools exceptionTools,
+                      FileTools fileTools,
+                      ReconciliationTools reconciliationTools,
+                      RuleSetTools ruleSetTools) {
         this.sessionRepository = sessionRepository;
         this.messageRepository = messageRepository;
         this.reconciliationRepository = reconciliationRepository;
         this.organizationService = organizationService;
         this.aiService = aiService;
         this.chatContextService = chatContextService;
+        this.dashboardTools = dashboardTools;
+        this.exceptionTools = exceptionTools;
+        this.fileTools = fileTools;
+        this.reconciliationTools = reconciliationTools;
+        this.ruleSetTools = ruleSetTools;
     }
 
     @Transactional
@@ -105,7 +125,8 @@ public class ChatService {
 
         // Build comprehensive context using the new context service
         String context = buildEnhancedContext(session, request.getMessage());
-        String aiResponse = aiService.chatSync(request.getMessage(), context);
+        String aiResponse = aiService.chatSync(request.getMessage(), context,
+                dashboardTools, exceptionTools, fileTools, reconciliationTools, ruleSetTools);
 
         ChatMessage assistantMessage = ChatMessage.builder()
                 .role("assistant")
@@ -149,7 +170,8 @@ public class ChatService {
         StringBuilder fullResponse = new StringBuilder();
         ChatSession finalSession = session;
 
-        return aiService.chat(request.getMessage(), context)
+        return aiService.chat(request.getMessage(), context,
+                dashboardTools, exceptionTools, fileTools, reconciliationTools, ruleSetTools)
                 .doOnNext(fullResponse::append)
                 .doOnComplete(() -> {
                     ChatMessage assistantMessage = ChatMessage.builder()

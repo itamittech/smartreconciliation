@@ -122,4 +122,59 @@ export async function uploadFile<T>(
   return response.json()
 }
 
+// SSE streaming POST — calls onChunk for each token, onDone when complete
+export async function streamPost(
+  endpoint: string,
+  data: unknown,
+  onChunk: (chunk: string) => void,
+  onDone: () => void,
+  onError: (error: Error) => void
+): Promise<void> {
+  const url = `${API_BASE_URL}${endpoint}`
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null)
+      throw new ApiError(
+        errorData?.message || `HTTP error ${response.status}`,
+        response.status,
+        errorData
+      )
+    }
+
+    const reader = response.body?.getReader()
+    if (!reader) throw new Error('No response body')
+
+    const decoder = new TextDecoder()
+    let buffer = ''
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() ?? ''
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const content = line.slice(6)
+          if (content.trim()) onChunk(content)
+        }
+      }
+    }
+    // Flush remaining buffer
+    if (buffer.startsWith('data: ')) {
+      const content = buffer.slice(6)
+      if (content.trim()) onChunk(content)
+    }
+    onDone()
+  } catch (error) {
+    onError(error instanceof Error ? error : new Error(String(error)))
+  }
+}
+
 export { API_BASE_URL }

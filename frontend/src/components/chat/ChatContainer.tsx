@@ -1,17 +1,18 @@
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, useCallback } from 'react'
 import { Sparkles, AlertCircle, Brain, Zap } from 'lucide-react'
 import { ChatMessage } from './ChatMessage'
 import { ChatInput } from './ChatInput'
 import { useAppStore } from '@/store'
 import type { ChatMessage as ChatMessageType } from '@/types'
-import { useQuickChat, useUploadFile } from '@/services/hooks'
+import { useUploadFile } from '@/services/hooks'
+import { streamPost } from '@/services/api'
 
 const ChatContainer = () => {
   const { chatMessages, addChatMessage } = useAppStore()
   const [isLoading, setIsLoading] = useState(false)
+  const [streamingContent, setStreamingContent] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const quickChat = useQuickChat()
   const uploadFile = useUploadFile()
 
   const scrollToBottom = () => {
@@ -20,46 +21,59 @@ const ChatContainer = () => {
 
   useEffect(() => {
     scrollToBottom()
-  }, [chatMessages])
+  }, [chatMessages, streamingContent])
 
-  const handleSendMessage = async (content: string) => {
-    setError(null)
+  const handleSendMessage = useCallback(
+    async (content: string) => {
+      setError(null)
 
-    const userMessage: ChatMessageType = {
-      id: crypto.randomUUID(),
-      role: 'user',
-      content,
-      timestamp: new Date().toISOString(),
-    }
-
-    addChatMessage(userMessage)
-    setIsLoading(true)
-
-    try {
-      const response = await quickChat.mutateAsync({ message: content })
-
-      const aiResponse: ChatMessageType = {
+      const userMessage: ChatMessageType = {
         id: crypto.randomUUID(),
-        role: 'assistant',
-        content: response.data?.response || 'No response received',
+        role: 'user',
+        content,
         timestamp: new Date().toISOString(),
       }
-      addChatMessage(aiResponse)
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to get AI response'
-      setError(errorMessage)
+      addChatMessage(userMessage)
+      setIsLoading(true)
+      setStreamingContent('')
 
-      const errorResponse: ChatMessageType = {
-        id: crypto.randomUUID(),
-        role: 'assistant',
-        content: `Neural network error: ${errorMessage}. Verify backend connectivity.`,
-        timestamp: new Date().toISOString(),
-      }
-      addChatMessage(errorResponse)
-    } finally {
-      setIsLoading(false)
-    }
-  }
+      let accumulated = ''
+
+      await streamPost(
+        '/chat/stream',
+        { message: content },
+        (chunk) => {
+          accumulated += chunk
+          setStreamingContent(accumulated)
+        },
+        () => {
+          const aiResponse: ChatMessageType = {
+            id: crypto.randomUUID(),
+            role: 'assistant',
+            content: accumulated || 'No response received',
+            timestamp: new Date().toISOString(),
+          }
+          addChatMessage(aiResponse)
+          setStreamingContent(null)
+          setIsLoading(false)
+        },
+        (err) => {
+          const errorMessage = err.message || 'Failed to get AI response'
+          setError(errorMessage)
+          const errorResponse: ChatMessageType = {
+            id: crypto.randomUUID(),
+            role: 'assistant',
+            content: `Neural network error: ${errorMessage}. Verify backend connectivity.`,
+            timestamp: new Date().toISOString(),
+          }
+          addChatMessage(errorResponse)
+          setStreamingContent(null)
+          setIsLoading(false)
+        }
+      )
+    },
+    [addChatMessage]
+  )
 
   const handleFileUpload = async (files: FileList) => {
     setError(null)
@@ -82,7 +96,8 @@ const ChatContainer = () => {
         const successMessage: ChatMessageType = {
           id: crypto.randomUUID(),
           role: 'assistant',
-          content: `✨ File "${uploadedFile?.originalFilename || file.name}" analyzed successfully!\n\n` +
+          content:
+            `✨ File "${uploadedFile?.originalFilename || file.name}" analyzed successfully!\n\n` +
             `📊 **Data Matrix:**\n` +
             `• Rows: ${uploadedFile?.rowCount || 'Computing...'}\n` +
             `• Columns: ${uploadedFile?.columnCount || 'Computing...'}\n` +
@@ -129,7 +144,7 @@ const ChatContainer = () => {
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto relative z-10">
-        {chatMessages.length === 0 ? (
+        {chatMessages.length === 0 && streamingContent === null ? (
           <div className="flex h-full flex-col items-center justify-center p-8 text-center">
             <div className="mb-6 rounded-2xl gradient-neural p-6 shadow-glow-violet animate-pulse-glow">
               <Brain className="h-12 w-12 text-white" />
@@ -166,7 +181,23 @@ const ChatContainer = () => {
             {chatMessages.map((message) => (
               <ChatMessage key={message.id} message={message} />
             ))}
-            {isLoading && (
+
+            {/* Live streaming message */}
+            {streamingContent !== null && (
+              <div className="flex gap-3 p-4 glass rounded-xl border border-violet-500/30">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full gradient-neural shadow-glow-violet">
+                  <Sparkles className="h-5 w-5 text-white" />
+                </div>
+                <div className="flex-1 text-sm text-gray-200 leading-relaxed whitespace-pre-wrap">
+                  {streamingContent}
+                  {/* Blinking cursor */}
+                  <span className="inline-block w-0.5 h-4 bg-violet-400 ml-0.5 animate-pulse" />
+                </div>
+              </div>
+            )}
+
+            {/* Thinking indicator (before first chunk arrives) */}
+            {isLoading && streamingContent === '' && (
               <div className="flex gap-3 p-4 glass rounded-xl border border-violet-500/30 animate-pulse-glow">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full gradient-neural shadow-glow-violet">
                   <Sparkles className="h-5 w-5 text-white" />
@@ -178,6 +209,7 @@ const ChatContainer = () => {
                 </div>
               </div>
             )}
+
             <div ref={messagesEndRef} />
           </div>
         )}

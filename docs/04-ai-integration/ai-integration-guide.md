@@ -244,7 +244,7 @@ public class AiService {
 
 Automatically suggests how fields should be mapped between source and target files.
 
-**Endpoint:** `POST /api/v1/ai/suggest-mapping`
+**Endpoint:** `POST /api/v1/ai/suggest-mappings`
 
 **Request:**
 
@@ -322,8 +322,15 @@ Generates intelligent matching rules based on file schemas.
 
 **Request:**
 
-```http
-POST /api/v1/ai/suggest-rules?sourceFileId=1&targetFileId=2&mappedFields=transaction_id,amount
+```json
+{
+  "sourceFileId": 1,
+  "targetFileId": 2,
+  "acceptedMappings": [
+    { "sourceField": "txn_id", "targetField": "transaction_id", "isKeyField": true },
+    { "sourceField": "amt", "targetField": "amount", "isKeyField": false }
+  ]
+}
 ```
 
 **Response:**
@@ -331,7 +338,30 @@ POST /api/v1/ai/suggest-rules?sourceFileId=1&targetFileId=2&mappedFields=transac
 ```json
 {
   "success": true,
-  "data": "Based on the file schemas, I recommend:\n\n1. Primary Key Match: Use 'transaction_id' for exact matching (weight: 1.0)\n2. Amount Match: Match 'amount' with tolerance of ±0.01 (weight: 0.8)\n3. Fuzzy Name Match: Apply fuzzy matching on 'customer_name' with 85% threshold (weight: 0.6)\n\nThis multi-tier approach maximizes match rate while maintaining accuracy."
+  "data": {
+    "rules": [
+      {
+        "name": "Transaction ID Exact Match",
+        "sourceField": "txn_id",
+        "targetField": "transaction_id",
+        "matchType": "EXACT",
+        "isKeyField": true,
+        "threshold": null,
+        "confidence": 0.98,
+        "reasoning": "Primary identifier — exact match required"
+      },
+      {
+        "name": "Amount Fuzzy Match",
+        "sourceField": "amt",
+        "targetField": "amount",
+        "matchType": "FUZZY",
+        "isKeyField": false,
+        "threshold": 0.95,
+        "confidence": 0.85,
+        "reasoning": "Numeric amount — high similarity threshold recommended"
+      }
+    ]
+  }
 }
 ```
 
@@ -346,14 +376,16 @@ POST /api/v1/ai/suggest-rules?sourceFileId=1&targetFileId=2&mappedFields=transac
 
 ### 3. Exception Resolution Suggestions
 
-Provides AI-powered suggestions for resolving reconciliation exceptions.
+AI suggestions are **automatically populated for every exception** during reconciliation (batched in groups of 10, up to 50 per run). The `aiSuggestion` field on each exception is always pre-filled — no extra click or API call needed.
 
-**Endpoint:** `GET /api/v1/exceptions/{id}/suggestions`
+To request a suggestion for a specific exception manually:
+
+**Endpoint:** `POST /api/v1/ai/suggest-resolution/{exceptionId}`
 
 **Request:**
 
 ```http
-GET /api/v1/exceptions/123/suggestions
+POST /api/v1/ai/suggest-resolution/123
 ```
 
 **Response:**
@@ -918,22 +950,39 @@ String prompt = """
 
 ## Advanced Topics
 
-### Function Calling (Future)
+### Function Calling (Implemented)
 
-Allow AI to trigger application functions:
+The AI chat assistant uses Spring AI `@Tool` annotations on service beans. Five tool beans are wired into every `ChatClient` prompt, giving the AI live access to reconciliation data:
 
 ```java
-@Bean
-public FunctionCallback getReconciliationFunction() {
-    return FunctionCallback.builder()
-        .function("getReconciliation", (Long id) -> {
-            return reconciliationService.getById(id);
-        })
-        .description("Get reconciliation by ID")
-        .inputType(Long.class)
-        .build();
+// ChatService.java — tools are passed on every prompt call
+chatClient.prompt()
+    .system(systemPrompt)
+    .user(message)
+    .tools(dashboardTools, exceptionTools, fileTools, reconciliationTools, ruleSetTools)
+    .stream()
+    .content()
+```
+
+Each tool bean uses the `@Tool` annotation:
+
+```java
+@Service
+public class ReconciliationTools {
+
+    @Tool(description = "Get details of a specific reconciliation by ID")
+    public ReconciliationSummaryResponse getReconciliation(Long reconciliationId) {
+        // queries live database
+    }
+
+    @Tool(description = "List reconciliations with optional status filter")
+    public List<ReconciliationSummaryResponse> listReconciliations(String status) {
+        // queries live database
+    }
 }
 ```
+
+See `docs/04-ai-integration/ai-tools-implementation-status.md` for the full list of implemented tools.
 
 ### RAG (Retrieval-Augmented Generation)
 

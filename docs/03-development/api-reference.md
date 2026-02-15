@@ -45,59 +45,13 @@ Currently in development phase - no authentication required. Production deployme
 
 ### Upload File
 
-Upload one or more files for reconciliation.
+Upload a single file for reconciliation.
 
 **Endpoint:** `POST /files/upload`
 
 **Request:**
 ```http
 POST /api/v1/files/upload
-Content-Type: multipart/form-data
-
-files: [file1.csv, file2.xlsx]
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Files uploaded successfully",
-  "data": [
-    {
-      "id": 1,
-      "fileName": "transactions_2024.csv",
-      "fileType": "CSV",
-      "fileSize": 2048576,
-      "rowCount": 15000,
-      "columnCount": 12,
-      "uploadedAt": "2026-01-31T10:30:00",
-      "status": "PROCESSED"
-    }
-  ]
-}
-```
-
-**Supported File Types:**
-- CSV (`.csv`)
-- Excel (`.xlsx`, `.xls`)
-- JSON (`.json`)
-- XML (`.xml`)
-
-**Limits:**
-- Max file size: 100MB per file
-- Max request size: 100MB total
-
----
-
-### Upload Single File
-
-Upload a single file for reconciliation.
-
-**Endpoint:** `POST /files/upload/single`
-
-**Request:**
-```http
-POST /api/v1/files/upload/single
 Content-Type: multipart/form-data
 
 file: transactions.csv
@@ -110,7 +64,7 @@ file: transactions.csv
   "message": "File uploaded successfully",
   "data": {
     "id": 1,
-    "fileName": "transactions_2024.csv",
+    "originalFilename": "transactions_2024.csv",
     "fileType": "CSV",
     "fileSize": 2048576,
     "rowCount": 15000,
@@ -120,6 +74,10 @@ file: transactions.csv
   }
 }
 ```
+
+**Supported File Types:**
+- CSV (`.csv`)
+- Excel (`.xlsx`, `.xls`)
 
 ---
 
@@ -415,102 +373,23 @@ GET /api/v1/reconciliations
 
 ---
 
-### Get Reconciliation Status
+### Start Reconciliation
 
-Check the current status of a reconciliation.
+Trigger execution of a created reconciliation.
 
-**Endpoint:** `GET /reconciliations/{id}/status`
+**Endpoint:** `POST /reconciliations/{id}/start`
 
 **Request:**
 ```http
-GET /api/v1/reconciliations/10/status
+POST /api/v1/reconciliations/10/start
 ```
 
 **Response:**
 ```json
 {
   "success": true,
-  "data": {
-    "id": 10,
-    "status": "RUNNING",
-    "progress": 45,
-    "matchedRecords": 4500,
-    "currentOperation": "Matching records using fuzzy logic"
-  }
-}
-```
-
----
-
-### Get Reconciliation Results
-
-Retrieve detailed results of a completed reconciliation.
-
-**Endpoint:** `GET /reconciliations/{id}/results`
-
-**Request:**
-```http
-GET /api/v1/reconciliations/10/results
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": 10,
-    "status": "COMPLETED",
-    "totalSourceRecords": 10000,
-    "totalTargetRecords": 9850,
-    "matchedRecords": 9800,
-    "unmatchedSourceRecords": 200,
-    "unmatchedTargetRecords": 50,
-    "exceptionCount": 25,
-    "matchRate": 98.0,
-    "statistics": {
-      "exactMatches": 9500,
-      "fuzzyMatches": 300,
-      "averageConfidence": 0.95,
-      "processingTimeMs": 45000
-    },
-    "results": {
-      "matchedPairs": [],
-      "unmatchedSource": [],
-      "unmatchedTarget": []
-    }
-  }
-}
-```
-
----
-
-### Get Reconciliation Exceptions
-
-List all exceptions found during reconciliation.
-
-**Endpoint:** `GET /reconciliations/{id}/exceptions`
-
-**Request:**
-```http
-GET /api/v1/reconciliations/10/exceptions
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "type": "AMOUNT_MISMATCH",
-      "severity": "HIGH",
-      "status": "OPEN",
-      "description": "Amount differs by 0.01",
-      "sourceData": {"id": "TXN001", "amount": 1500.00},
-      "targetData": {"id": "TXN001", "amount": 1500.01},
-      "createdAt": "2026-01-31T10:35:00"
-    }
-  ]
+  "message": "Reconciliation started",
+  "data": null
 }
 ```
 
@@ -551,35 +430,7 @@ Create a new rule set for reconciliation.
 {
   "name": "Bank Statement Rules",
   "description": "Standard rules for bank reconciliation",
-  "sourceFileId": 1,
-  "targetFileId": 2,
-  "fieldMappings": [
-    {
-      "sourceField": "transaction_id",
-      "targetField": "txn_id",
-      "transformationType": "DIRECT"
-    },
-    {
-      "sourceField": "amt",
-      "targetField": "amount",
-      "transformationType": "DIRECT"
-    }
-  ],
-  "matchingRules": [
-    {
-      "name": "Primary Key Match",
-      "fields": ["transaction_id"],
-      "matchType": "EXACT",
-      "weight": 1.0
-    },
-    {
-      "name": "Amount Match",
-      "fields": ["amount"],
-      "matchType": "EXACT",
-      "weight": 0.8,
-      "tolerance": 0.01
-    }
-  ]
+  "isAiGenerated": false
 }
 ```
 
@@ -592,41 +443,23 @@ Create a new rule set for reconciliation.
     "id": 5,
     "name": "Bank Statement Rules",
     "description": "Standard rules for bank reconciliation",
-    "fieldMappings": [
-      {
-        "id": 10,
-        "sourceField": "transaction_id",
-        "targetField": "txn_id",
-        "transformationType": "DIRECT"
-      }
-    ],
-    "matchingRules": [
-      {
-        "id": 20,
-        "name": "Primary Key Match",
-        "fields": ["transaction_id"],
-        "matchType": "EXACT",
-        "weight": 1.0
-      }
-    ],
+    "isAiGenerated": false,
+    "fieldMappings": [],
+    "matchingRules": [],
     "createdAt": "2026-01-31T10:30:00"
   }
 }
 ```
 
-**Transformation Types:**
-- `DIRECT` - No transformation
-- `UPPERCASE` - Convert to uppercase
-- `LOWERCASE` - Convert to lowercase
-- `TRIM` - Remove leading/trailing whitespace
-- `DATE_FORMAT` - Convert date format
-- `CURRENCY_CONVERSION` - Convert currency
+Add field mappings and matching rules using the separate endpoints below.
 
 **Match Types:**
-- `EXACT` - Exact match required
-- `FUZZY` - Fuzzy string matching
+- `EXACT` - Exact string/value match
+- `FUZZY` - Levenshtein distance similarity (threshold 0–100)
 - `RANGE` - Numeric range match
-- `DATE_RANGE` - Date range match
+- `CONTAINS` - Source value contains target
+- `STARTS_WITH` - Source value starts with target
+- `ENDS_WITH` - Source value ends with target
 
 ---
 
@@ -745,6 +578,61 @@ DELETE /api/v1/rules/5
 
 ---
 
+### Duplicate Rule Set
+
+Create a copy of an existing rule set.
+
+**Endpoint:** `POST /rules/{id}/duplicate`
+
+**Request:**
+```http
+POST /api/v1/rules/5/duplicate
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 6,
+    "name": "Bank Statement Rules (Copy)",
+    "fieldMappings": [],
+    "matchingRules": []
+  }
+}
+```
+
+---
+
+### Test Rule Set
+
+Dry-run a rule set against a sample of data without saving results.
+
+**Endpoint:** `POST /rules/{id}/test`
+
+**Request:**
+```json
+{
+  "sampleSize": 100
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "sampleSize": 100,
+    "matchedCount": 92,
+    "unmatchedCount": 8,
+    "matchRate": 92.0,
+    "details": []
+  }
+}
+```
+
+---
+
 ### Add Field Mapping
 
 Add a field mapping to an existing rule set.
@@ -756,7 +644,7 @@ Add a field mapping to an existing rule set.
 {
   "sourceField": "customer_name",
   "targetField": "client_name",
-  "transformationType": "UPPERCASE"
+  "isKeyField": false
 }
 ```
 
@@ -772,7 +660,7 @@ Add a field mapping to an existing rule set.
         "id": 11,
         "sourceField": "customer_name",
         "targetField": "client_name",
-        "transformationType": "UPPERCASE"
+        "isKeyField": false
       }
     ]
   }
@@ -791,10 +679,10 @@ Add a matching rule to an existing rule set.
 ```json
 {
   "name": "Fuzzy Name Match",
-  "fields": ["customer_name"],
+  "sourceField": "customer_name",
+  "targetField": "client_name",
   "matchType": "FUZZY",
-  "weight": 0.7,
-  "threshold": 0.85
+  "threshold": 85
 }
 ```
 
@@ -871,12 +759,13 @@ GET /api/v1/exceptions?severity=HIGH&status=OPEN&page=0&size=20
 ```
 
 **Exception Types:**
-- `AMOUNT_MISMATCH` - Monetary amount doesn't match
-- `DATE_MISMATCH` - Date values don't match
-- `MISSING_IN_SOURCE` - Record exists in target but not in source
-- `MISSING_IN_TARGET` - Record exists in source but not in target
-- `DUPLICATE_FOUND` - Duplicate records detected
-- `VALIDATION_ERROR` - Data validation failed
+- `VALUE_MISMATCH` - Field values don't match between source and target
+- `MISSING_SOURCE` - Record exists in target but not in source
+- `MISSING_TARGET` - Record exists in source but not in target
+- `DUPLICATE` - Duplicate records detected in source or target
+- `FORMAT_ERROR` - Data format/type validation failed
+- `TOLERANCE_EXCEEDED` - Numeric difference exceeds allowed tolerance
+- `POTENTIAL_MATCH` - AI identified a probable match the deterministic engine missed (typos, formatting differences)
 
 ---
 
@@ -924,17 +813,16 @@ GET /api/v1/exceptions/1
 
 ---
 
-### Update Exception
+### Resolve Exception
 
-Update an exception's status or resolution.
+Mark an exception as resolved with an optional note.
 
-**Endpoint:** `PUT /exceptions/{id}`
+**Endpoint:** `PUT /exceptions/{id}/resolve`
 
 **Request:**
 ```json
 {
-  "status": "RESOLVED",
-  "resolution": "Amount difference is due to rounding. Acceptable variance."
+  "notes": "Amount difference is due to rounding. Acceptable variance."
 }
 ```
 
@@ -942,13 +830,34 @@ Update an exception's status or resolution.
 ```json
 {
   "success": true,
-  "message": "Exception updated successfully",
+  "message": "Exception resolved",
   "data": {
     "id": 1,
     "status": "RESOLVED",
-    "resolution": "Amount difference is due to rounding. Acceptable variance.",
     "resolvedAt": "2026-01-31T11:00:00"
   }
+}
+```
+
+---
+
+### Ignore Exception
+
+Mark an exception as ignored.
+
+**Endpoint:** `PUT /exceptions/{id}/ignore`
+
+**Request:**
+```http
+PUT /api/v1/exceptions/1/ignore
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Exception ignored",
+  "data": null
 }
 ```
 
@@ -989,34 +898,17 @@ Update multiple exceptions at once.
 
 ---
 
-### Get AI Suggestion for Exception
-
-Get AI-generated suggestions for resolving an exception.
-
-**Endpoint:** `GET /exceptions/{id}/suggestions`
-
-**Request:**
-```http
-GET /api/v1/exceptions/1/suggestions
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": "Based on the amount mismatch of $0.01, this appears to be a rounding difference. The discrepancy is within acceptable tolerance for financial reconciliation. Suggested action: Mark as resolved with 'Rounding variance' as the reason."
-}
-```
-
 ---
 
 ## AI Services
 
-### Suggest Field Mapping
+> **Note:** AI suggestions are automatically pre-populated on every exception during reconciliation (up to 50 per run). The `aiSuggestion` field is always present on exception responses — no extra request is needed.
+
+### Suggest Field Mappings
 
 Get AI-powered suggestions for mapping fields between source and target files.
 
-**Endpoint:** `POST /ai/suggest-mapping`
+**Endpoint:** `POST /ai/suggest-mappings`
 
 **Request:**
 ```json
@@ -1062,26 +954,61 @@ Get AI-powered suggestions for mapping fields between source and target files.
 
 ### Suggest Matching Rules
 
-Get AI-powered suggestions for reconciliation rules.
+Get AI-powered suggestions for reconciliation rules given accepted field mappings.
 
 **Endpoint:** `POST /ai/suggest-rules`
 
-**Query Parameters:**
-- `sourceFileId` (required) - Source file ID
-- `targetFileId` (required) - Target file ID
-- `mappedFields` (optional) - Comma-separated list of already mapped fields
-
 **Request:**
-```http
-POST /api/v1/ai/suggest-rules?sourceFileId=1&targetFileId=2&mappedFields=transaction_id,amount
+```json
+{
+  "sourceFileId": 1,
+  "targetFileId": 2,
+  "acceptedMappings": [
+    { "sourceField": "txn_id", "targetField": "transaction_id", "isKeyField": true },
+    { "sourceField": "amt", "targetField": "amount", "isKeyField": false }
+  ]
+}
 ```
 
 **Response:**
 ```json
 {
   "success": true,
-  "message": "Rule suggestions generated",
-  "data": "Based on the file schemas, I recommend the following reconciliation strategy:\n\n1. Primary matching rule: Use 'transaction_id' for exact matching (weight: 1.0)\n2. Secondary rule: Match 'amount' with a tolerance of ±0.01 (weight: 0.8)\n3. Tertiary rule: Apply fuzzy matching on 'customer_name' with 85% threshold (weight: 0.6)\n\nThis multi-tier approach will maximize match rate while maintaining accuracy."
+  "data": {
+    "rules": [
+      {
+        "name": "Transaction ID Exact Match",
+        "sourceField": "txn_id",
+        "targetField": "transaction_id",
+        "matchType": "EXACT",
+        "isKeyField": true,
+        "threshold": null,
+        "confidence": 0.98,
+        "reasoning": "Primary identifier — exact match required"
+      }
+    ]
+  }
+}
+```
+
+---
+
+### Suggest Exception Resolution
+
+Request an AI-generated resolution suggestion for a specific exception. (Normally not needed — suggestions are auto-populated during reconciliation.)
+
+**Endpoint:** `POST /ai/suggest-resolution/{exceptionId}`
+
+**Request:**
+```http
+POST /api/v1/ai/suggest-resolution/123
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": "This $0.01 amount mismatch appears to be a rounding difference. Suggested action: Mark as resolved with 'Rounding variance' as the reason."
 }
 ```
 
@@ -1240,8 +1167,8 @@ Send a message in a chat session.
 **Request:**
 ```json
 {
-  "sessionId": 1,
-  "content": "Can you suggest rules for matching these files?"
+  "message": "Can you suggest rules for matching these files?",
+  "sessionId": 1
 }
 ```
 
@@ -1270,17 +1197,17 @@ Send a message in a chat session.
 
 ### Stream Message
 
-Send a message and receive a streaming response.
+Send a message and receive a streaming response. **This is the primary chat endpoint** — the frontend uses this for real-time token-by-token rendering.
 
 **Endpoint:** `POST /chat/stream`
 
-**Content-Type:** `text/event-stream`
+**Response Content-Type:** `text/event-stream`
 
 **Request:**
 ```json
 {
-  "sessionId": 1,
-  "content": "Explain the reconciliation results"
+  "message": "Explain the reconciliation results",
+  "reconciliationId": 10
 }
 ```
 
@@ -1299,198 +1226,6 @@ data:  a 98%
 data:  match rate
 
 data: ...
-```
-
----
-
-## Data Sources
-
-### Create Data Source
-
-Create a new data source connection.
-
-**Endpoint:** `POST /datasources`
-
-**Request:**
-```json
-{
-  "name": "Production Database",
-  "description": "Main PostgreSQL database",
-  "type": "DATABASE",
-  "config": {
-    "host": "db.example.com",
-    "port": 5432,
-    "database": "production",
-    "username": "readonly",
-    "password": "encrypted_password",
-    "ssl": true
-  }
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Data source created successfully",
-  "data": {
-    "id": 1,
-    "name": "Production Database",
-    "type": "DATABASE",
-    "active": true,
-    "createdAt": "2026-01-31T10:30:00"
-  }
-}
-```
-
-**Data Source Types:**
-- `DATABASE` - Database connection (PostgreSQL, MySQL, etc.)
-- `REST_API` - REST API endpoint
-- `FILE` - File-based source
-- `WEBHOOK` - Webhook receiver
-
----
-
-### Get Data Source
-
-Retrieve a specific data source.
-
-**Endpoint:** `GET /datasources/{id}`
-
-**Request:**
-```http
-GET /api/v1/datasources/1
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "name": "Production Database",
-    "description": "Main PostgreSQL database",
-    "type": "DATABASE",
-    "active": true,
-    "lastTestedAt": "2026-01-31T09:00:00",
-    "lastTestSuccessful": true,
-    "createdAt": "2026-01-30T10:00:00"
-  }
-}
-```
-
----
-
-### List Data Sources
-
-Get all data sources.
-
-**Endpoint:** `GET /datasources`
-
-**Request:**
-```http
-GET /api/v1/datasources
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": 1,
-      "name": "Production Database",
-      "type": "DATABASE",
-      "active": true,
-      "lastTestSuccessful": true
-    },
-    {
-      "id": 2,
-      "name": "SAP API",
-      "type": "REST_API",
-      "active": true,
-      "lastTestSuccessful": false
-    }
-  ]
-}
-```
-
----
-
-### Update Data Source
-
-Update an existing data source.
-
-**Endpoint:** `PUT /datasources/{id}`
-
-**Request:**
-```json
-{
-  "name": "Updated Production Database",
-  "active": true
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Data source updated successfully",
-  "data": {
-    "id": 1,
-    "name": "Updated Production Database",
-    "updatedAt": "2026-01-31T11:00:00"
-  }
-}
-```
-
----
-
-### Delete Data Source
-
-Delete a data source.
-
-**Endpoint:** `DELETE /datasources/{id}`
-
-**Request:**
-```http
-DELETE /api/v1/datasources/1
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Data source deleted successfully",
-  "data": null
-}
-```
-
----
-
-### Test Data Source Connection
-
-Test connectivity to a data source.
-
-**Endpoint:** `POST /datasources/{id}/test`
-
-**Request:**
-```http
-POST /api/v1/datasources/1/test
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Connection test successful",
-  "data": {
-    "successful": true,
-    "responseTime": 125,
-    "message": "Successfully connected to database",
-    "testedAt": "2026-01-31T11:00:00"
-  }
-}
 ```
 
 ---

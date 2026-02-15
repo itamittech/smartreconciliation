@@ -1,53 +1,79 @@
 # Smart Reconciliation
 
-An AI-powered, industry-agnostic reconciliation platform that transforms how businesses match and verify data across systems. Unlike traditional rule-based tools requiring extensive manual configuration, Smart Reconciliation uses AI to autonomously understand data formats, suggest intelligent mappings, and execute reconciliations with minimal user effort.
+An AI-native, industry-agnostic reconciliation platform. AI is the core engine — it identifies field mappings, generates rule sets, performs a second-pass on unmatched records, and auto-explains every exception. The deterministic matching engine handles speed and precision; AI handles intelligence and insight.
 
-**Core Value Proposition:** *"Upload your data, describe what you need, and let AI handle the rest."*
+**Core Value Proposition:** *"Upload your files, let AI analyze the patterns, review the suggestions, and reconcile with confidence."*
+
+---
+
+## How It Works
+
+1. **Upload** source and target files (CSV, Excel)
+2. **AI Analysis** — click "Let AI Analyze Files" in the wizard or rule modal; AI inspects column schemas and suggests optimal field mappings with confidence scores
+3. **Review & Adjust** — accept or reject individual mappings and matching rules; confidence badges (green ≥80%, yellow 50–79%, red <50%) guide decisions
+4. **Run Reconciliation** — deterministic engine matches records using your rule set (6 match types); AI runs a second pass on any unmatched records to find POTENTIAL_MATCH candidates missed by key-based logic
+5. **Exceptions with AI Insight** — every exception is auto-annotated with an AI suggestion the moment reconciliation completes; no manual "request suggestion" step
+6. **Chat Assistant** — ask questions in plain English; AI queries live reconciliation data via tool calls and responds with streaming tokens in real time
+
+---
 
 ## Features
 
-### Chat-First AI Interface
-- Natural language understanding for reconciliation requests
-- Contextual follow-up questions when ambiguous
-- AI decisions explained in plain English
-- Accept corrections via conversation
+### AI-First Rule Creation
+- **Reconciliation Wizard (Step 3):** "Let AI Analyze Files" CTA → field mapping review panel → "Suggest Matching Rules" → rule review → auto-creates rule set
+- **Create Rule Set Modal:** Manual | AI-Assisted mode toggle; AI-Assisted path has the same suggest-mappings + suggest-rules flow
+- AI-generated rule sets display a sparkle badge in the rule library
 
-### Zero-Config AI Magic
-- **Autonomous Data Understanding:** Auto-detect file formats (CSV, Excel, JSON, XML), infer column types, detect delimiters and encoding
-- **Intelligent Field Mapping:** Semantic matching (understands "Amt" = "Amount" = "Total"), cross-language support, confidence scores
-- **Smart Reconciliation Rules:** Suggest matching strategies, propose tolerance thresholds, identify many-to-one matches
+### Intelligent Matching Engine
+- 6 match types: `EXACT`, `FUZZY` (Levenshtein), `RANGE`, `CONTAINS`, `STARTS_WITH`, `ENDS_WITH`
+- Key-based composite matching, async execution with progress tracking
+- **AI second-pass:** after deterministic matching, AI evaluates unmatched records (≤200) and creates `POTENTIAL_MATCH` exceptions for probable cross-file matches (typos, formatting differences)
 
-### Visual Rule Builder
-- Drag-drop interface for creating matching rules
-- Pre-built transformation blocks (field mapping, date parsing, currency conversion, aggregation)
-- Rule library with version history
+### Exception Management with Auto-AI
+- 7 exception types: `MISSING_SOURCE`, `MISSING_TARGET`, `VALUE_MISMATCH`, `DUPLICATE`, `FORMAT_ERROR`, `TOLERANCE_EXCEEDED`, `POTENTIAL_MATCH`
+- AI suggestions auto-populated on every exception during reconciliation (batched, up to 50 per run) — always available inline, no extra click
+- Status workflow: `OPEN` → `RESOLVED` / `IGNORED`, bulk actions, audit trail
 
-### Multi-Source Connectivity
-- File uploads: CSV, Excel (.xlsx, .xls), JSON, XML
-- Database connections: PostgreSQL, MySQL, SQL Server, Oracle
-- REST API connector with webhook support
+### Real-Time AI Chat
+- SSE streaming: responses render word-by-word with a live cursor via `POST /chat/stream`
+- AI has live tool access: queries reconciliations, exceptions, files, rule sets, and dashboard metrics in real time
+- Context-aware: pass reconciliation ID for scoped assistance
 
-### Exception Management
-- Intelligent flagging with severity levels
-- AI-suggested resolutions
-- Bulk actions and audit trail
+### File Management
+- Upload CSV and Excel (.xlsx/.xls) files
+- Async schema detection (column names, types, nullable flags, sample values)
+- File preview, row/column counts, status tracking
+
+### Dashboard
+- KPI cards: match rate, open exceptions, reconciliation counts
+- Exception breakdown by type and severity
+- Recent reconciliation activity; auto-refreshes every 60 seconds
+
+---
 
 ## Technology Stack
 
 | Layer | Technology |
 |-------|------------|
 | **Backend** | Java 21 + Spring Boot 3.5.10 |
-| **AI Integration** | Spring AI 1.1.2 |
-| **LLM Providers** | Anthropic Claude, OpenAI, DeepSeek |
+| **AI / LLM** | Spring AI 1.1.2 — Anthropic Claude, OpenAI, DeepSeek |
+| **AI Tool Calling** | Spring AI `@Tool` — DashboardTools, ExceptionTools, FileTools, ReconciliationTools, RuleSetTools |
 | **Vector Store** | PostgreSQL + PGVector |
-| **Database** | PostgreSQL |
-| **Frontend** | React + TypeScript (planned) |
+| **Database** | PostgreSQL 16 (Docker) |
+| **Frontend** | React 19 + TypeScript + Vite |
+| **Frontend State** | Zustand (UI state) + TanStack React Query (server state) |
+| **Frontend Streaming** | Fetch API `ReadableStream` → SSE parser |
+
+---
 
 ## Prerequisites
 
-- Java 21
+- Java 21+ (tested with OpenJDK 24)
+- Node.js 18+
 - Docker and Docker Compose
-- API keys for AI providers (Anthropic, OpenAI, or DeepSeek)
+- API key for at least one AI provider (Anthropic, OpenAI, or DeepSeek)
+
+---
 
 ## Getting Started
 
@@ -57,11 +83,11 @@ An AI-powered, industry-agnostic reconciliation platform that transforms how bus
 docker-compose up -d
 ```
 
-This starts PostgreSQL with PGVector extension on port 5432.
+Starts PostgreSQL with PGVector on port 5432.
 
-### 2. Configure API Keys
+### 2. Configure AI API Keys
 
-Set your AI provider API keys in `src/main/resources/application.properties` or as environment variables:
+Edit `src/main/resources/application.properties` or set environment variables:
 
 ```properties
 spring.ai.anthropic.api-key=your-anthropic-key
@@ -69,7 +95,7 @@ spring.ai.openai.api-key=your-openai-key
 spring.ai.deepseek.api-key=your-deepseek-key
 ```
 
-### 3. Run the Application
+### 3. Run the Backend
 
 **Windows:**
 ```bash
@@ -81,94 +107,181 @@ mvnw.cmd spring-boot:run
 ./mvnw spring-boot:run
 ```
 
-The application will start on `http://localhost:8080`.
+Backend starts at `http://localhost:8080`.
 
-## TDD Workflow
+### 4. Run the Frontend
 
-This repo uses a test-driven workflow. Start here:
-- `docs/06-testing/tdd-workflow.md`
-- Project skill: `$smartrecon-tdd` (repo-scoped automation of the workflow)
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend starts at `http://localhost:5173`.
+
+---
 
 ## Development Commands
 
-### Windows
+### Backend
+
 ```bash
-mvnw.cmd spring-boot:run          # Run the application
-mvnw.cmd test                     # Run all tests
-mvnw.cmd test -Dtest=TestClassName#methodName  # Run single test
-mvnw.cmd clean package            # Full build
-mvnw.cmd dependency:tree          # View dependencies
+# Windows
+mvnw.cmd spring-boot:run
+mvnw.cmd compile
+mvnw.cmd test
+mvnw.cmd test -Dtest=TestClassName#methodName
+mvnw.cmd clean package
+
+# Unix/Linux/macOS
+./mvnw spring-boot:run
+./mvnw compile
+./mvnw test
+./mvnw clean package
 ```
 
-### Unix/Linux/macOS
+### Frontend
+
 ```bash
-./mvnw spring-boot:run            # Run the application
-./mvnw test                       # Run all tests
-./mvnw test -Dtest=TestClassName#methodName  # Run single test
-./mvnw clean package              # Full build
+cd frontend
+npm run dev        # Development server (port 5173)
+npm run build      # Production build
+npm run lint       # ESLint
 ```
+
+---
 
 ## API Endpoints
 
 Base URL: `http://localhost:8080/api/v1`
 
-### Core Resources
+### Files
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/files/upload` | Upload CSV or Excel file |
+| `GET` | `/files` | List all uploaded files |
+| `GET` | `/files/{id}` | Get file metadata |
+| `GET` | `/files/{id}/preview` | Preview rows and column schema |
+| `DELETE` | `/files/{id}` | Delete a file |
 
-| Resource | Endpoints |
-|----------|-----------|
-| **Data Sources** | `POST/GET/PUT/DELETE /datasources` |
-| **File Uploads** | `POST /files/upload`, `GET /files/{id}/preview` |
-| **Reconciliations** | `POST/GET /reconciliations`, `GET /reconciliations/{id}/results` |
-| **AI/Chat** | `POST /chat`, `POST /chat/stream`, `POST /ai/suggest-mapping` |
-| **Rules** | `POST/GET/PUT/DELETE /rules` |
-| **Exceptions** | `GET /exceptions`, `PUT /exceptions/{id}`, `POST /exceptions/bulk-resolve` |
+### Reconciliations
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/reconciliations` | Create reconciliation |
+| `GET` | `/reconciliations` | List reconciliations (paginated) |
+| `GET` | `/reconciliations/{id}` | Get reconciliation details |
+| `POST` | `/reconciliations/{id}/start` | Start reconciliation run |
+| `POST` | `/reconciliations/{id}/cancel` | Cancel in-progress run |
+| `DELETE` | `/reconciliations/{id}` | Delete reconciliation |
+
+### Rules
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/rules` | Create rule set (`isAiGenerated` flag supported) |
+| `GET` | `/rules` | List all rule sets |
+| `GET` | `/rules/{id}` | Get rule set with mappings and rules |
+| `PUT` | `/rules/{id}` | Update rule set |
+| `DELETE` | `/rules/{id}` | Delete rule set |
+| `POST` | `/rules/{id}/duplicate` | Duplicate a rule set |
+| `POST` | `/rules/{id}/test` | Dry-run test a rule set |
+| `POST` | `/rules/{id}/mappings` | Add field mapping |
+| `POST` | `/rules/{id}/matching-rules` | Add matching rule |
+
+### Exceptions
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/exceptions` | List exceptions (filter by type, severity, status, reconciliationId) |
+| `GET` | `/exceptions/{id}` | Get exception detail |
+| `PUT` | `/exceptions/{id}/resolve` | Resolve an exception |
+| `PUT` | `/exceptions/{id}/ignore` | Ignore an exception |
+| `POST` | `/exceptions/bulk-resolve` | Bulk resolve |
+| `POST` | `/exceptions/bulk-ignore` | Bulk ignore |
+
+### AI
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/ai/suggest-mappings` | Suggest field mappings for two files |
+| `POST` | `/ai/suggest-rules` | Suggest matching rules given accepted mappings |
+| `POST` | `/ai/suggest-resolution/{exceptionId}` | Suggest resolution for a specific exception |
+
+### Chat
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/chat/stream` | **SSE streaming** chat — `text/event-stream`, `data: {token}\n\n` |
+| `POST` | `/chat/message` | Synchronous chat (single response) |
+| `POST` | `/chat/sessions` | Create chat session |
+| `GET` | `/chat/sessions` | List sessions |
+| `GET` | `/chat/sessions/{id}/messages` | Get session history |
+| `DELETE` | `/chat/sessions/{id}` | Delete session |
+
+### Dashboard & Health
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/dashboard/metrics` | Aggregate KPIs |
+| `GET` | `/health` | Health check |
+
+---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        CLIENT LAYER                              │
-│  Web App (React)  │  REST API Clients  │  Webhooks Receivers    │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                        API GATEWAY                               │
-│         (Authentication, Rate Limiting, Routing)                 │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      APPLICATION LAYER                           │
-│  Chat/NLP Service │ Reconciliation Engine │ Rule Engine          │
-│  Connector Service │ AI/ML Service │ Exception Service           │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                        DATA LAYER                                │
-│  PostgreSQL (Primary DB) │ Redis (Cache) │ PGVector (Vectors)   │
-│  File Storage (S3/MinIO) │ Audit Log Storage                    │
-└─────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                      FRONTEND (React 19)                      │
+│  ReconciliationWizard  │  RulesPage  │  ExceptionsPage        │
+│  ChatContainer (SSE)   │  Dashboard  │  FilesPage             │
+│  Zustand + React Query │  api.ts (streamPost for SSE)         │
+└──────────────────────────────┬───────────────────────────────┘
+                               │ HTTP / SSE
+                               ▼
+┌──────────────────────────────────────────────────────────────┐
+│                   BACKEND (Spring Boot 3.5.10)                │
+│                                                              │
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │                   AI LAYER (Core)                       │  │
+│  │  AiService (Claude/OpenAI/DeepSeek via Spring AI)      │  │
+│  │  • suggestMappings   • suggestRules                     │  │
+│  │  • suggestPotentialMatches (AI second-pass)             │  │
+│  │  • getExceptionSuggestion (auto-populates on run)       │  │
+│  │  • chat / streamMessage (SSE)                           │  │
+│  │                                                         │  │
+│  │  Tool Services (@Tool beans wired to ChatClient):       │  │
+│  │  DashboardTools │ ExceptionTools │ FileTools            │  │
+│  │  ReconciliationTools │ RuleSetTools                     │  │
+│  └────────────────────────────────────────────────────────┘  │
+│                                                              │
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │              RECONCILIATION ENGINE                      │  │
+│  │  Deterministic matching (6 types) → AI second-pass     │  │
+│  │  → Auto-populate exception AI suggestions (batched)    │  │
+│  └────────────────────────────────────────────────────────┘  │
+│                                                              │
+│  Controllers: Files │ Reconciliations │ Rules │ Exceptions   │
+│               Chat  │ AI              │ Dashboard            │
+└──────────────────────────────┬───────────────────────────────┘
+                               │
+                               ▼
+┌──────────────────────────────────────────────────────────────┐
+│                        DATA LAYER                             │
+│         PostgreSQL + PGVector (Docker, port 5432)            │
+└──────────────────────────────────────────────────────────────┘
 ```
+
+---
 
 ## Database Configuration
 
-PostgreSQL with PGVector is configured via Docker Compose:
-- **Host:** localhost
-- **Port:** 5432
-- **User:** myuser
-- **Password:** secret
-- **Database:** mydatabase
+PostgreSQL with PGVector, started via Docker Compose:
 
-## On-Premise Deployment
+| Setting | Value |
+|---------|-------|
+| Host | `localhost` |
+| Port | `5432` |
+| User | `myuser` |
+| Password | `secret` |
+| Database | `mydatabase` |
 
-Smart Reconciliation supports air-gapped deployments with:
-- Local LLM option via Ollama (Llama, Mistral)
-- All data stays within customer infrastructure
-- Docker-based deployment
-- AES-256 encryption at rest, TLS 1.3 in transit
+---
 
 ## License
 
-Proprietary - All rights reserved.
+Proprietary — All rights reserved.

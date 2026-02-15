@@ -17,6 +17,7 @@ import type {
   CreateMatchingRuleRequest,
   ResolveExceptionRequest,
   ChatMessageRequest,
+  AiSuggestedMapping,
 } from './types'
 
 // Query keys for cache management
@@ -426,7 +427,7 @@ export function useSuggestRules() {
     }: {
       sourceFileId: number
       targetFileId: number
-      mappings: CreateFieldMappingRequest[]
+      mappings: AiSuggestedMapping[]
     }) => aiApi.suggestRules(sourceFileId, targetFileId, mappings),
   })
 }

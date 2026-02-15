@@ -2,7 +2,14 @@
 
 // Enums matching backend
 export type ReconciliationStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED'
-export type ExceptionType = 'MISSING_SOURCE' | 'MISSING_TARGET' | 'MISMATCH' | 'DUPLICATE'
+export type ExceptionType =
+  | 'MISSING_SOURCE'
+  | 'MISSING_TARGET'
+  | 'VALUE_MISMATCH'
+  | 'DUPLICATE'
+  | 'FORMAT_ERROR'
+  | 'TOLERANCE_EXCEEDED'
+  | 'POTENTIAL_MATCH'
 export type ExceptionSeverity = 'CRITICAL' | 'WARNING' | 'INFO'
 export type ExceptionStatus = 'OPEN' | 'RESOLVED' | 'IGNORED'
 export type ColumnType = 'STRING' | 'INTEGER' | 'DECIMAL' | 'DATE' | 'BOOLEAN'
@@ -197,6 +204,38 @@ export interface CreateMatchingRuleRequest {
 export interface ResolveExceptionRequest {
   resolution: string
   resolvedBy?: string
+}
+
+// AI Suggestion types (matches AiMappingSuggestionResponse and AiRuleSuggestionResponse)
+export interface AiSuggestedMapping {
+  sourceField: string
+  targetField: string
+  confidence: number
+  reason?: string
+  isKey?: boolean
+  suggestedTransform?: string
+}
+
+export interface AiMappingSuggestionResult {
+  mappings: AiSuggestedMapping[]
+  explanation?: string
+}
+
+export interface AiSuggestedRule {
+  name: string
+  sourceField: string
+  targetField: string
+  matchType: MatchType
+  isKey?: boolean
+  fuzzyThreshold?: number
+  tolerance?: number
+  priority?: number
+  reason?: string
+}
+
+export interface AiRuleSuggestionResult {
+  rules: AiSuggestedRule[]
+  explanation?: string
 }
 
 export interface ChatMessageRequest {

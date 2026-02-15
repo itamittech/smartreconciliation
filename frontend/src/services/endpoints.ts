@@ -17,6 +17,9 @@ import type {
   CreateMatchingRuleRequest,
   ResolveExceptionRequest,
   ChatMessageRequest,
+  AiSuggestedMapping,
+  AiMappingSuggestionResult,
+  AiRuleSuggestionResult,
 } from './types'
 
 // ============================================
@@ -168,12 +171,12 @@ export const chatApi = {
 // ============================================
 export const aiApi = {
   suggestMappings: (sourceFileId: number, targetFileId: number) =>
-    post<{ mappings: CreateFieldMappingRequest[] }>('/ai/suggest-mappings', {
+    post<AiMappingSuggestionResult>('/ai/suggest-mappings', {
       sourceFileId,
       targetFileId,
     }),
-  suggestRules: (sourceFileId: number, targetFileId: number, mappings: CreateFieldMappingRequest[]) =>
-    post<{ rules: CreateMatchingRuleRequest[] }>('/ai/suggest-rules', {
+  suggestRules: (sourceFileId: number, targetFileId: number, mappings: AiSuggestedMapping[]) =>
+    post<AiRuleSuggestionResult>('/ai/suggest-rules', {
       sourceFileId,
       targetFileId,
       mappings,

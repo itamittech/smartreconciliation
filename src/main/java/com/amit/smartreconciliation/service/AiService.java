@@ -2,6 +2,7 @@ package com.amit.smartreconciliation.service;
 
 import com.amit.smartreconciliation.dto.request.AiMappingSuggestionRequest;
 import com.amit.smartreconciliation.dto.response.AiMappingSuggestionResponse;
+import com.amit.smartreconciliation.dto.response.AiRuleSuggestionResponse;
 import com.amit.smartreconciliation.dto.response.SchemaResponse;
 import com.amit.smartreconciliation.entity.FieldMapping;
 import com.amit.smartreconciliation.exception.AiServiceException;
@@ -63,18 +64,21 @@ public class AiService {
         }
     }
 
-    public String suggestRules(Long sourceFileId, Long targetFileId, List<String> mappedFields) {
+    public AiRuleSuggestionResponse suggestRules(Long sourceFileId, Long targetFileId,
+                                                  List<AiMappingSuggestionResponse.SuggestedMapping> mappings) {
         try {
             SchemaResponse sourceSchema = fileUploadService.getSchema(sourceFileId);
             SchemaResponse targetSchema = fileUploadService.getSchema(targetFileId);
 
-            String prompt = buildRuleSuggestionPrompt(sourceSchema, targetSchema, mappedFields);
+            String prompt = buildRuleSuggestionPrompt(sourceSchema, targetSchema, mappings);
 
             ChatClient chatClient = ChatClient.create(chatModel);
-            return chatClient.prompt()
+            String response = chatClient.prompt()
                     .user(prompt)
                     .call()
                     .content();
+
+            return parseRuleSuggestionResponse(response);
         } catch (Exception e) {
             log.error("Error getting AI rule suggestions: {}", e.getMessage(), e);
             throw new AiServiceException("Failed to get rule suggestions: " + e.getMessage(), e);
@@ -175,29 +179,73 @@ public class AiService {
     }
 
     private String buildRuleSuggestionPrompt(SchemaResponse sourceSchema, SchemaResponse targetSchema,
-                                              List<String> mappedFields) {
+                                              List<AiMappingSuggestionResponse.SuggestedMapping> mappings) {
         StringBuilder sb = new StringBuilder();
-        sb.append("You are a data reconciliation expert. Based on these schemas and mappings, suggest matching rules.\n\n");
+        sb.append("You are a data reconciliation expert. Based on these field mappings and schemas, suggest matching rules.\n\n");
 
-        sb.append("SOURCE SCHEMA:\n");
+        sb.append("FIELD MAPPINGS TO CREATE RULES FOR:\n");
+        for (AiMappingSuggestionResponse.SuggestedMapping m : mappings) {
+            sb.append("- ").append(m.getSourceField()).append(" → ").append(m.getTargetField());
+            if (Boolean.TRUE.equals(m.getIsKey())) sb.append(" [KEY FIELD]");
+            sb.append("\n");
+        }
+
+        sb.append("\nSOURCE SCHEMA (types for context):\n");
         for (SchemaResponse.ColumnSchema col : sourceSchema.getColumns()) {
-            sb.append("- ").append(col.getName()).append(" (").append(col.getDetectedType()).append(")\n");
+            sb.append("- ").append(col.getName()).append(": ").append(col.getDetectedType()).append("\n");
         }
 
-        sb.append("\nTARGET SCHEMA:\n");
-        for (SchemaResponse.ColumnSchema col : targetSchema.getColumns()) {
-            sb.append("- ").append(col.getName()).append(" (").append(col.getDetectedType()).append(")\n");
-        }
-
-        sb.append("\nMAPPED FIELDS: ").append(String.join(", ", mappedFields)).append("\n");
-
-        sb.append("\nSuggest matching rules considering:\n");
-        sb.append("- Which fields should be key identifiers\n");
-        sb.append("- Which fields need exact matching vs fuzzy matching\n");
-        sb.append("- Appropriate tolerances for numeric fields\n");
-        sb.append("- Date format considerations\n");
+        sb.append("\nReturn ONLY valid JSON (no markdown):\n");
+        sb.append("{\n  \"rules\": [\n    {\n");
+        sb.append("      \"name\": \"Descriptive rule name\",\n");
+        sb.append("      \"sourceField\": \"source_column\",\n");
+        sb.append("      \"targetField\": \"target_column\",\n");
+        sb.append("      \"matchType\": \"EXACT|FUZZY|RANGE|CONTAINS|STARTS_WITH|ENDS_WITH\",\n");
+        sb.append("      \"isKey\": true|false,\n");
+        sb.append("      \"fuzzyThreshold\": 0.85,\n");
+        sb.append("      \"tolerance\": 0.01,\n");
+        sb.append("      \"priority\": 1,\n");
+        sb.append("      \"reason\": \"Why this match type\"\n");
+        sb.append("    }\n  ],\n  \"explanation\": \"Overall matching strategy\"\n}");
 
         return sb.toString();
+    }
+
+    private AiRuleSuggestionResponse parseRuleSuggestionResponse(String response) {
+        try {
+            String cleaned = response.trim()
+                    .replaceAll("(?s)^```json", "").replaceAll("(?s)^```", "").replaceAll("```$", "").trim();
+
+            JsonNode root = objectMapper.readTree(cleaned);
+            AiRuleSuggestionResponse result = new AiRuleSuggestionResponse();
+
+            if (root.has("explanation")) {
+                result.setExplanation(root.get("explanation").asText());
+            }
+
+            List<AiRuleSuggestionResponse.SuggestedRule> rules = new ArrayList<>();
+            JsonNode rulesNode = root.get("rules");
+            if (rulesNode != null && rulesNode.isArray()) {
+                for (JsonNode node : rulesNode) {
+                    AiRuleSuggestionResponse.SuggestedRule rule = new AiRuleSuggestionResponse.SuggestedRule();
+                    rule.setName(node.has("name") ? node.get("name").asText() : "Rule");
+                    rule.setSourceField(node.has("sourceField") ? node.get("sourceField").asText() : null);
+                    rule.setTargetField(node.has("targetField") ? node.get("targetField").asText() : null);
+                    rule.setMatchType(node.has("matchType") ? node.get("matchType").asText("EXACT") : "EXACT");
+                    rule.setIsKey(node.has("isKey") ? node.get("isKey").asBoolean() : false);
+                    rule.setFuzzyThreshold(node.has("fuzzyThreshold") ? node.get("fuzzyThreshold").asDouble() : null);
+                    rule.setTolerance(node.has("tolerance") ? node.get("tolerance").asDouble() : null);
+                    rule.setPriority(node.has("priority") ? node.get("priority").asInt(0) : 0);
+                    rule.setReason(node.has("reason") ? node.get("reason").asText() : null);
+                    rules.add(rule);
+                }
+            }
+            result.setRules(rules);
+            return result;
+        } catch (JsonProcessingException e) {
+            log.error("Failed to parse AI rule suggestion response: {}", response);
+            throw new AiServiceException("Failed to parse AI rule suggestions", e);
+        }
     }
 
     private String buildExceptionSuggestionPrompt(String exceptionType, String sourceValue,

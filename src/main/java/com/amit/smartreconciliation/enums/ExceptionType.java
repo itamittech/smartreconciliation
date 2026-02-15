@@ -6,5 +6,6 @@ public enum ExceptionType {
     VALUE_MISMATCH,
     DUPLICATE,
     FORMAT_ERROR,
-    TOLERANCE_EXCEEDED
+    TOLERANCE_EXCEEDED,
+    POTENTIAL_MATCH   // AI identified a probable cross-file match missed by key-based matching
 }

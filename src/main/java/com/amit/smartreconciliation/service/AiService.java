@@ -3,6 +3,7 @@ package com.amit.smartreconciliation.service;
 import com.amit.smartreconciliation.dto.request.AiMappingSuggestionRequest;
 import com.amit.smartreconciliation.dto.response.AiMappingSuggestionResponse;
 import com.amit.smartreconciliation.dto.response.SchemaResponse;
+import com.amit.smartreconciliation.entity.FieldMapping;
 import com.amit.smartreconciliation.exception.AiServiceException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -16,6 +17,7 @@ import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class AiService {
@@ -238,6 +240,99 @@ public class AiService {
             """);
 
         return systemPrompt.toString();
+    }
+
+    public record PotentialMatchSuggestion(
+            Map<String, Object> sourceRecord,
+            Map<String, Object> targetRecord,
+            double confidence,
+            String reasoning) {}
+
+    public List<PotentialMatchSuggestion> suggestPotentialMatches(
+            List<Map<String, Object>> unmatchedSourceRecords,
+            List<Map<String, Object>> unmatchedTargetRecords,
+            List<FieldMapping> fieldMappings) {
+        try {
+            // Limit to 30 records per side to keep prompt size manageable
+            List<Map<String, Object>> sources = unmatchedSourceRecords.subList(
+                    0, Math.min(30, unmatchedSourceRecords.size()));
+            List<Map<String, Object>> targets = unmatchedTargetRecords.subList(
+                    0, Math.min(30, unmatchedTargetRecords.size()));
+
+            String prompt = buildPotentialMatchPrompt(sources, targets, fieldMappings);
+
+            ChatClient chatClient = ChatClient.create(chatModel);
+            String response = chatClient.prompt().user(prompt).call().content();
+
+            return parsePotentialMatchResponse(response, sources, targets);
+        } catch (Exception e) {
+            log.warn("AI potential match analysis failed: {}", e.getMessage());
+            return List.of();
+        }
+    }
+
+    private String buildPotentialMatchPrompt(List<Map<String, Object>> sources,
+                                              List<Map<String, Object>> targets,
+                                              List<FieldMapping> fieldMappings) {
+        String keyFields = fieldMappings.stream()
+                .filter(FieldMapping::getIsKey)
+                .map(fm -> fm.getSourceField() + " → " + fm.getTargetField())
+                .reduce("", (a, b) -> a.isEmpty() ? b : a + ", " + b);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("You are a data reconciliation expert. The following records failed exact key-based matching. ");
+        sb.append("Identify pairs that likely represent the same entity despite formatting differences ");
+        sb.append("(e.g., case differences, leading zeros, date formats, abbreviations, typos).\n\n");
+        sb.append("KEY FIELDS: ").append(keyFields).append("\n\n");
+
+        sb.append("UNMATCHED SOURCE RECORDS (index: data):\n");
+        for (int i = 0; i < sources.size(); i++) {
+            sb.append(i).append(": ").append(sources.get(i)).append("\n");
+        }
+
+        sb.append("\nUNMATCHED TARGET RECORDS (index: data):\n");
+        for (int i = 0; i < targets.size(); i++) {
+            sb.append(i).append(": ").append(targets.get(i)).append("\n");
+        }
+
+        sb.append("\nReturn ONLY a valid JSON array (no markdown) of potential matches:\n");
+        sb.append("[{\"sourceIndex\":0,\"targetIndex\":2,\"confidence\":0.85,\"reasoning\":\"Why they match\"}]\n");
+        sb.append("Only include pairs with confidence >= 0.65. Return empty array [] if none found.");
+
+        return sb.toString();
+    }
+
+    private List<PotentialMatchSuggestion> parsePotentialMatchResponse(
+            String response,
+            List<Map<String, Object>> sources,
+            List<Map<String, Object>> targets) {
+        try {
+            String cleaned = response.trim()
+                    .replaceAll("^```json", "").replaceAll("^```", "").replaceAll("```$", "").trim();
+
+            JsonNode root = objectMapper.readTree(cleaned);
+            List<PotentialMatchSuggestion> results = new ArrayList<>();
+
+            if (root.isArray()) {
+                for (JsonNode node : root) {
+                    int sourceIndex = node.has("sourceIndex") ? node.get("sourceIndex").asInt(-1) : -1;
+                    int targetIndex = node.has("targetIndex") ? node.get("targetIndex").asInt(-1) : -1;
+                    double confidence = node.has("confidence") ? node.get("confidence").asDouble(0) : 0;
+                    String reasoning = node.has("reasoning") ? node.get("reasoning").asText("") : "";
+
+                    if (sourceIndex >= 0 && sourceIndex < sources.size()
+                            && targetIndex >= 0 && targetIndex < targets.size()
+                            && confidence >= 0.65) {
+                        results.add(new PotentialMatchSuggestion(
+                                sources.get(sourceIndex), targets.get(targetIndex), confidence, reasoning));
+                    }
+                }
+            }
+            return results;
+        } catch (JsonProcessingException e) {
+            log.warn("Failed to parse potential match response: {}", e.getMessage());
+            return List.of();
+        }
     }
 
     private AiMappingSuggestionResponse parseMappingSuggestionResponse(String response) {

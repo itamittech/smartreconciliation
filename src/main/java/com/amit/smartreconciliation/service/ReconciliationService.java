@@ -132,6 +132,14 @@ public class ReconciliationService {
             // Populate AI suggestions for up to the first AI_SUGGESTION_MAX_EXCEPTIONS exceptions
             populateAiSuggestions(savedExceptions, reconciliation.getName());
 
+            // AI second-pass: find potential matches among unmatched records (capped at 200 total)
+            long unmatchedCount = savedExceptions.stream()
+                    .filter(e -> e.getType() == ExceptionType.MISSING_TARGET || e.getType() == ExceptionType.MISSING_SOURCE)
+                    .count();
+            if (unmatchedCount > 0 && unmatchedCount <= 200) {
+                runAiSecondPass(savedExceptions, reconciliation);
+            }
+
             reconciliation.setStatus(ReconciliationStatus.COMPLETED);
             reconciliation.setCompletedAt(LocalDateTime.now());
             reconciliation.setProgress(100);
@@ -495,6 +503,46 @@ public class ReconciliationService {
         }
 
         return result;
+    }
+
+    private void runAiSecondPass(List<ReconciliationException> savedExceptions, Reconciliation reconciliation) {
+        List<Map<String, Object>> unmatchedSources = savedExceptions.stream()
+                .filter(e -> e.getType() == ExceptionType.MISSING_TARGET && e.getSourceData() != null)
+                .map(ReconciliationException::getSourceData)
+                .collect(Collectors.toList());
+
+        List<Map<String, Object>> unmatchedTargets = savedExceptions.stream()
+                .filter(e -> e.getType() == ExceptionType.MISSING_SOURCE && e.getTargetData() != null)
+                .map(ReconciliationException::getTargetData)
+                .collect(Collectors.toList());
+
+        if (unmatchedSources.isEmpty() || unmatchedTargets.isEmpty()) return;
+
+        log.info("Running AI second-pass: {} unmatched source, {} unmatched target records",
+                unmatchedSources.size(), unmatchedTargets.size());
+
+        List<AiService.PotentialMatchSuggestion> suggestions = aiService.suggestPotentialMatches(
+                unmatchedSources, unmatchedTargets, reconciliation.getRuleSet().getFieldMappings());
+
+        for (AiService.PotentialMatchSuggestion suggestion : suggestions) {
+            ReconciliationException potentialMatch = ReconciliationException.builder()
+                    .type(ExceptionType.POTENTIAL_MATCH)
+                    .severity(ExceptionSeverity.MEDIUM)
+                    .status(ExceptionStatus.OPEN)
+                    .description("AI identified a potential match missed by key-based matching")
+                    .sourceData(suggestion.sourceRecord())
+                    .targetData(suggestion.targetRecord())
+                    .reconciliation(reconciliation)
+                    .build();
+            potentialMatch.setAiSuggestion(String.format("%.0f%% confidence — %s",
+                    suggestion.confidence() * 100, suggestion.reasoning()));
+            exceptionRepository.save(potentialMatch);
+        }
+
+        if (!suggestions.isEmpty()) {
+            log.info("AI second-pass found {} potential matches for reconciliation {}",
+                    suggestions.size(), reconciliation.getId());
+        }
     }
 
     private void populateAiSuggestions(List<ReconciliationException> exceptions, String reconciliationName) {

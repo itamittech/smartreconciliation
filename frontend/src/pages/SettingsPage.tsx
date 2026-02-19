@@ -14,8 +14,8 @@ import {
 } from 'lucide-react'
 import { Button, Input, Card, CardHeader, CardTitle, CardContent, Badge } from '@/components/ui'
 import { cn } from '@/lib/utils'
-import { dataSourcesApi } from '@/services/api'
-import type { DataSource } from '@/types'
+import { dataSourcesApi, aiConfigApi } from '@/services/api'
+import type { DataSource, AiProvider } from '@/types'
 
 type SettingsTab = 'profile' | 'connections' | 'ai' | 'notifications' | 'security' | 'appearance'
 
@@ -45,6 +45,22 @@ const SettingsPage = () => {
     mutationFn: (id: number) => dataSourcesApi.testConnection(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dataSources'] })
+    },
+  })
+
+  // Fetch AI configuration
+  const { data: aiConfigResponse, isLoading: isAiConfigLoading } = useQuery({
+    queryKey: ['aiConfig'],
+    queryFn: () => aiConfigApi.getConfig(),
+  })
+
+  const aiConfig = aiConfigResponse?.data
+
+  // Update AI provider mutation
+  const updateAiProviderMutation = useMutation({
+    mutationFn: (provider: AiProvider) => aiConfigApi.updateConfig({ provider }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['aiConfig'] })
     },
   })
 
@@ -225,68 +241,84 @@ const SettingsPage = () => {
               <CardTitle>AI Configuration</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div>
-                <label className="text-sm font-medium" htmlFor="aiProvider">
-                  AI Provider
-                </label>
-                <select
-                  id="aiProvider"
-                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  defaultValue="anthropic"
-                >
-                  <option value="anthropic">Anthropic Claude</option>
-                  <option value="openai">OpenAI GPT-4</option>
-                  <option value="deepseek">DeepSeek</option>
-                  <option value="ollama">Ollama (Local)</option>
-                </select>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Select the AI provider for intelligent features
-                </p>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium" htmlFor="apiKey">
-                  API Key
-                </label>
-                <Input
-                  id="apiKey"
-                  type="password"
-                  placeholder="sk-..."
-                  className="mt-1"
-                />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Your API key is encrypted and stored securely
-                </p>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium">AI Features</label>
-                <div className="mt-2 space-y-2">
-                  {[
-                    { id: 'autoMapping', label: 'Auto field mapping suggestions' },
-                    { id: 'exceptionSuggestions', label: 'Exception resolution suggestions' },
-                    { id: 'ruleGeneration', label: 'AI rule generation' },
-                    { id: 'chatAssistant', label: 'Chat assistant' },
-                  ].map((feature) => (
-                    <label
-                      key={feature.id}
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        defaultChecked
-                        className="rounded border-input"
-                      />
-                      <span className="text-sm">{feature.label}</span>
-                    </label>
-                  ))}
+              {isAiConfigLoading ? (
+                <div className="flex items-center justify-center p-8 text-muted-foreground">
+                  Loading AI configuration...
                 </div>
-              </div>
+              ) : (
+                <>
+                  <div>
+                    <label className="text-sm font-medium" htmlFor="aiProvider">
+                      AI Provider
+                    </label>
+                    <select
+                      id="aiProvider"
+                      className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      value={aiConfig?.currentProvider || 'anthropic'}
+                      onChange={(e) => {
+                        const provider = e.target.value as AiProvider
+                        updateAiProviderMutation.mutate(provider)
+                      }}
+                      disabled={updateAiProviderMutation.isPending}
+                    >
+                      <option value="anthropic">Anthropic Claude</option>
+                      <option value="openai">OpenAI GPT-4</option>
+                      <option value="deepseek">DeepSeek</option>
+                    </select>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {updateAiProviderMutation.isPending
+                        ? 'Saving...'
+                        : updateAiProviderMutation.isSuccess
+                        ? '✅ Saved! Restart the application for changes to take effect.'
+                        : 'Select the AI provider for intelligent features'}
+                    </p>
+                  </div>
 
-              <Button>
-                <Save className="mr-2 h-4 w-4" />
-                Save AI Settings
-              </Button>
+                  <div>
+                    <label className="text-sm font-medium" htmlFor="apiKey">
+                      API Key
+                    </label>
+                    <Input
+                      id="apiKey"
+                      type="password"
+                      placeholder="Configured via .env file"
+                      className="mt-1"
+                      disabled
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      API keys are configured in the .env file for security
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium">AI Features</label>
+                    <div className="mt-2 space-y-2">
+                      {[
+                        { id: 'autoMapping', label: 'Auto field mapping suggestions' },
+                        { id: 'exceptionSuggestions', label: 'Exception resolution suggestions' },
+                        { id: 'ruleGeneration', label: 'AI rule generation' },
+                        { id: 'chatAssistant', label: 'Chat assistant' },
+                      ].map((feature) => (
+                        <label
+                          key={feature.id}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            defaultChecked
+                            disabled
+                            className="rounded border-input"
+                          />
+                          <span className="text-sm text-muted-foreground">{feature.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      All AI features are currently enabled by default
+                    </p>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         )

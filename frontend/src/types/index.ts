@@ -97,3 +97,15 @@ export interface DashboardMetrics {
     exceptions: number
   }[]
 }
+
+export type AiProvider = 'anthropic' | 'openai' | 'deepseek'
+
+export interface AiConfig {
+  currentProvider: AiProvider
+  availableProviders: AiProvider[]
+  requiresRestart: boolean
+}
+
+export interface AiConfigRequest {
+  provider: AiProvider
+}

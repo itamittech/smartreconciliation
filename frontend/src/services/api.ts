@@ -188,4 +188,10 @@ export const dataSourcesApi = {
   testConnection: (id: number) => post<import('@/types').DataSource>(`/datasources/${id}/test`),
 }
 
+// AI Configuration API
+export const aiConfigApi = {
+  getConfig: () => get<import('@/types').AiConfig>('/ai/config'),
+  updateConfig: (data: import('@/types').AiConfigRequest) => put<import('@/types').AiConfig>('/ai/config', data),
+}
+
 export { API_BASE_URL }

@@ -46,12 +46,27 @@ export interface ChatMessage {
   }
 }
 
+export type DataSourceType = 'FILE' | 'DATABASE' | 'API'
+
 export interface DataSource {
-  id: string
+  id: number
   name: string
-  type: 'file' | 'database' | 'api'
-  status: 'active' | 'inactive' | 'error'
-  lastSyncedAt?: string
+  description?: string
+  type: DataSourceType
+  config?: Record<string, unknown>
+  active: boolean
+  lastTestedAt?: string
+  lastTestSuccessful?: boolean
+  lastTestError?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface DataSourceRequest {
+  name: string
+  description?: string
+  type: DataSourceType
+  config?: Record<string, unknown>
 }
 
 export interface UploadedFile {

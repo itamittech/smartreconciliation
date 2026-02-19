@@ -177,4 +177,15 @@ export async function streamPost(
   }
 }
 
+// DataSource API
+export const dataSourcesApi = {
+  getAll: () => get<import('@/types').DataSource[]>('/datasources'),
+  getById: (id: number) => get<import('@/types').DataSource>(`/datasources/${id}`),
+  create: (data: import('@/types').DataSourceRequest) => post<import('@/types').DataSource>('/datasources', data),
+  update: (id: number, data: import('@/types').DataSourceRequest) =>
+    put<import('@/types').DataSource>(`/datasources/${id}`, data),
+  delete: (id: number) => del<void>(`/datasources/${id}`),
+  testConnection: (id: number) => post<import('@/types').DataSource>(`/datasources/${id}/test`),
+}
+
 export { API_BASE_URL }

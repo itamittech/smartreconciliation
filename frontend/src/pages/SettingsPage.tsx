@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   User,
   Database,
@@ -13,22 +14,10 @@ import {
 } from 'lucide-react'
 import { Button, Input, Card, CardHeader, CardTitle, CardContent, Badge } from '@/components/ui'
 import { cn } from '@/lib/utils'
+import { dataSourcesApi } from '@/services/api'
+import type { DataSource } from '@/types'
 
 type SettingsTab = 'profile' | 'connections' | 'ai' | 'notifications' | 'security' | 'appearance'
-
-interface Connection {
-  id: string
-  name: string
-  type: 'postgresql' | 'mysql' | 'api'
-  status: 'connected' | 'disconnected' | 'error'
-  lastTested?: string
-}
-
-const mockConnections: Connection[] = [
-  { id: '1', name: 'Production Database', type: 'postgresql', status: 'connected', lastTested: '2026-01-24' },
-  { id: '2', name: 'Accounting System API', type: 'api', status: 'connected', lastTested: '2026-01-23' },
-  { id: '3', name: 'Legacy MySQL', type: 'mysql', status: 'error', lastTested: '2026-01-20' },
-]
 
 const tabs: { id: SettingsTab; label: string; icon: typeof User }[] = [
   { id: 'profile', label: 'Profile', icon: User },
@@ -41,7 +30,23 @@ const tabs: { id: SettingsTab; label: string; icon: typeof User }[] = [
 
 const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile')
-  const [connections, setConnections] = useState(mockConnections)
+  const queryClient = useQueryClient()
+
+  // Fetch all data sources
+  const { data: dataSourcesResponse, isLoading } = useQuery({
+    queryKey: ['dataSources'],
+    queryFn: () => dataSourcesApi.getAll(),
+  })
+
+  const dataSources = dataSourcesResponse?.data || []
+
+  // Test connection mutation
+  const testConnectionMutation = useMutation({
+    mutationFn: (id: number) => dataSourcesApi.testConnection(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dataSources'] })
+    },
+  })
 
   const handleTabClick = (tab: SettingsTab) => {
     setActiveTab(tab)
@@ -54,13 +59,8 @@ const SettingsPage = () => {
     }
   }
 
-  const handleTestConnection = (id: string) => {
-    console.log('Testing connection:', id)
-    setConnections((prev) =>
-      prev.map((c) =>
-        c.id === id ? { ...c, status: 'connected' as const, lastTested: new Date().toISOString().split('T')[0] } : c
-      )
-    )
+  const handleTestConnection = (id: number) => {
+    testConnectionMutation.mutate(id)
   }
 
   const renderContent = () => {
@@ -129,65 +129,91 @@ const SettingsPage = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {connections.map((conn) => (
-                  <div
-                    key={conn.id}
-                    className="flex items-center justify-between rounded-lg border p-4"
-                  >
-                    <div className="flex items-center gap-3">
+              {isLoading ? (
+                <div className="flex items-center justify-center p-8 text-muted-foreground">
+                  Loading data sources...
+                </div>
+              ) : dataSources.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
+                  <Database className="mb-2 h-12 w-12 opacity-20" />
+                  <p>No data sources configured</p>
+                  <p className="text-sm">Add a connection to get started</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {dataSources.map((ds: DataSource) => {
+                    const isConnected = ds.active && ds.lastTestSuccessful
+                    const hasError = ds.lastTestSuccessful === false
+                    const lastTested = ds.lastTestedAt
+                      ? new Date(ds.lastTestedAt).toLocaleDateString()
+                      : 'Never'
+
+                    return (
                       <div
-                        className={cn('rounded-full p-2', {
-                          'bg-success/10': conn.status === 'connected',
-                          'bg-destructive/10': conn.status === 'error',
-                          'bg-muted': conn.status === 'disconnected',
-                        })}
+                        key={ds.id}
+                        className="flex items-center justify-between rounded-lg border p-4"
                       >
-                        <Database
-                          className={cn('h-4 w-4', {
-                            'text-success': conn.status === 'connected',
-                            'text-destructive': conn.status === 'error',
-                            'text-muted-foreground': conn.status === 'disconnected',
-                          })}
-                        />
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={cn('rounded-full p-2', {
+                              'bg-success/10': isConnected,
+                              'bg-destructive/10': hasError,
+                              'bg-muted': !ds.active || ds.lastTestSuccessful === undefined,
+                            })}
+                          >
+                            <Database
+                              className={cn('h-4 w-4', {
+                                'text-success': isConnected,
+                                'text-destructive': hasError,
+                                'text-muted-foreground': !ds.active || ds.lastTestSuccessful === undefined,
+                              })}
+                            />
+                          </div>
+                          <div>
+                            <p className="font-medium">{ds.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {ds.type} • Last tested: {lastTested}
+                            </p>
+                            {ds.description && (
+                              <p className="text-xs text-muted-foreground">{ds.description}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant={
+                              isConnected
+                                ? 'success'
+                                : hasError
+                                ? 'destructive'
+                                : 'secondary'
+                            }
+                          >
+                            {isConnected && <CheckCircle2 className="mr-1 h-3 w-3" />}
+                            {hasError && <AlertCircle className="mr-1 h-3 w-3" />}
+                            {isConnected
+                              ? 'connected'
+                              : hasError
+                              ? 'error'
+                              : ds.active
+                              ? 'not tested'
+                              : 'inactive'}
+                          </Badge>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleTestConnection(ds.id)}
+                            disabled={testConnectionMutation.isPending}
+                          >
+                            <TestTube className="mr-1 h-3 w-3" />
+                            {testConnectionMutation.isPending ? 'Testing...' : 'Test'}
+                          </Button>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium">{conn.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {conn.type.toUpperCase()} • Last tested: {conn.lastTested}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant={
-                          conn.status === 'connected'
-                            ? 'success'
-                            : conn.status === 'error'
-                            ? 'destructive'
-                            : 'secondary'
-                        }
-                      >
-                        {conn.status === 'connected' && (
-                          <CheckCircle2 className="mr-1 h-3 w-3" />
-                        )}
-                        {conn.status === 'error' && (
-                          <AlertCircle className="mr-1 h-3 w-3" />
-                        )}
-                        {conn.status}
-                      </Badge>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleTestConnection(conn.id)}
-                      >
-                        <TestTube className="mr-1 h-3 w-3" />
-                        Test
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                    )
+                  })}
+                </div>
+              )}
             </CardContent>
           </Card>
         )

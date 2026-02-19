@@ -17,8 +17,10 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class AiService {
@@ -29,16 +31,19 @@ public class AiService {
     private final FileUploadService fileUploadService;
     private final ObjectMapper objectMapper;
     private final ChatContextService chatContextService;
+    private final PromptTemplateService promptTemplateService;
     private final ChatClient chatClient;
 
     public AiService(ChatModel chatModel,
                      FileUploadService fileUploadService,
                      ObjectMapper objectMapper,
-                     ChatContextService chatContextService) {
+                     ChatContextService chatContextService,
+                     PromptTemplateService promptTemplateService) {
         this.chatModel = chatModel;
         this.fileUploadService = fileUploadService;
         this.objectMapper = objectMapper;
         this.chatContextService = chatContextService;
+        this.promptTemplateService = promptTemplateService;
 
         // Build ChatClient - Spring AI will auto-discover @Tool annotated methods from @Component classes
         this.chatClient = ChatClient.builder(chatModel).build();
@@ -65,7 +70,7 @@ public class AiService {
     }
 
     public AiRuleSuggestionResponse suggestRules(Long sourceFileId, Long targetFileId,
-                                                  List<AiMappingSuggestionResponse.SuggestedMapping> mappings) {
+                                                 List<AiMappingSuggestionResponse.SuggestedMapping> mappings) {
         try {
             SchemaResponse sourceSchema = fileUploadService.getSchema(sourceFileId);
             SchemaResponse targetSchema = fileUploadService.getSchema(targetFileId);
@@ -86,7 +91,7 @@ public class AiService {
     }
 
     public String getExceptionSuggestion(String exceptionType, String sourceValue, String targetValue,
-                                          String fieldName, String context) {
+                                         String fieldName, String context) {
         try {
             String prompt = buildExceptionSuggestionPrompt(exceptionType, sourceValue, targetValue, fieldName, context);
 
@@ -138,77 +143,23 @@ public class AiService {
     }
 
     private String buildMappingSuggestionPrompt(SchemaResponse sourceSchema, SchemaResponse targetSchema) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("You are a data reconciliation expert. Analyze these two file schemas and suggest field mappings.\n\n");
+        Map<String, String> variables = new HashMap<>();
+        variables.put("sourceFileName", sourceSchema.getFilename());
+        variables.put("sourceColumns", formatSchemaColumnsWithSamples(sourceSchema.getColumns()));
+        variables.put("targetFileName", targetSchema.getFilename());
+        variables.put("targetColumns", formatSchemaColumnsWithSamples(targetSchema.getColumns()));
 
-        sb.append("SOURCE FILE: ").append(sourceSchema.getFilename()).append("\n");
-        sb.append("Columns:\n");
-        for (SchemaResponse.ColumnSchema col : sourceSchema.getColumns()) {
-            sb.append("- ").append(col.getName())
-              .append(" (type: ").append(col.getDetectedType())
-              .append(", samples: ").append(String.join(", ", col.getSampleValues().subList(0, Math.min(3, col.getSampleValues().size()))))
-              .append(")\n");
-        }
-
-        sb.append("\nTARGET FILE: ").append(targetSchema.getFilename()).append("\n");
-        sb.append("Columns:\n");
-        for (SchemaResponse.ColumnSchema col : targetSchema.getColumns()) {
-            sb.append("- ").append(col.getName())
-              .append(" (type: ").append(col.getDetectedType())
-              .append(", samples: ").append(String.join(", ", col.getSampleValues().subList(0, Math.min(3, col.getSampleValues().size()))))
-              .append(")\n");
-        }
-
-        sb.append("\nProvide field mappings as JSON array with format:\n");
-        sb.append("{\n");
-        sb.append("  \"mappings\": [\n");
-        sb.append("    {\n");
-        sb.append("      \"sourceField\": \"source_column_name\",\n");
-        sb.append("      \"targetField\": \"target_column_name\",\n");
-        sb.append("      \"confidence\": 0.95,\n");
-        sb.append("      \"reason\": \"Why these fields match\",\n");
-        sb.append("      \"isKey\": true/false,\n");
-        sb.append("      \"suggestedTransform\": \"optional transform like UPPERCASE, DATE_FORMAT, etc.\"\n");
-        sb.append("    }\n");
-        sb.append("  ],\n");
-        sb.append("  \"explanation\": \"Overall explanation of the mappings\"\n");
-        sb.append("}\n");
-        sb.append("\nOnly return valid JSON, no markdown code blocks or additional text.");
-
-        return sb.toString();
+        return promptTemplateService.renderTemplate("prompts/ai/mapping-suggestion.st", variables);
     }
 
     private String buildRuleSuggestionPrompt(SchemaResponse sourceSchema, SchemaResponse targetSchema,
-                                              List<AiMappingSuggestionResponse.SuggestedMapping> mappings) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("You are a data reconciliation expert. Based on these field mappings and schemas, suggest matching rules.\n\n");
+                                             List<AiMappingSuggestionResponse.SuggestedMapping> mappings) {
+        Map<String, String> variables = new HashMap<>();
+        variables.put("fieldMappings", formatFieldMappings(mappings));
+        variables.put("sourceSchema", formatSchemaTypes(sourceSchema.getColumns()));
+        variables.put("targetSchema", formatSchemaTypes(targetSchema.getColumns()));
 
-        sb.append("FIELD MAPPINGS TO CREATE RULES FOR:\n");
-        for (AiMappingSuggestionResponse.SuggestedMapping m : mappings) {
-            sb.append("- ").append(m.getSourceField()).append(" → ").append(m.getTargetField());
-            if (Boolean.TRUE.equals(m.getIsKey())) sb.append(" [KEY FIELD]");
-            sb.append("\n");
-        }
-
-        sb.append("\nSOURCE SCHEMA (types for context):\n");
-        for (SchemaResponse.ColumnSchema col : sourceSchema.getColumns()) {
-            sb.append("- ").append(col.getName()).append(": ").append(col.getDetectedType()).append("\n");
-        }
-
-        sb.append("\nReturn ONLY valid JSON (no markdown):\n");
-        sb.append("{\n  \"rules\": [\n    {\n");
-        sb.append("      \"name\": \"Descriptive rule name\",\n");
-        sb.append("      \"sourceField\": \"source_column\",\n");
-        sb.append("      \"targetField\": \"target_column\",\n");
-        sb.append("      \"matchType\": \"EXACT|FUZZY|RANGE|CONTAINS|STARTS_WITH|ENDS_WITH\",\n");
-        sb.append("      \"isKey\": true|false,\n");
-        sb.append("      \"fuzzyThreshold\": 0.85,\n");
-        sb.append("      \"tolerance\": 0.01,\n");
-        sb.append("      \"priority\": 1,\n");
-        sb.append("      \"reason\": \"Why this match type\"\n");
-        sb.append("    }\n  ],\n  \"explanation\": \"Overall matching strategy\"\n}");
-
-        return sb.toString();
+        return promptTemplateService.renderTemplate("prompts/ai/rule-suggestion.st", variables);
     }
 
     private AiRuleSuggestionResponse parseRuleSuggestionResponse(String response) {
@@ -249,51 +200,28 @@ public class AiService {
     }
 
     private String buildExceptionSuggestionPrompt(String exceptionType, String sourceValue,
-                                                   String targetValue, String fieldName, String context) {
-        return String.format("""
-            You are a data reconciliation expert. Analyze this exception and suggest a resolution.
+                                                  String targetValue, String fieldName, String context) {
+        Map<String, String> variables = new HashMap<>();
+        variables.put("exceptionType", exceptionType);
+        variables.put("fieldName", fieldName);
+        variables.put("sourceValue", sourceValue);
+        variables.put("targetValue", targetValue);
+        variables.put("context", context);
 
-            Exception Type: %s
-            Field: %s
-            Source Value: %s
-            Target Value: %s
-            Context: %s
-
-            Provide a brief, actionable suggestion for resolving this discrepancy.
-            Consider common causes like formatting differences, rounding, timing, or data entry errors.
-            """, exceptionType, fieldName, sourceValue, targetValue, context);
+        return promptTemplateService.renderTemplate("prompts/ai/exception-suggestion.st", variables);
     }
 
     private String buildChatSystemPrompt(String context) {
-        // Build comprehensive system prompt with detailed knowledge
-        StringBuilder systemPrompt = new StringBuilder();
-
-        // Add comprehensive system knowledge
-        systemPrompt.append(chatContextService.buildSystemKnowledge());
-
-        // Add dynamic context
-        systemPrompt.append("\n## CURRENT SESSION CONTEXT\n\n");
-        if (context != null && !context.trim().isEmpty()) {
-            systemPrompt.append(context);
-        } else {
-            systemPrompt.append("No specific reconciliation or session context provided.\n");
+        String contextValue = context;
+        if (contextValue == null || contextValue.trim().isEmpty()) {
+            contextValue = "No specific reconciliation or session context provided.";
         }
 
-        systemPrompt.append("""
+        Map<String, String> variables = new HashMap<>();
+        variables.put("systemKnowledge", chatContextService.buildSystemKnowledge());
+        variables.put("context", contextValue);
 
-            ## RESPONSE GUIDELINES
-
-            - Be concise, helpful, and technically accurate
-            - Always reference actual system components (table names, field names, enum values) from the system knowledge above
-            - When explaining how the system works, describe the actual implementation, not hypothetical scenarios
-            - If you don't have specific information in the context, say so clearly
-            - Provide actionable guidance based on the actual system capabilities
-            - Use markdown formatting for better readability
-            - Use normal sentence spacing; do not collapse words together
-            - Format lists and headings with readable spacing (for example: "# Title", "- item", "1. item")
-            """);
-
-        return systemPrompt.toString();
+        return promptTemplateService.renderTemplate("prompts/ai/chat-system.st", variables);
     }
 
     public record PotentialMatchSuggestion(
@@ -326,34 +254,23 @@ public class AiService {
     }
 
     private String buildPotentialMatchPrompt(List<Map<String, Object>> sources,
-                                              List<Map<String, Object>> targets,
-                                              List<FieldMapping> fieldMappings) {
+                                             List<Map<String, Object>> targets,
+                                             List<FieldMapping> fieldMappings) {
         String keyFields = fieldMappings.stream()
                 .filter(FieldMapping::getIsKey)
-                .map(fm -> fm.getSourceField() + " → " + fm.getTargetField())
-                .reduce("", (a, b) -> a.isEmpty() ? b : a + ", " + b);
+                .map(fm -> fm.getSourceField() + " -> " + fm.getTargetField())
+                .collect(Collectors.joining(", "));
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("You are a data reconciliation expert. The following records failed exact key-based matching. ");
-        sb.append("Identify pairs that likely represent the same entity despite formatting differences ");
-        sb.append("(e.g., case differences, leading zeros, date formats, abbreviations, typos).\n\n");
-        sb.append("KEY FIELDS: ").append(keyFields).append("\n\n");
-
-        sb.append("UNMATCHED SOURCE RECORDS (index: data):\n");
-        for (int i = 0; i < sources.size(); i++) {
-            sb.append(i).append(": ").append(sources.get(i)).append("\n");
+        if (keyFields.isEmpty()) {
+            keyFields = "(none)";
         }
 
-        sb.append("\nUNMATCHED TARGET RECORDS (index: data):\n");
-        for (int i = 0; i < targets.size(); i++) {
-            sb.append(i).append(": ").append(targets.get(i)).append("\n");
-        }
+        Map<String, String> variables = new HashMap<>();
+        variables.put("keyFields", keyFields);
+        variables.put("sourceRecords", formatIndexedRecords(sources));
+        variables.put("targetRecords", formatIndexedRecords(targets));
 
-        sb.append("\nReturn ONLY a valid JSON array (no markdown) of potential matches:\n");
-        sb.append("[{\"sourceIndex\":0,\"targetIndex\":2,\"confidence\":0.85,\"reasoning\":\"Why they match\"}]\n");
-        sb.append("Only include pairs with confidence >= 0.65. Return empty array [] if none found.");
-
-        return sb.toString();
+        return promptTemplateService.renderTemplate("prompts/ai/potential-match.st", variables);
     }
 
     private List<PotentialMatchSuggestion> parsePotentialMatchResponse(
@@ -432,5 +349,63 @@ public class AiService {
             log.error("Failed to parse AI response: {}", response);
             throw new AiServiceException("Failed to parse AI mapping suggestions", e);
         }
+    }
+
+    private String formatSchemaColumnsWithSamples(List<SchemaResponse.ColumnSchema> columns) {
+        if (columns == null || columns.isEmpty()) {
+            return "- (none)";
+        }
+
+        List<String> lines = new ArrayList<>();
+        for (SchemaResponse.ColumnSchema col : columns) {
+            List<String> sampleValues = col.getSampleValues();
+            if (sampleValues == null) {
+                sampleValues = List.of();
+            }
+            List<String> limitedSamples = sampleValues.subList(0, Math.min(3, sampleValues.size()));
+            String samples = limitedSamples.isEmpty() ? "N/A" : String.join(", ", limitedSamples);
+            lines.add("- " + col.getName() + " (type: " + col.getDetectedType() + ", samples: " + samples + ")");
+        }
+        return String.join("\n", lines);
+    }
+
+    private String formatSchemaTypes(List<SchemaResponse.ColumnSchema> columns) {
+        if (columns == null || columns.isEmpty()) {
+            return "- (none)";
+        }
+
+        List<String> lines = new ArrayList<>();
+        for (SchemaResponse.ColumnSchema col : columns) {
+            lines.add("- " + col.getName() + ": " + col.getDetectedType());
+        }
+        return String.join("\n", lines);
+    }
+
+    private String formatFieldMappings(List<AiMappingSuggestionResponse.SuggestedMapping> mappings) {
+        if (mappings == null || mappings.isEmpty()) {
+            return "- (none)";
+        }
+
+        List<String> lines = new ArrayList<>();
+        for (AiMappingSuggestionResponse.SuggestedMapping mapping : mappings) {
+            String line = "- " + mapping.getSourceField() + " -> " + mapping.getTargetField();
+            if (Boolean.TRUE.equals(mapping.getIsKey())) {
+                line += " [KEY FIELD]";
+            }
+            lines.add(line);
+        }
+        return String.join("\n", lines);
+    }
+
+    private String formatIndexedRecords(List<Map<String, Object>> records) {
+        if (records == null || records.isEmpty()) {
+            return "(none)";
+        }
+
+        List<String> lines = new ArrayList<>();
+        for (int i = 0; i < records.size(); i++) {
+            lines.add(i + ": " + records.get(i));
+        }
+        return String.join("\n", lines);
     }
 }

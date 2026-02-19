@@ -11,6 +11,7 @@ import {
   Sparkles,
   Key,
   Info,
+  Upload,
 } from 'lucide-react'
 import { Button, Input, Card } from '@/components/ui'
 import { cn } from '@/lib/utils'
@@ -24,6 +25,7 @@ import {
   useCreateRuleSet,
   useAddFieldMapping,
   useAddMatchingRule,
+  useUploadFile,
 } from '@/services/hooks'
 import type { AiSuggestedMapping, AiSuggestedRule } from '@/services/types'
 
@@ -100,6 +102,8 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
   const createRuleSet = useCreateRuleSet()
   const addFieldMapping = useAddFieldMapping()
   const addMatchingRule = useAddMatchingRule()
+  const uploadFile = useUploadFile()
+  const [uploadError, setUploadError] = useState<string | null>(null)
 
   const files = filesResponse?.data || []
   const ruleSets = ruleSetsResponse?.data || []
@@ -236,6 +240,34 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
     } finally {
       setIsCreatingRuleSet(false)
     }
+  }
+
+  const handleFileUpload = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    role: 'source' | 'target'
+  ) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadError(null)
+    uploadFile.mutate(
+      { file },
+      {
+        onSuccess: (res) => {
+          const newId = res.data?.id
+          if (newId) {
+            setWizardState((prev) => ({
+              ...prev,
+              [role === 'source' ? 'sourceFileId' : 'targetFileId']: newId,
+            }))
+          }
+        },
+        onError: (err) => {
+          setUploadError(err instanceof Error ? err.message : 'Upload failed')
+        },
+      }
+    )
+    // Reset the input so the same file can be re-selected if needed
+    e.target.value = ''
   }
 
   const renderRulesStep = () => {
@@ -474,6 +506,52 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
     )
   }
 
+  const renderUploadSection = (role: 'source' | 'target') => (
+    <div className="mb-4">
+      <label
+        htmlFor={`upload-${role}`}
+        className={cn(
+          'flex cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-dashed p-3 text-sm transition-colors',
+          uploadFile.isPending
+            ? 'cursor-not-allowed opacity-60 border-border'
+            : 'border-primary/30 hover:border-primary hover:bg-primary/5'
+        )}
+      >
+        {uploadFile.isPending ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            <span className="text-muted-foreground">Uploading…</span>
+          </>
+        ) : (
+          <>
+            <Upload className="h-4 w-4 text-primary" />
+            <span className="text-primary font-medium">Upload a new file</span>
+            <span className="text-muted-foreground">(CSV, Excel, JSON, XML)</span>
+          </>
+        )}
+        <input
+          id={`upload-${role}`}
+          type="file"
+          accept=".csv,.xlsx,.xls,.json,.xml"
+          className="sr-only"
+          disabled={uploadFile.isPending}
+          onChange={(e) => handleFileUpload(e, role)}
+        />
+      </label>
+      {uploadError && (
+        <p className="mt-1 flex items-center gap-1 text-xs text-destructive">
+          <AlertCircle className="h-3.5 w-3.5" />
+          {uploadError}
+        </p>
+      )}
+      <div className="relative my-3 flex items-center gap-2">
+        <div className="h-px flex-1 bg-border" />
+        <span className="text-xs text-muted-foreground">or pick from existing</span>
+        <div className="h-px flex-1 bg-border" />
+      </div>
+    </div>
+  )
+
   const renderStepContent = () => {
     switch (currentStep) {
       case 0:
@@ -508,7 +586,8 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
       case 1:
         return (
           <div>
-            <p className="mb-4 text-sm text-muted-foreground">Select the source file to reconcile from</p>
+            {renderUploadSection('source')}
+            <p className="mb-2 text-sm text-muted-foreground">Select the source file to reconcile from</p>
             {filesLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -519,7 +598,7 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
                 <p className="mt-2 text-muted-foreground">No files uploaded yet</p>
               </div>
             ) : (
-              <div className="max-h-64 space-y-2 overflow-auto">
+              <div className="max-h-52 space-y-2 overflow-auto">
                 {files.map((file) => (
                   <Card
                     key={file.id}
@@ -540,14 +619,14 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
                             {file.missing && <span className="ml-2 text-xs font-normal">(Missing)</span>}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {file.missing 
-                              ? "File missing from disk - please re-upload" 
+                            {file.missing
+                              ? "File missing from disk - please re-upload"
                               : `${file.rowCount?.toLocaleString() || '?'} rows, ${file.columnCount || '?'} columns`}
                           </p>
                         </div>
                       </div>
                       {wizardState.sourceFileId === file.id && (
-                        file.missing 
+                        file.missing
                           ? <AlertCircle className="h-5 w-5 text-destructive" />
                           : <Check className="h-5 w-5 text-primary" />
                       )}
@@ -562,7 +641,8 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
       case 2:
         return (
           <div>
-            <p className="mb-4 text-sm text-muted-foreground">Select the target file to reconcile against</p>
+            {renderUploadSection('target')}
+            <p className="mb-2 text-sm text-muted-foreground">Select the target file to reconcile against</p>
             {filesLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -573,7 +653,7 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
                 <p className="mt-2 text-muted-foreground">No files uploaded yet</p>
               </div>
             ) : (
-              <div className="max-h-64 space-y-2 overflow-auto">
+              <div className="max-h-52 space-y-2 overflow-auto">
                 {files
                   .filter((f) => f.id !== wizardState.sourceFileId)
                   .map((file) => (
@@ -596,14 +676,14 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
                               {file.missing && <span className="ml-2 text-xs font-normal">(Missing)</span>}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {file.missing 
-                                ? "File missing from disk - please re-upload" 
+                              {file.missing
+                                ? "File missing from disk - please re-upload"
                                 : `${file.rowCount?.toLocaleString() || '?'} rows, ${file.columnCount || '?'} columns`}
                             </p>
                           </div>
                         </div>
                         {wizardState.targetFileId === file.id && (
-                          file.missing 
+                          file.missing
                             ? <AlertCircle className="h-5 w-5 text-destructive" />
                             : <Check className="h-5 w-5 text-primary" />
                         )}

@@ -424,7 +424,7 @@ const ReconciliationsPage = () => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              aria-label="Start reconciliation"
+                              aria-label={`Start ${recon.name}`}
                               onClick={(e) => handleStart(e, recon.id)}
                               disabled={startingIds.has(recon.id)}
                               className="gap-1 text-green-500 hover:text-green-400 hover:bg-green-500/10"

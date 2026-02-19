@@ -190,7 +190,7 @@ export interface CreateRuleSetRequest {
 export interface CreateFieldMappingRequest {
   sourceField: string
   targetField: string
-  isKeyField: boolean
+  isKey: boolean
   displayOrder?: number
 }
 
@@ -199,7 +199,8 @@ export interface CreateMatchingRuleRequest {
   sourceField: string
   targetField: string
   matchType: MatchType
-  threshold?: number
+  fuzzyThreshold?: number
+  tolerance?: number
   isActive?: boolean
 }
 

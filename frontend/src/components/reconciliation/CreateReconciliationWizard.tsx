@@ -203,7 +203,7 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
       for (const m of acceptedMappings.filter((m) => m.accepted)) {
         await addFieldMapping.mutateAsync({
           ruleSetId,
-          data: { sourceField: m.sourceField, targetField: m.targetField, isKeyField: m.isKey ?? false },
+          data: { sourceField: m.sourceField, targetField: m.targetField, isKey: m.isKey ?? false },
         })
       }
 
@@ -215,7 +215,8 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
             sourceField: r.sourceField,
             targetField: r.targetField,
             matchType: r.matchType,
-            threshold: r.fuzzyThreshold,
+            fuzzyThreshold: r.fuzzyThreshold,
+            tolerance: r.tolerance,
           },
         })
       }

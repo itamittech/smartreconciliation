@@ -76,7 +76,7 @@ const RulesPage = () => {
         data: {
           sourceField: mapping.sourceField,
           targetField: mapping.targetField,
-          isKeyField: mapping.isKeyField,
+          isKey: mapping.isKeyField,
         },
       })
     }
@@ -90,7 +90,8 @@ const RulesPage = () => {
           sourceField: rule.sourceField,
           targetField: rule.targetField,
           matchType: rule.matchType as 'EXACT' | 'FUZZY' | 'RANGE' | 'CONTAINS' | 'STARTS_WITH' | 'ENDS_WITH',
-          threshold: rule.threshold ?? undefined,
+          fuzzyThreshold: rule.matchType === 'FUZZY' ? (rule.threshold ?? undefined) : undefined,
+          tolerance: rule.matchType === 'RANGE' ? (rule.threshold ?? undefined) : undefined,
         },
       })
     }

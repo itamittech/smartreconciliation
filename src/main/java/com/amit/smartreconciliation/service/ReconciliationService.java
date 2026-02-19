@@ -223,11 +223,10 @@ public class ReconciliationService {
                         List<ReconciliationException> fieldExceptions =
                                 compareRecords(sourceRecord, targetRecord, ruleSet);
 
-                        if (fieldExceptions.isEmpty()) {
-                            matchedCount++;
-                        } else {
-                            exceptions.addAll(fieldExceptions);
-                        }
+                        // A record pair found by key is always "matched" — field discrepancies
+                        // are reported as VALUE_MISMATCH exceptions but do not make the record unmatched
+                        matchedCount++;
+                        exceptions.addAll(fieldExceptions);
                     } else {
                         ReconciliationException exception = ReconciliationException.builder()
                                 .type(ExceptionType.DUPLICATE)
@@ -273,10 +272,16 @@ public class ReconciliationService {
             }
         }
 
+        // Unmatched = records with no key counterpart in the other file
+        long missingTargetCount = exceptions.stream()
+                .filter(e -> e.getType() == ExceptionType.MISSING_TARGET).count();
+        long missingSourceCount = exceptions.stream()
+                .filter(e -> e.getType() == ExceptionType.MISSING_SOURCE).count();
+
         return new ReconciliationResult(
                 matchedCount,
-                sourceData.getRowCount() - matchedCount,
-                targetData.getRowCount() - matchedCount,
+                (int) missingTargetCount,
+                (int) missingSourceCount,
                 exceptions
         );
     }

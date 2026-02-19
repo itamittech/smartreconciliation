@@ -36,7 +36,7 @@ export const filesApi = {
   getAll: () => get<UploadedFile[]>('/files'),
   getById: (id: number) => get<UploadedFile>(`/files/${id}`),
   upload: (file: File, type?: string) =>
-    uploadFile<UploadedFile>('/files/upload', file, type ? { type } : undefined),
+    uploadFile<UploadedFile>('/files/upload/single', file, type ? { type } : undefined),
   delete: (id: number) => del<void>(`/files/${id}`),
   getPreview: (id: number, limit?: number) =>
     get<{ headers: string[]; rows: string[][] }>(

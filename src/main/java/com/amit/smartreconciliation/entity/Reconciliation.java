@@ -20,9 +20,10 @@ public class Reconciliation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String name;
 
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @Enumerated(EnumType.STRING)
@@ -49,6 +50,8 @@ public class Reconciliation {
     private Integer exceptionCount = 0;
     private Double matchRate = 0.0;
     private Integer progress = 0;
+
+    @Column(columnDefinition = "TEXT")
     private String errorMessage;
 
     private LocalDateTime startedAt;

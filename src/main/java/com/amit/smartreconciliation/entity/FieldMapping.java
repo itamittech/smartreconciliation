@@ -23,6 +23,7 @@ public class FieldMapping {
     @Column(nullable = false)
     private String targetField;
 
+    @Column(columnDefinition = "TEXT")
     private String transform;
 
     private Double confidence = 1.0;

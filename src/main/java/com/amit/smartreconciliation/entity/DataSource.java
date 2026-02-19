@@ -22,6 +22,7 @@ public class DataSource {
     @Column(nullable = false)
     private String name;
 
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @Enumerated(EnumType.STRING)
@@ -37,6 +38,8 @@ public class DataSource {
 
     private LocalDateTime lastTestedAt;
     private Boolean lastTestSuccessful;
+
+    @Column(columnDefinition = "TEXT")
     private String lastTestError;
 
     @ManyToOne(fetch = FetchType.LAZY)

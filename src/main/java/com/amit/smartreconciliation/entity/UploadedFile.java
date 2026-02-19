@@ -44,6 +44,8 @@ public class UploadedFile {
 
     private Integer rowCount;
     private Integer columnCount;
+
+    @Column(columnDefinition = "TEXT")
     private String processingError;
 
     @ManyToOne(fetch = FetchType.LAZY)

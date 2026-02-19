@@ -32,9 +32,15 @@ public class ReconciliationException {
     @Column(nullable = false)
     private ExceptionStatus status = ExceptionStatus.OPEN;
 
+    @Column(columnDefinition = "TEXT")
     private String description;
+
     private String fieldName;
+
+    @Column(columnDefinition = "TEXT")
     private String sourceValue;
+
+    @Column(columnDefinition = "TEXT")
     private String targetValue;
 
     @Type(JsonType.class)
@@ -45,8 +51,12 @@ public class ReconciliationException {
     @Column(columnDefinition = "jsonb")
     private Map<String, Object> targetData;
 
+    @Column(columnDefinition = "TEXT")
     private String aiSuggestion;
+
+    @Column(columnDefinition = "TEXT")
     private String resolution;
+
     private String resolvedBy;
     private LocalDateTime resolvedAt;
     private LocalDateTime acknowledgedAt;

@@ -48,6 +48,7 @@ const ReconciliationsPage = () => {
   const [sortField, setSortField] = useState<SortField>('createdAt')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [startingIds, setStartingIds] = useState<Set<number>>(new Set())
 
   const { data: reconciliationsResponse, isLoading, isError, error } = useReconciliations({
     page: currentPage - 1, // Backend uses 0-based indexing
@@ -175,7 +176,15 @@ const ReconciliationsPage = () => {
 
   const handleStart = (e: React.MouseEvent, id: number) => {
     e.stopPropagation()
-    startReconciliation.mutate(id)
+    setStartingIds((prev) => new Set(prev).add(id))
+    startReconciliation.mutate(id, {
+      onSettled: () =>
+        setStartingIds((prev) => {
+          const s = new Set(prev)
+          s.delete(id)
+          return s
+        }),
+    })
   }
 
   const getMatchRate = (recon: ApiReconciliation) => {
@@ -414,13 +423,18 @@ const ReconciliationsPage = () => {
                           {recon.status === 'PENDING' && (
                             <Button
                               variant="ghost"
-                              size="icon"
+                              size="sm"
                               aria-label="Start reconciliation"
                               onClick={(e) => handleStart(e, recon.id)}
-                              disabled={startReconciliation.isPending}
-                              className="hover:text-green-400"
+                              disabled={startingIds.has(recon.id)}
+                              className="gap-1 text-green-500 hover:text-green-400 hover:bg-green-500/10"
                             >
-                              <PlayCircle className="h-4 w-4" />
+                              {startingIds.has(recon.id) ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <PlayCircle className="h-4 w-4" />
+                              )}
+                              {startingIds.has(recon.id) ? 'Starting...' : 'Start'}
                             </Button>
                           )}
                           <Button

@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { Send, Paperclip, Mic, Sparkles } from 'lucide-react'
+import { Send, Paperclip } from 'lucide-react'
 import { Button, Input } from '@/components/ui'
 
 interface ChatInputProps {
@@ -60,29 +60,16 @@ const ChatInput = ({ onSendMessage, onFileUpload, isLoading }: ChatInputProps) =
           <Paperclip className="h-5 w-5" />
         </Button>
 
-        <div className="flex-1 relative">
-          <Input
-            type="text"
-            placeholder="Describe your quantum reconciliation needs..."
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={isLoading}
-            className="pr-10"
-            aria-label="Chat message"
-          />
-          <Sparkles className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-violet-400 animate-pulse-glow" />
-        </div>
-
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label="Voice input"
-          className="hover:bg-space-750 hover:text-cyan-400"
-        >
-          <Mic className="h-5 w-5" />
-        </Button>
+        <Input
+          type="text"
+          placeholder="Ask about your reconciliation data, exceptions, or rules..."
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={handleKeyDown}
+          disabled={isLoading}
+          className="flex-1"
+          aria-label="Chat message"
+        />
 
         <Button
           type="submit"

@@ -41,8 +41,8 @@ const App = () => {
         <Header />
         <main className="flex-1 overflow-auto">
           {renderPage()}
-          <Footer />
         </main>
+        <Footer />
       </div>
     </div>
   )

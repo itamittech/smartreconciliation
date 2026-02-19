@@ -104,6 +104,7 @@ export interface UploadedFile {
   schema: ColumnSchema[] | null
   storagePath: string | null
   status: string
+  missing: boolean
   createdAt: string
   updatedAt: string
 }

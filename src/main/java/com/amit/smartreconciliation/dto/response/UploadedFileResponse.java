@@ -16,12 +16,17 @@ public class UploadedFileResponse {
     private Integer rowCount;
     private Integer columnCount;
     private String processingError;
+    private boolean missing;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     public UploadedFileResponse() {}
 
     public static UploadedFileResponse fromEntity(UploadedFile entity) {
+        return fromEntity(entity, false);
+    }
+
+    public static UploadedFileResponse fromEntity(UploadedFile entity, boolean missing) {
         UploadedFileResponse r = new UploadedFileResponse();
         r.id = entity.getId();
         r.originalFilename = entity.getOriginalFilename();
@@ -32,6 +37,7 @@ public class UploadedFileResponse {
         r.rowCount = entity.getRowCount();
         r.columnCount = entity.getColumnCount();
         r.processingError = entity.getProcessingError();
+        r.missing = missing;
         r.createdAt = entity.getCreatedAt();
         r.updatedAt = entity.getUpdatedAt();
         return r;
@@ -46,6 +52,7 @@ public class UploadedFileResponse {
     public Integer getRowCount() { return rowCount; }
     public Integer getColumnCount() { return columnCount; }
     public String getProcessingError() { return processingError; }
+    public boolean isMissing() { return missing; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 }

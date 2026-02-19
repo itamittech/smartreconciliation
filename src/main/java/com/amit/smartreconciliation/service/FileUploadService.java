@@ -69,7 +69,7 @@ public class FileUploadService {
         UploadedFile saved = uploadedFileRepository.save(uploadedFile);
 
         try {
-            Path uploadPath = Paths.get(fileStorageConfig.getUploadDir());
+            Path uploadPath = Paths.get(fileStorageConfig.getUploadDir()).toAbsolutePath();
             Path filePath = uploadPath.resolve(storedFilename);
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
@@ -87,6 +87,13 @@ public class FileUploadService {
             uploadedFileRepository.save(saved);
             throw new FileProcessingException("Failed to store file: " + e.getMessage(), e);
         }
+    }
+
+    public boolean existsOnDisk(UploadedFile file) {
+        if (file == null || file.getFilePath() == null) {
+            return false;
+        }
+        return Files.exists(Paths.get(file.getFilePath()));
     }
 
     @Async
@@ -130,7 +137,7 @@ public class FileUploadService {
     public UploadedFileResponse getById(Long id) {
         UploadedFile file = uploadedFileRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("UploadedFile", id));
-        return UploadedFileResponse.fromEntity(file);
+        return UploadedFileResponse.fromEntity(file, !existsOnDisk(file));
     }
 
     public UploadedFile getEntityById(Long id) {
@@ -142,7 +149,7 @@ public class FileUploadService {
         Organization org = organizationService.getDefaultOrganization();
         return uploadedFileRepository.findByOrganizationId(org.getId())
                 .stream()
-                .map(UploadedFileResponse::fromEntity)
+                .map(file -> UploadedFileResponse.fromEntity(file, !existsOnDisk(file)))
                 .collect(Collectors.toList());
     }
 

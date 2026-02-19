@@ -21,7 +21,6 @@ import { CreateReconciliationWizard, ReconciliationDetailsModal } from '@/compon
 import type { ReconciliationStatus } from '@/types'
 import { cn } from '@/lib/utils'
 import { useReconciliations, useDeleteReconciliation, useStartReconciliation, useBulkDeleteReconciliations } from '@/services/hooks'
-import { useAppStore } from '@/store'
 import type { Reconciliation as ApiReconciliation } from '@/services/types'
 
 const statusConfig: Record<
@@ -50,7 +49,6 @@ const ReconciliationsPage = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
 
-  const { setActiveView } = useAppStore()
   const { data: reconciliationsResponse, isLoading, isError, error } = useReconciliations({
     page: currentPage - 1, // Backend uses 0-based indexing
     size: ITEMS_PER_PAGE,
@@ -431,7 +429,7 @@ const ReconciliationsPage = () => {
                             aria-label="View details"
                             onClick={(e) => {
                               e.stopPropagation()
-                              setActiveView('exceptions')
+                              handleRowClick(recon.id)
                             }}
                             className="hover:text-violet-400"
                           >

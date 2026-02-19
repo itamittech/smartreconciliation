@@ -5,6 +5,7 @@ import com.amit.smartreconciliation.dto.response.ReconciliationResponse;
 import com.amit.smartreconciliation.entity.*;
 import com.amit.smartreconciliation.enums.*;
 import com.amit.smartreconciliation.exception.ResourceNotFoundException;
+import com.amit.smartreconciliation.exception.FileProcessingException;
 import com.amit.smartreconciliation.repository.ReconciliationExceptionRepository;
 import com.amit.smartreconciliation.repository.ReconciliationRepository;
 import org.slf4j.Logger;
@@ -59,6 +60,13 @@ public class ReconciliationService {
         UploadedFile targetFile = fileUploadService.getEntityById(request.getTargetFileId());
         RuleSet ruleSet = ruleService.getEntityById(request.getRuleSetId());
 
+        if (!fileUploadService.existsOnDisk(sourceFile)) {
+            throw new FileProcessingException("Source file missing from disk: " + sourceFile.getOriginalFilename());
+        }
+        if (!fileUploadService.existsOnDisk(targetFile)) {
+            throw new FileProcessingException("Target file missing from disk: " + targetFile.getOriginalFilename());
+        }
+
         Reconciliation reconciliation = Reconciliation.builder()
                 .name(request.getName())
                 .description(request.getDescription())
@@ -73,9 +81,19 @@ public class ReconciliationService {
         Reconciliation saved = reconciliationRepository.save(reconciliation);
         log.info("Created reconciliation: {} (id: {})", saved.getName(), saved.getId());
 
-        executeReconciliationAsync(saved.getId());
-
         return ReconciliationResponse.fromEntity(saved);
+    }
+
+    @Transactional
+    public ReconciliationResponse start(Long id) {
+        Reconciliation reconciliation = reconciliationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Reconciliation", id));
+        if (reconciliation.getStatus() != ReconciliationStatus.PENDING &&
+                reconciliation.getStatus() != ReconciliationStatus.FAILED) {
+            throw new IllegalStateException("Reconciliation cannot be started in status: " + reconciliation.getStatus());
+        }
+        executeReconciliationAsync(id);
+        return ReconciliationResponse.fromEntity(reconciliation);
     }
 
     @Async

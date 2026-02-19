@@ -108,6 +108,12 @@ public class ReconciliationController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    @PostMapping("/{id}/start")
+    public ResponseEntity<ApiResponse<ReconciliationResponse>> start(@PathVariable Long id) {
+        ReconciliationResponse response = reconciliationService.start(id);
+        return ResponseEntity.ok(ApiResponse.success("Reconciliation started", response));
+    }
+
     @PostMapping("/{id}/cancel")
     public ResponseEntity<ApiResponse<Void>> cancel(@PathVariable Long id) {
         reconciliationService.cancel(id);

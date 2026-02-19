@@ -11,6 +11,7 @@ import {
   X,
 } from 'lucide-react'
 import { Button, Input, Card, Badge } from '@/components/ui'
+import { cn } from '@/lib/utils'
 import { useFiles, useDeleteFile, useUploadFile, useFilePreview } from '@/services/hooks'
 
 const FilesPage = () => {
@@ -61,7 +62,8 @@ const FilesPage = () => {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   }
 
-  const getStatusVariant = (status: string): 'default' | 'secondary' | 'success' | 'warning' | 'destructive' => {
+  const getStatusVariant = (status: string, missing?: boolean): 'default' | 'secondary' | 'success' | 'warning' | 'destructive' => {
+    if (missing) return 'destructive'
     switch (status.toUpperCase()) {
       case 'PROCESSED':
       case 'READY':
@@ -181,14 +183,27 @@ const FilesPage = () => {
                 {filteredFiles.map((file) => (
                   <tr
                     key={file.id}
-                    className="border-b transition-colors hover:bg-muted/50"
+                    className={cn(
+                      'border-b transition-colors hover:bg-muted/50',
+                      file.missing && 'opacity-80'
+                    )}
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="rounded-full bg-secondary p-2">
-                          <FileText className="h-4 w-4" />
+                        <div className={cn("rounded-full bg-secondary p-2", file.missing && "bg-destructive/10")}>
+                          <FileText className={cn("h-4 w-4", file.missing && "text-destructive")} />
                         </div>
-                        <span className="font-medium">{file.originalFilename}</span>
+                        <div className="flex flex-col">
+                          <span className={cn("font-medium", file.missing && "text-destructive")}>
+                            {file.originalFilename}
+                          </span>
+                          {file.missing && (
+                            <span className="flex items-center gap-1 text-[10px] font-semibold uppercase text-destructive">
+                              <AlertCircle className="h-3 w-3" />
+                              File missing from disk
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm">
@@ -201,8 +216,8 @@ const FilesPage = () => {
                       {file.columnCount || '-'}
                     </td>
                     <td className="px-4 py-3">
-                      <Badge variant={getStatusVariant(file.status)}>
-                        {file.status}
+                      <Badge variant={getStatusVariant(file.status, file.missing)}>
+                        {file.missing ? 'MISSING' : file.status}
                       </Badge>
                     </td>
                     <td className="px-4 py-3 text-sm text-muted-foreground">
@@ -215,6 +230,8 @@ const FilesPage = () => {
                           size="icon"
                           aria-label="Preview file"
                           onClick={(e) => handlePreview(e, file.id)}
+                          disabled={file.missing}
+                          title={file.missing ? "File missing from disk" : "Preview file"}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>

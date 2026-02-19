@@ -39,7 +39,6 @@ import static org.assertj.core.api.Assertions.within;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -87,6 +86,9 @@ class ReconciliationServiceTest {
                 fileParserService,
                 aiService
         ));
+
+        // Default: files exist on disk for all tests unless overridden
+        org.mockito.Mockito.lenient().when(fileUploadService.existsOnDisk(any())).thenReturn(true);
     }
 
     @Test
@@ -135,8 +137,6 @@ class ReconciliationServiceTest {
             return saved;
         });
 
-        doNothing().when(reconciliationService).executeReconciliationAsync(anyLong());
-
         // When
         ReconciliationResponse response = reconciliationService.create(request);
 
@@ -155,7 +155,9 @@ class ReconciliationServiceTest {
         assertThat(response.getStatus()).isEqualTo(ReconciliationStatus.PENDING);
         assertThat(response.getCreatedAt()).isEqualTo(createdAt);
 
-        verify(reconciliationService).executeReconciliationAsync(10L);
+        // create() no longer auto-starts; execution is triggered via separate start() call
+        org.mockito.Mockito.verify(reconciliationService, org.mockito.Mockito.never())
+                .executeReconciliationAsync(anyLong());
     }
 
     @Test

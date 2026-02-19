@@ -108,10 +108,18 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
     switch (currentStep) {
       case 0:
         return wizardState.name.trim().length > 0
-      case 1:
-        return wizardState.sourceFileId !== null
-      case 2:
-        return wizardState.targetFileId !== null && wizardState.targetFileId !== wizardState.sourceFileId
+      case 1: {
+        const file = files.find((f) => f.id === wizardState.sourceFileId)
+        return wizardState.sourceFileId !== null && (!file || !file.missing)
+      }
+      case 2: {
+        const file = files.find((f) => f.id === wizardState.targetFileId)
+        return (
+          wizardState.targetFileId !== null &&
+          wizardState.targetFileId !== wizardState.sourceFileId &&
+          (!file || !file.missing)
+        )
+      }
       case 3:
         return wizardState.ruleSetId !== null
       default:
@@ -196,6 +204,7 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
       const ruleSetRes = await createRuleSet.mutateAsync({
         name: `AI: ${wizardState.name}`,
         description: aiExplanation || 'AI-generated rule set',
+        isAiGenerated: true,
       })
       const ruleSetId = ruleSetRes.data?.id
       if (!ruleSetId) throw new Error('Rule set creation failed')
@@ -516,21 +525,32 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
                     key={file.id}
                     className={cn(
                       'cursor-pointer p-3 transition-colors hover:bg-muted/50',
-                      wizardState.sourceFileId === file.id && 'border-primary bg-primary/5'
+                      wizardState.sourceFileId === file.id && 'border-primary bg-primary/5',
+                      file.missing && 'opacity-70',
+                      file.missing && wizardState.sourceFileId === file.id && 'border-destructive bg-destructive/5'
                     )}
                     onClick={() => setWizardState({ ...wizardState, sourceFileId: file.id })}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <FileText className="h-5 w-5 text-muted-foreground" />
+                        <FileText className={cn("h-5 w-5 text-muted-foreground", file.missing && "text-destructive")} />
                         <div>
-                          <p className="font-medium">{file.originalFilename}</p>
+                          <p className={cn("font-medium", file.missing && "text-destructive")}>
+                            {file.originalFilename}
+                            {file.missing && <span className="ml-2 text-xs font-normal">(Missing)</span>}
+                          </p>
                           <p className="text-xs text-muted-foreground">
-                            {file.rowCount?.toLocaleString() || '?'} rows, {file.columnCount || '?'} columns
+                            {file.missing 
+                              ? "File missing from disk - please re-upload" 
+                              : `${file.rowCount?.toLocaleString() || '?'} rows, ${file.columnCount || '?'} columns`}
                           </p>
                         </div>
                       </div>
-                      {wizardState.sourceFileId === file.id && <Check className="h-5 w-5 text-primary" />}
+                      {wizardState.sourceFileId === file.id && (
+                        file.missing 
+                          ? <AlertCircle className="h-5 w-5 text-destructive" />
+                          : <Check className="h-5 w-5 text-primary" />
+                      )}
                     </div>
                   </Card>
                 ))}
@@ -561,21 +581,32 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
                       key={file.id}
                       className={cn(
                         'cursor-pointer p-3 transition-colors hover:bg-muted/50',
-                        wizardState.targetFileId === file.id && 'border-primary bg-primary/5'
+                        wizardState.targetFileId === file.id && 'border-primary bg-primary/5',
+                        file.missing && 'opacity-70',
+                        file.missing && wizardState.targetFileId === file.id && 'border-destructive bg-destructive/5'
                       )}
                       onClick={() => setWizardState({ ...wizardState, targetFileId: file.id })}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <FileText className="h-5 w-5 text-muted-foreground" />
+                          <FileText className={cn("h-5 w-5 text-muted-foreground", file.missing && "text-destructive")} />
                           <div>
-                            <p className="font-medium">{file.originalFilename}</p>
+                            <p className={cn("font-medium", file.missing && "text-destructive")}>
+                              {file.originalFilename}
+                              {file.missing && <span className="ml-2 text-xs font-normal">(Missing)</span>}
+                            </p>
                             <p className="text-xs text-muted-foreground">
-                              {file.rowCount?.toLocaleString() || '?'} rows, {file.columnCount || '?'} columns
+                              {file.missing 
+                                ? "File missing from disk - please re-upload" 
+                                : `${file.rowCount?.toLocaleString() || '?'} rows, ${file.columnCount || '?'} columns`}
                             </p>
                           </div>
                         </div>
-                        {wizardState.targetFileId === file.id && <Check className="h-5 w-5 text-primary" />}
+                        {wizardState.targetFileId === file.id && (
+                          file.missing 
+                            ? <AlertCircle className="h-5 w-5 text-destructive" />
+                            : <Check className="h-5 w-5 text-primary" />
+                        )}
                       </div>
                     </Card>
                   ))}

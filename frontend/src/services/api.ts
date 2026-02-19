@@ -131,10 +131,61 @@ export async function streamPost(
   onError: (error: Error) => void
 ): Promise<void> {
   const url = `${API_BASE_URL}${endpoint}`
+
+  const parseEvent = (eventPayload: string): string | null => {
+    const lines = eventPayload.split('\n')
+    const dataLines: string[] = []
+
+    for (const rawLine of lines) {
+      const line = rawLine.replace(/\r$/, '')
+      if (!line) continue
+
+      if (line.startsWith('data:')) {
+        let content: string
+
+        // Tolerate duplicated SSE framing like "data: data: ...".
+        if (/^data:\s*data:\s*/.test(line)) {
+          content = line.replace(/^data:\s*data:\s*/, '')
+        } else {
+          content = line.slice(5)
+          // SSE allows one optional separator space after "data:".
+          if (content.startsWith(' ')) {
+            content = content.slice(1)
+          }
+        }
+
+        dataLines.push(content)
+      } else if (!line.startsWith(':')) {
+        // Be tolerant of malformed frames where continuation lines are emitted without "data:".
+        dataLines.push(line)
+      }
+    }
+
+    if (!dataLines.length) {
+      return null
+    }
+
+    // Some servers emit a trailing empty data line per event; avoid injecting artificial newlines.
+    const hasNonEmptyData = dataLines.some((part) => part.length > 0)
+    if (hasNonEmptyData) {
+      while (dataLines.length > 0 && dataLines[dataLines.length - 1] === '') {
+        dataLines.pop()
+      }
+    }
+
+    const combined = dataLines.join('\n')
+    if (!combined) return null
+    if (combined.trim() === '[DONE]') return null
+    return combined
+  }
+
   try {
     const response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'text/event-stream',
+      },
       body: JSON.stringify(data),
     })
 
@@ -153,24 +204,32 @@ export async function streamPost(
     const decoder = new TextDecoder()
     let buffer = ''
 
+    const flushEventsFromBuffer = (forceFlushRemainder = false) => {
+      let separatorIndex = buffer.indexOf('\n\n')
+      while (separatorIndex !== -1) {
+        const eventPayload = buffer.slice(0, separatorIndex)
+        buffer = buffer.slice(separatorIndex + 2)
+        const parsed = parseEvent(eventPayload)
+        if (parsed) onChunk(parsed)
+        separatorIndex = buffer.indexOf('\n\n')
+      }
+
+      if (forceFlushRemainder && buffer.length > 0) {
+        const parsed = parseEvent(buffer)
+        if (parsed) onChunk(parsed)
+        buffer = ''
+      }
+    }
+
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
-      buffer += decoder.decode(value, { stream: true })
-      const lines = buffer.split('\n')
-      buffer = lines.pop() ?? ''
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const content = line.slice(6)
-          if (content.trim()) onChunk(content)
-        }
-      }
+      buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, '\n')
+      flushEventsFromBuffer()
     }
-    // Flush remaining buffer
-    if (buffer.startsWith('data: ')) {
-      const content = buffer.slice(6)
-      if (content.trim()) onChunk(content)
-    }
+
+    buffer += decoder.decode().replace(/\r\n/g, '\n')
+    flushEventsFromBuffer(true)
     onDone()
   } catch (error) {
     onError(error instanceof Error ? error : new Error(String(error)))
@@ -195,3 +254,4 @@ export const aiConfigApi = {
 }
 
 export { API_BASE_URL }
+

@@ -4,6 +4,7 @@ import {
   FolderOpen,
   Upload,
   Eye,
+  Columns2,
   Trash2,
   Loader2,
   AlertCircle,
@@ -13,10 +14,12 @@ import {
 import { Button, Input, Card, Badge } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { useFiles, useDeleteFile, useUploadFile, useFilePreview } from '@/services/hooks'
+import type { UploadedFile } from '@/services/types'
 
 const FilesPage = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [previewFileId, setPreviewFileId] = useState<number | null>(null)
+  const [isSideBySidePreviewOpen, setIsSideBySidePreviewOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { data: filesResponse, isLoading, isError, error } = useFiles()
@@ -24,6 +27,8 @@ const FilesPage = () => {
   const uploadFile = useUploadFile()
 
   const files = filesResponse?.data || []
+  const previewableFiles = files.filter((file) => !file.missing)
+  const canOpenSideBySidePreview = previewableFiles.length >= 2
 
   const filteredFiles = files.filter((file) =>
     file.originalFilename.toLowerCase().includes(searchQuery.toLowerCase())
@@ -115,7 +120,20 @@ const FilesPage = () => {
               Manage your data files for reconciliation
             </p>
           </div>
-          <div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsSideBySidePreviewOpen(true)}
+              disabled={!canOpenSideBySidePreview}
+              title={
+                canOpenSideBySidePreview
+                  ? 'Open source and target file previews side by side'
+                  : 'Upload at least two non-missing files to compare'
+              }
+            >
+              <Columns2 className="mr-2 h-4 w-4" />
+              Side by Side View
+            </Button>
             <input
               ref={fileInputRef}
               type="file"
@@ -273,6 +291,13 @@ const FilesPage = () => {
           onClose={() => setPreviewFileId(null)}
         />
       )}
+
+      {isSideBySidePreviewOpen && (
+        <SideBySidePreviewModal
+          files={previewableFiles}
+          onClose={() => setIsSideBySidePreviewOpen(false)}
+        />
+      )}
     </div>
   )
 }
@@ -314,45 +339,189 @@ const FilePreviewModal = ({ fileId, onClose }: FilePreviewModalProps) => {
             </div>
           )}
 
-          {preview && (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/50">
-                    {preview.headers?.map((header, idx) => (
-                      <th
-                        key={idx}
-                        className="whitespace-nowrap px-3 py-2 text-left font-medium text-muted-foreground"
-                      >
-                        {header}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {preview.rows?.map((row, rowIdx) => (
-                    <tr key={rowIdx} className="border-b">
-                      {row.map((cell, cellIdx) => (
-                        <td
-                          key={cellIdx}
-                          className="whitespace-nowrap px-3 py-2"
-                        >
-                          {cell ?? '-'}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {(!preview.rows || preview.rows.length === 0) && (
-                <p className="py-8 text-center text-muted-foreground">No data to preview</p>
-              )}
-            </div>
-          )}
+          {preview && <PreviewTable preview={preview} />}
         </div>
       </div>
     </div>
   )
 }
+
+interface SideBySidePreviewModalProps {
+  files: UploadedFile[]
+  onClose: () => void
+}
+
+const SideBySidePreviewModal = ({ files, onClose }: SideBySidePreviewModalProps) => {
+  const [sourceFileId, setSourceFileId] = useState<number>(files[0]?.id ?? 0)
+  const [targetFileId, setTargetFileId] = useState<number>(
+    files.find((file) => file.id !== files[0]?.id)?.id ?? files[0]?.id ?? 0
+  )
+
+  const handleSourceFileChange = (id: number) => {
+    setSourceFileId(id)
+    if (targetFileId === id) {
+      const nextTarget = files.find((file) => file.id !== id)
+      if (nextTarget) setTargetFileId(nextTarget.id)
+    }
+  }
+
+  const handleTargetFileChange = (id: number) => {
+    setTargetFileId(id)
+    if (sourceFileId === id) {
+      const nextSource = files.find((file) => file.id !== id)
+      if (nextSource) setSourceFileId(nextSource.id)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="relative max-h-[90vh] w-full max-w-[95vw] overflow-hidden rounded-lg bg-background shadow-lg">
+        <div className="flex items-center justify-between border-b px-6 py-4">
+          <div>
+            <h3 className="text-lg font-semibold">Source vs Target Preview</h3>
+            <p className="text-sm text-muted-foreground">
+              Compare both files side by side (first 20 rows)
+            </p>
+          </div>
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close side by side preview">
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <div className="max-h-[calc(90vh-88px)] overflow-auto p-6">
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            <FilePreviewPane
+              label="Source"
+              files={files}
+              selectedFileId={sourceFileId}
+              blockedFileId={targetFileId}
+              onFileChange={handleSourceFileChange}
+            />
+            <FilePreviewPane
+              label="Target"
+              files={files}
+              selectedFileId={targetFileId}
+              blockedFileId={sourceFileId}
+              onFileChange={handleTargetFileChange}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+interface FilePreviewPaneProps {
+  label: string
+  files: UploadedFile[]
+  selectedFileId: number
+  blockedFileId: number
+  onFileChange: (fileId: number) => void
+}
+
+const FilePreviewPane = ({
+  label,
+  files,
+  selectedFileId,
+  blockedFileId,
+  onFileChange,
+}: FilePreviewPaneProps) => {
+  const { data: previewResponse, isLoading, isError, error } = useFilePreview(selectedFileId, 20)
+  const preview = previewResponse?.data
+  const selectedFile = files.find((file) => file.id === selectedFileId)
+
+  return (
+    <Card className="p-4">
+      <div className="mb-3 space-y-2">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm font-semibold">{label} File</p>
+          <select
+            value={selectedFileId}
+            onChange={(e) => onFileChange(Number(e.target.value))}
+            className="w-full max-w-sm rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            aria-label={`${label} file selector`}
+          >
+            {files.map((file) => (
+              <option key={file.id} value={file.id} disabled={file.id === blockedFileId}>
+                {file.originalFilename}
+              </option>
+            ))}
+          </select>
+        </div>
+        {selectedFile && (
+          <p className="text-xs text-muted-foreground">
+            {selectedFile.rowCount?.toLocaleString() || '?'} rows, {selectedFile.columnCount || '?'} columns
+          </p>
+        )}
+      </div>
+
+      <div className="h-[420px] overflow-auto rounded-md border">
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        )}
+
+        {isError && (
+          <div className="flex flex-col items-center gap-2 py-12 text-center">
+            <AlertCircle className="h-8 w-8 text-destructive" />
+            <p className="text-muted-foreground">
+              {error instanceof Error ? error.message : 'Failed to load preview'}
+            </p>
+          </div>
+        )}
+
+        {preview && (
+          <div className="p-3">
+            <PreviewTable preview={preview} />
+          </div>
+        )}
+      </div>
+    </Card>
+  )
+}
+
+interface PreviewTableProps {
+  preview: {
+    headers: string[]
+    rows: string[][]
+  }
+}
+
+const PreviewTable = ({ preview }: PreviewTableProps) => (
+  <div className="overflow-x-auto">
+    <table className="w-full text-sm">
+      <thead>
+        <tr className="border-b bg-muted/50">
+          {preview.headers?.map((header, idx) => (
+            <th
+              key={idx}
+              className="whitespace-nowrap px-3 py-2 text-left font-medium text-muted-foreground"
+            >
+              {header}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {preview.rows?.map((row, rowIdx) => (
+          <tr key={rowIdx} className="border-b">
+            {row.map((cell, cellIdx) => (
+              <td
+                key={cellIdx}
+                className="whitespace-nowrap px-3 py-2"
+              >
+                {cell ?? '-'}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+    {(!preview.rows || preview.rows.length === 0) && (
+      <p className="py-8 text-center text-muted-foreground">No data to preview</p>
+    )}
+  </div>
+)
 
 export { FilesPage }

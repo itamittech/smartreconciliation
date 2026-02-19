@@ -4,7 +4,7 @@ export type ExceptionType = 'missing_source' | 'missing_target' | 'mismatch' | '
 
 export type ExceptionSeverity = 'critical' | 'warning' | 'info'
 
-export type ExceptionStatus = 'open' | 'resolved' | 'ignored'
+export type ExceptionStatus = 'open' | 'acknowledged' | 'in_review' | 'resolved' | 'ignored'
 
 export interface Reconciliation {
   id: string
@@ -31,6 +31,8 @@ export interface ReconciliationException {
   sourceData?: Record<string, unknown>
   targetData?: Record<string, unknown>
   details: string
+  resolution?: string
+  resolvedBy?: string
   aiSuggestion?: string
   createdAt: string
 }

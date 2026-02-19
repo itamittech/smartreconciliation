@@ -39,7 +39,7 @@ const ChatInput = ({ onSendMessage, onFileUpload, isLoading }: ChatInputProps) =
   }
 
   return (
-    <form onSubmit={handleSubmit} className="border-t border-space-600 glass-strong p-4 relative z-10">
+    <form onSubmit={handleSubmit} className="border-t border-neutral-200 bg-white p-4">
       <div className="flex items-center gap-2">
         <input
           ref={fileInputRef}
@@ -55,7 +55,7 @@ const ChatInput = ({ onSendMessage, onFileUpload, isLoading }: ChatInputProps) =
           size="icon"
           onClick={handleFileClick}
           aria-label="Attach file"
-          className="hover:bg-space-750 hover:text-violet-400"
+          className="hover:bg-neutral-100"
         >
           <Paperclip className="h-5 w-5" />
         </Button>
@@ -89,7 +89,7 @@ const ChatInput = ({ onSendMessage, onFileUpload, isLoading }: ChatInputProps) =
               key={suggestion}
               type="button"
               onClick={() => setMessage(suggestion)}
-              className="rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs text-violet-300 transition-all hover:bg-violet-500/20 hover:border-violet-400 hover:text-violet-200"
+              className="rounded-full border border-neutral-300 bg-neutral-50 px-3 py-1 text-xs font-medium text-neutral-700 transition-smooth hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700"
               aria-label={`Suggestion: ${suggestion}`}
             >
               {suggestion}

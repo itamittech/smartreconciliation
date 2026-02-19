@@ -16,6 +16,7 @@ import type {
   CreateFieldMappingRequest,
   CreateMatchingRuleRequest,
   ResolveExceptionRequest,
+  UpdateExceptionRequest,
   ChatMessageRequest,
   AiSuggestedMapping,
   AiMappingSuggestionResult,
@@ -99,6 +100,8 @@ export const exceptionsApi = {
     return get<ReconciliationException[]>(`/exceptions${queryString ? `?${queryString}` : ''}`)
   },
   getById: (id: number) => get<ReconciliationException>(`/exceptions/${id}`),
+  update: (id: number, data: UpdateExceptionRequest) =>
+    put<ReconciliationException>(`/exceptions/${id}`, data),
   resolve: (id: number, data: ResolveExceptionRequest) =>
     put<ReconciliationException>(`/exceptions/${id}/resolve`, data),
   ignore: (id: number) => put<ReconciliationException>(`/exceptions/${id}/ignore`),

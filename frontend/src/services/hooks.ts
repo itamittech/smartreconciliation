@@ -16,6 +16,7 @@ import type {
   CreateFieldMappingRequest,
   CreateMatchingRuleRequest,
   ResolveExceptionRequest,
+  UpdateExceptionRequest,
   ChatMessageRequest,
   AiSuggestedMapping,
 } from './types'
@@ -222,6 +223,18 @@ export function useResolveException() {
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: ResolveExceptionRequest }) =>
       exceptionsApi.resolve(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['exceptions'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard })
+    },
+  })
+}
+
+export function useUpdateException() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: UpdateExceptionRequest }) =>
+      exceptionsApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['exceptions'] })
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard })

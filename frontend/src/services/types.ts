@@ -11,7 +11,7 @@ export type ExceptionType =
   | 'TOLERANCE_EXCEEDED'
   | 'POTENTIAL_MATCH'
 export type ExceptionSeverity = 'CRITICAL' | 'WARNING' | 'INFO'
-export type ExceptionStatus = 'OPEN' | 'RESOLVED' | 'IGNORED'
+export type ExceptionStatus = 'OPEN' | 'ACKNOWLEDGED' | 'IN_REVIEW' | 'RESOLVED' | 'IGNORED'
 export type ColumnType = 'STRING' | 'INTEGER' | 'DECIMAL' | 'DATE' | 'BOOLEAN'
 export type MatchType = 'EXACT' | 'FUZZY' | 'RANGE' | 'CONTAINS' | 'STARTS_WITH' | 'ENDS_WITH'
 
@@ -207,6 +207,12 @@ export interface CreateMatchingRuleRequest {
 
 export interface ResolveExceptionRequest {
   resolution: string
+  resolvedBy?: string
+}
+
+export interface UpdateExceptionRequest {
+  status?: ExceptionStatus
+  resolution?: string
   resolvedBy?: string
 }
 

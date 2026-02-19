@@ -289,6 +289,8 @@ public class AiService {
             - If you don't have specific information in the context, say so clearly
             - Provide actionable guidance based on the actual system capabilities
             - Use markdown formatting for better readability
+            - Use normal sentence spacing; do not collapse words together
+            - Format lists and headings with readable spacing (for example: "# Title", "- item", "1. item")
             """);
 
         return systemPrompt.toString();

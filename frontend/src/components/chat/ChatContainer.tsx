@@ -1,18 +1,24 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { Sparkles, AlertCircle, MessageSquare, FileText, List, HelpCircle } from 'lucide-react'
-import { ChatMessage } from './ChatMessage'
+import { ChatMessage, AssistantMessageContent } from './ChatMessage'
 import { ChatInput } from './ChatInput'
 import { useAppStore } from '@/store'
 import type { ChatMessage as ChatMessageType } from '@/types'
 import { useUploadFile } from '@/services/hooks'
-import { streamPost } from '@/services/api'
+import { post } from '@/services/api'
+import type { ChatResponse as ApiChatResponse } from '@/services/types'
 
 const ChatContainer = () => {
   const { chatMessages, addChatMessage } = useAppStore()
   const [isLoading, setIsLoading] = useState(false)
   const [streamingContent, setStreamingContent] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [activeSessionId, setActiveSessionId] = useState<number | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const typingIntervalRef = useRef<number | null>(null)
+  const typingQueueRef = useRef('')
+  const renderedStreamingRef = useRef('')
+  const typingDrainResolverRef = useRef<(() => void) | null>(null)
   const uploadFile = useUploadFile()
 
   const scrollToBottom = () => {
@@ -23,9 +29,79 @@ const ChatContainer = () => {
     scrollToBottom()
   }, [chatMessages, streamingContent])
 
+  const stopTyping = useCallback(() => {
+    if (typingIntervalRef.current !== null) {
+      window.clearInterval(typingIntervalRef.current)
+      typingIntervalRef.current = null
+    }
+  }, [])
+
+  const resolveTypingDrain = useCallback(() => {
+    if (typingDrainResolverRef.current) {
+      typingDrainResolverRef.current()
+      typingDrainResolverRef.current = null
+    }
+  }, [])
+
+  const startTyping = useCallback(() => {
+    if (typingIntervalRef.current !== null) {
+      return
+    }
+
+    typingIntervalRef.current = window.setInterval(() => {
+      if (!typingQueueRef.current) {
+        stopTyping()
+        resolveTypingDrain()
+        return
+      }
+
+      const nextSlice = typingQueueRef.current.slice(0, 2)
+      typingQueueRef.current = typingQueueRef.current.slice(nextSlice.length)
+      renderedStreamingRef.current += nextSlice
+      setStreamingContent(renderedStreamingRef.current)
+
+      if (!typingQueueRef.current) {
+        stopTyping()
+        resolveTypingDrain()
+      }
+    }, 22)
+  }, [resolveTypingDrain, stopTyping])
+
+  const queueStreamingChunk = useCallback(
+    (chunk: string) => {
+      typingQueueRef.current += chunk
+      startTyping()
+    },
+    [startTyping]
+  )
+
+  const waitForTypingToDrain = useCallback(() => {
+    return new Promise<void>((resolve) => {
+      if (!typingQueueRef.current) {
+        resolve()
+        return
+      }
+      typingDrainResolverRef.current = resolve
+    })
+  }, [])
+
+  const resetTypingState = useCallback(() => {
+    stopTyping()
+    typingQueueRef.current = ''
+    renderedStreamingRef.current = ''
+    resolveTypingDrain()
+  }, [resolveTypingDrain, stopTyping])
+
+  useEffect(() => {
+    return () => {
+      resetTypingState()
+    }
+  }, [resetTypingState])
+
   const handleSendMessage = useCallback(
     async (content: string) => {
       setError(null)
+      resetTypingState()
 
       const userMessage: ChatMessageType = {
         id: crypto.randomUUID(),
@@ -37,42 +113,52 @@ const ChatContainer = () => {
       setIsLoading(true)
       setStreamingContent('')
 
-      let accumulated = ''
-
-      await streamPost(
-        '/chat/stream',
-        { message: content },
-        (chunk) => {
-          accumulated += chunk
-          setStreamingContent(accumulated)
-        },
-        () => {
-          const aiResponse: ChatMessageType = {
-            id: crypto.randomUUID(),
-            role: 'assistant',
-            content: accumulated || 'No response received',
-            timestamp: new Date().toISOString(),
-          }
-          addChatMessage(aiResponse)
-          setStreamingContent(null)
-          setIsLoading(false)
-        },
-        (err) => {
-          const errorMessage = err.message || 'Failed to get AI response'
-          setError(errorMessage)
-          const errorResponse: ChatMessageType = {
-            id: crypto.randomUUID(),
-            role: 'assistant',
-            content: `Unable to reach the AI assistant: ${errorMessage}. Please check your connection and try again.`,
-            timestamp: new Date().toISOString(),
-          }
-          addChatMessage(errorResponse)
-          setStreamingContent(null)
-          setIsLoading(false)
+      const appendAssistantMessage = (messageContent: string) => {
+        const aiResponse: ChatMessageType = {
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          content: messageContent,
+          timestamp: new Date().toISOString(),
         }
-      )
+        addChatMessage(aiResponse)
+      }
+
+      try {
+        const syncResponse = await post<ApiChatResponse>('/chat/message', {
+          message: content,
+          sessionId: activeSessionId ?? undefined,
+        })
+
+        const reply = syncResponse.data?.response
+        if (syncResponse.data?.sessionId) {
+          setActiveSessionId(syncResponse.data.sessionId)
+        }
+
+        if (!reply?.trim()) {
+          appendAssistantMessage('No response received from the AI assistant. Please try again.')
+          return
+        }
+
+        queueStreamingChunk(reply)
+        await waitForTypingToDrain()
+        appendAssistantMessage(reply)
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to get AI response'
+        setError(errorMessage)
+        const errorResponse: ChatMessageType = {
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          content: `Unable to reach the AI assistant: ${errorMessage}. Please check your connection and try again.`,
+          timestamp: new Date().toISOString(),
+        }
+        addChatMessage(errorResponse)
+      } finally {
+        resetTypingState()
+        setStreamingContent(null)
+        setIsLoading(false)
+      }
     },
-    [addChatMessage]
+    [activeSessionId, addChatMessage, queueStreamingChunk, resetTypingState, waitForTypingToDrain]
   )
 
   const handleFileUpload = async (files: FileList) => {
@@ -83,7 +169,7 @@ const ChatContainer = () => {
       const userMessage: ChatMessageType = {
         id: crypto.randomUUID(),
         role: 'user',
-        content: `📁 Uploading: ${file.name}`,
+        content: `Uploading file: ${file.name}`,
         timestamp: new Date().toISOString(),
       }
       addChatMessage(userMessage)
@@ -98,10 +184,10 @@ const ChatContainer = () => {
           role: 'assistant',
           content:
             `File "${uploadedFile?.originalFilename || file.name}" uploaded and parsed successfully.\n\n` +
-            `**File Summary:**\n` +
-            `• Rows: ${uploadedFile?.rowCount ?? 'N/A'}\n` +
-            `• Columns: ${uploadedFile?.columnCount ?? 'N/A'}\n` +
-            `• Size: ${(file.size / 1024).toFixed(1)} KB\n\n` +
+            `File Summary:\n` +
+            `- Rows: ${uploadedFile?.rowCount ?? 'N/A'}\n` +
+            `- Columns: ${uploadedFile?.columnCount ?? 'N/A'}\n` +
+            `- Size: ${(file.size / 1024).toFixed(1)} KB\n\n` +
             `You can now use this file in a reconciliation. Would you like help setting up a rule set or running a reconciliation?`,
           timestamp: new Date().toISOString(),
         }
@@ -124,36 +210,36 @@ const ChatContainer = () => {
   }
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Error Banner */}
+    <div className="flex h-full flex-col bg-neutral-50">
       {error && (
-        <div className="flex items-center gap-2 bg-red-500/10 border-b border-red-500/30 px-4 py-2 text-sm text-red-400 shrink-0">
-          <AlertCircle className="h-4 w-4 shrink-0" />
-          <span className="flex-1">{error}</span>
-          <button
-            onClick={() => setError(null)}
-            className="text-xs underline hover:text-red-300"
-          >
-            Dismiss
-          </button>
+        <div className="shrink-0 border-b border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span className="flex-1">{error}</span>
+            <button
+              onClick={() => setError(null)}
+              className="text-xs underline hover:text-destructive"
+            >
+              Dismiss
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden">
         {chatMessages.length === 0 && streamingContent === null ? (
           <div className="flex h-full flex-col items-center justify-center p-8 text-center">
-            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-500/10 border border-violet-500/20">
-              <MessageSquare className="h-8 w-8 text-violet-400" />
+            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-xl border border-brand-200 bg-brand-50">
+              <MessageSquare className="h-8 w-8 text-brand-600" />
             </div>
-            <h2 className="mb-2 text-xl font-semibold text-white">
+            <h2 className="mb-2 text-xl font-semibold text-neutral-900">
               AI Reconciliation Assistant
             </h2>
-            <p className="mb-8 max-w-md text-sm text-gray-400 leading-relaxed">
+            <p className="mb-8 max-w-md text-sm leading-relaxed text-neutral-600">
               Ask questions about your reconciliation data, get help analysing exceptions,
               or request assistance creating matching rules.
             </p>
-            <div className="grid gap-3 sm:grid-cols-2 w-full max-w-xl">
+            <div className="grid w-full max-w-xl gap-3 sm:grid-cols-2">
               {[
                 { icon: FileText, text: 'Reconcile bank statement with ledger' },
                 { icon: AlertCircle, text: 'Analyse pending exceptions' },
@@ -163,45 +249,43 @@ const ChatContainer = () => {
                 <button
                   key={text}
                   onClick={() => handleSendMessage(text)}
-                  className="glass border border-space-500 rounded-xl p-4 text-left text-sm transition-all hover:border-violet-500/50 hover:bg-violet-500/5 group"
+                  className="group rounded-lg border border-neutral-200 bg-white p-4 text-left text-sm transition-smooth hover:border-brand-300 hover:bg-brand-50/40"
                   aria-label={`Start conversation: ${text}`}
                   disabled={isLoading}
                 >
-                  <Icon className="h-4 w-4 text-gray-400 mb-2 group-hover:text-violet-400 transition-colors" />
-                  <span className="text-gray-300 group-hover:text-white transition-colors">{text}</span>
+                  <Icon className="mb-2 h-4 w-4 text-neutral-500 transition-colors group-hover:text-brand-600" />
+                  <span className="text-neutral-700 transition-colors group-hover:text-neutral-900">{text}</span>
                 </button>
               ))}
             </div>
           </div>
         ) : (
-          <div className="space-y-1 p-4">
+          <div className="space-y-1 overflow-x-hidden p-4">
             {chatMessages.map((message) => (
               <ChatMessage key={message.id} message={message} />
             ))}
 
-            {/* Live streaming message */}
             {streamingContent !== null && (
-              <div className="flex gap-3 p-4 glass rounded-xl border border-violet-500/20">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-500/20 border border-violet-500/30">
-                  <Sparkles className="h-5 w-5 text-violet-400" />
+              <div className="flex gap-3 rounded-lg border border-neutral-200 bg-white p-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-700 ring-2 ring-neutral-200">
+                  <Sparkles className="h-5 w-5 text-white" />
                 </div>
-                <div className="flex-1 text-sm text-gray-200 leading-relaxed whitespace-pre-wrap">
-                  {streamingContent}
-                  <span className="inline-block w-0.5 h-4 bg-violet-400 ml-0.5 animate-pulse" />
+                <div className="min-w-0 flex-1 text-neutral-900">
+                  <AssistantMessageContent content={streamingContent} />
+                  <span className="ml-0.5 inline-block h-4 w-0.5 animate-pulse bg-brand-600" />
                 </div>
               </div>
             )}
 
-            {/* Thinking indicator */}
             {isLoading && streamingContent === '' && (
-              <div className="flex gap-3 p-4 glass rounded-xl border border-violet-500/20">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-500/20 border border-violet-500/30">
-                  <Sparkles className="h-5 w-5 text-violet-400" />
+              <div className="flex gap-3 rounded-lg border border-neutral-200 bg-white p-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-700 ring-2 ring-neutral-200">
+                  <Sparkles className="h-5 w-5 text-white" />
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-bounce [animation-delay:0ms]" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-bounce [animation-delay:150ms]" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-bounce [animation-delay:300ms]" />
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-brand-600 [animation-delay:0ms]" />
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-brand-600 [animation-delay:150ms]" />
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-brand-600 [animation-delay:300ms]" />
                 </div>
               </div>
             )}
@@ -211,7 +295,6 @@ const ChatContainer = () => {
         )}
       </div>
 
-      {/* Input Area */}
       <ChatInput
         onSendMessage={handleSendMessage}
         onFileUpload={handleFileUpload}

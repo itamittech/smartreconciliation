@@ -2,47 +2,39 @@ import { forwardRef, type HTMLAttributes } from 'react'
 import { cn } from '@/lib/utils'
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'glass' | 'interactive' | 'glow' | 'solid'
-  glowColor?: 'violet' | 'cyan' | 'pink' | 'green'
+  variant?: 'default' | 'elevated' | 'interactive' | 'glass' // 'glass' deprecated, maps to 'elevated'
+  glowColor?: string // deprecated, kept for compatibility
 }
 
 const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ className, variant = 'default', glowColor = 'violet', ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn(
-        // Base styles - Quantum design
-        'rounded-xl transition-glow overflow-hidden',
-        // Variant styles
-        {
-          // Default - Solid dark card
-          'bg-card border border-space-600 shadow-lg': variant === 'default',
+  ({ className, variant = 'default', glowColor, ...props }, ref) => {
+    // Map old variants for backward compatibility
+    const normalizedVariant = variant === 'glass' ? 'elevated' : variant
 
-          // Glass - Glassmorphism
-          'glass shadow-xl': variant === 'glass',
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          // Base styles - Professional
+          'rounded-lg transition-smooth overflow-hidden',
+          // Variant styles
+          {
+            // Default - Clean white card
+            'bg-white border border-neutral-200 shadow-sm': normalizedVariant === 'default',
 
-          // Interactive - Hover with glow
-          'bg-card border border-space-600 shadow-lg hover:shadow-glow-violet hover:-translate-y-1 hover:border-violet-500/50 cursor-pointer transition-all duration-300':
-            variant === 'interactive',
+            // Elevated - More prominent shadow (also handles 'glass' for backward compat)
+            'bg-white border border-neutral-200 shadow-md': normalizedVariant === 'elevated',
 
-          // Glow - Always glowing
-          'bg-card border-2 shadow-xl': variant === 'glow',
-
-          // Solid - Strong background
-          'bg-space-750 border border-space-600 shadow-md': variant === 'solid',
-        },
-        // Glow color variants
-        variant === 'glow' && {
-          'border-violet-500/50 shadow-glow-violet': glowColor === 'violet',
-          'border-cyan-500/50 shadow-glow-cyan': glowColor === 'cyan',
-          'border-pink-500/50 shadow-glow-pink': glowColor === 'pink',
-          'border-green-500/50 shadow-glow-green': glowColor === 'green',
-        },
-        className
-      )}
-      {...props}
-    />
-  )
+            // Interactive - Hover effect
+            'bg-white border border-neutral-200 shadow-sm hover:shadow-md hover:border-brand-200 cursor-pointer':
+              normalizedVariant === 'interactive',
+          },
+          className
+        )}
+        {...props}
+      />
+    )
+  }
 )
 Card.displayName = 'Card'
 
@@ -62,7 +54,7 @@ const CardTitle = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLHeadingEle
     <h3
       ref={ref}
       className={cn(
-        'text-xl font-semibold leading-tight tracking-tight text-foreground',
+        'text-xl font-semibold leading-tight tracking-tight text-neutral-900',
         className
       )}
       {...props}
@@ -75,7 +67,7 @@ const CardDescription = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLPara
   ({ className, ...props }, ref) => (
     <p
       ref={ref}
-      className={cn('text-sm text-gray-400 leading-relaxed', className)}
+      className={cn('text-sm text-neutral-600 leading-relaxed', className)}
       {...props}
     />
   )

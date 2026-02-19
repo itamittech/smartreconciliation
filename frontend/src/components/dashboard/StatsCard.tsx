@@ -44,8 +44,8 @@ const StatsCard = ({
               </p>
             )}
           </div>
-          <div className="rounded-full bg-primary/10 p-3">
-            <Icon className="h-6 w-6 text-primary" />
+          <div className="rounded-md bg-brand-50 p-3">
+            <Icon className="h-6 w-6 text-brand-600" />
           </div>
         </div>
       </CardContent>

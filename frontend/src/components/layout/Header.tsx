@@ -1,4 +1,4 @@
-import { Bell, Search, Sparkles } from 'lucide-react'
+import { Bell, Search, BarChart3 } from 'lucide-react'
 import { Button, Input, Avatar, Badge } from '@/components/ui'
 import { useAppStore } from '@/store'
 
@@ -8,19 +8,19 @@ const Header = () => {
   const getPageTitle = () => {
     switch (activeView) {
       case 'home':
-        return 'Quantum Dashboard'
+        return 'Dashboard'
       case 'chat':
-        return 'AI Intelligence'
+        return 'AI Assistant'
       case 'reconciliations':
         return 'Reconciliations'
       case 'exceptions':
-        return 'Exception Matrix'
+        return 'Exceptions'
       case 'rules':
-        return 'Rule Engine'
+        return 'Rule Sets'
       case 'files':
         return 'Data Sources'
       case 'settings':
-        return 'Configuration'
+        return 'Settings'
       default:
         return 'Dashboard'
     }
@@ -29,80 +29,79 @@ const Header = () => {
   const getPageDescription = () => {
     switch (activeView) {
       case 'home':
-        return 'Real-time intelligence and insights'
+        return 'Overview and insights'
       case 'chat':
-        return 'Conversational AI assistant'
+        return 'AI-powered assistance'
       case 'reconciliations':
         return 'Track and manage reconciliation workflows'
       case 'exceptions':
-        return 'Resolve discrepancies with AI guidance'
+        return 'Resolve discrepancies efficiently'
       case 'rules':
-        return 'Configure intelligent matching algorithms'
+        return 'Configure matching algorithms'
       case 'files':
         return 'Manage your data sources'
       case 'settings':
-        return 'Customize your quantum experience'
+        return 'Customize your experience'
       default:
-        return 'AI-powered reconciliation intelligence'
+        return 'AI-powered reconciliation platform'
     }
   }
 
   return (
-    <header className="sticky top-0 z-50 flex h-20 items-center justify-between border-b border-space-600 px-6 glass-strong backdrop-blur-xl">
+    <header className="sticky top-0 z-50 flex h-20 items-center justify-between border-b border-neutral-200 px-6 bg-white backdrop-blur-sm">
       <div className="flex items-center gap-4">
-        {/* AI Icon with animated gradient */}
-        <div className="hidden md:flex items-center justify-center h-11 w-11 rounded-xl gradient-neural shadow-glow-violet animate-pulse-glow">
-          <Sparkles className="h-5 w-5 text-white" />
+        {/* Page Icon */}
+        <div className="hidden md:flex items-center justify-center h-11 w-11 rounded-md bg-brand-50">
+          <BarChart3 className="h-5 w-5 text-brand-600" />
         </div>
         <div>
-          {/* Page title with gradient */}
-          <h1 className="text-xl font-bold text-gradient-neural">
+          {/* Page title */}
+          <h1 className="text-xl font-bold text-neutral-900">
             {getPageTitle()}
           </h1>
-          <p className="text-xs text-gray-400 hidden md:block mt-0.5">
+          <p className="text-xs text-neutral-500 hidden md:block mt-0.5">
             {getPageDescription()}
           </p>
         </div>
       </div>
 
       <div className="flex items-center gap-4">
-        {/* Search with glowing focus */}
+        {/* Search */}
         <div className="relative hidden lg:block">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
           <Input
             type="search"
-            placeholder="Search intelligence..."
-            className="w-80 pl-10 bg-space-800/80 backdrop-blur-sm border-space-600 focus:border-violet-500 focus:shadow-glow-violet"
+            placeholder="Search..."
+            className="w-80 pl-10"
             aria-label="Search"
           />
         </div>
 
-        {/* Notifications with glowing badge */}
+        {/* Notifications */}
         <Button
           variant="ghost"
           size="icon"
           aria-label="View notifications"
-          className="relative hover:bg-space-750 hover:text-violet-400 rounded-lg"
+          className="relative rounded-md"
         >
           <Bell className="h-5 w-5" />
           <Badge
-            variant="glow"
-            pulse
+            variant="destructive"
             className="absolute -right-1 -top-1 h-5 w-5 flex items-center justify-center p-0 text-xs border-2 border-background"
           >
             3
           </Badge>
         </Button>
 
-        {/* User Menu with glowing border */}
-        <div className="flex items-center gap-3 pl-4 border-l border-space-600">
+        {/* User Menu */}
+        <div className="flex items-center gap-3 pl-4 border-l border-neutral-200">
           <div className="hidden md:block text-right">
-            <p className="text-sm font-semibold text-foreground">John Doe</p>
-            <p className="text-xs text-cyan-400">Quantum Analyst</p>
+            <p className="text-sm font-semibold text-neutral-900">John Doe</p>
+            <p className="text-xs text-neutral-500">Financial Analyst</p>
           </div>
           <Avatar
             fallback="JD"
-            className="h-10 w-10 ring-2 ring-violet-500/50 hover:ring-violet-400 hover:shadow-glow-violet transition-all cursor-pointer"
+            className="h-10 w-10 ring-2 ring-neutral-200 hover:ring-brand-300 transition-smooth cursor-pointer"
           />
         </div>
       </div>

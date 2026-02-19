@@ -24,7 +24,7 @@ export const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalPr
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -32,7 +32,7 @@ export const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalPr
       {/* Modal */}
       <div
         className={cn(
-          'relative w-full mx-4 bg-background border-2 border-violet-500/30 rounded-lg shadow-xl',
+          'relative w-full mx-4 bg-white border border-neutral-200 rounded-lg shadow-xl',
           sizeClasses[size]
         )}
         role="dialog"
@@ -40,8 +40,8 @@ export const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalPr
         aria-labelledby="modal-title"
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-violet-500/20 p-4">
-          <h2 id="modal-title" className="text-lg font-semibold">
+        <div className="flex items-center justify-between border-b border-neutral-200 p-4">
+          <h2 id="modal-title" className="text-lg font-semibold text-neutral-900">
             {title}
           </h2>
           <Button

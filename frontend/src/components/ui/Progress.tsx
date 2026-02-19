@@ -12,7 +12,7 @@ const Progress = ({ className, value = 0, max = 100, ...props }: ProgressProps) 
   return (
     <div
       className={cn(
-        'relative h-2 w-full overflow-hidden rounded-full bg-secondary',
+        'relative h-2 w-full overflow-hidden rounded-full bg-neutral-200',
         className
       )}
       role="progressbar"
@@ -22,7 +22,7 @@ const Progress = ({ className, value = 0, max = 100, ...props }: ProgressProps) 
       {...props}
     >
       <div
-        className="h-full bg-primary transition-all duration-300 ease-in-out"
+        className="h-full bg-brand-500 transition-all duration-300 ease-in-out"
         style={{ width: `${percentage}%` }}
       />
     </div>

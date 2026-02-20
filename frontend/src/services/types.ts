@@ -309,3 +309,29 @@ export interface ChatMessageRequest {
   message: string
   context?: Record<string, unknown>
 }
+
+// Knowledge Base types
+export type KnowledgeDomain =
+  | 'BANKING'
+  | 'TRADING'
+  | 'ACCOUNTS_PAYABLE'
+  | 'INVENTORY'
+  | 'INTERCOMPANY'
+  | 'ECOMMERCE'
+  | 'TECHNICAL'
+  | 'GENERAL'
+
+export interface KnowledgeDocument {
+  id: number
+  title: string
+  domain: KnowledgeDomain
+  fileType: string
+  chunkCount: number
+  createdByEmail: string | null
+  createdAt: string
+}
+
+export interface DomainDetectionResult {
+  domain: KnowledgeDomain
+  confidence: number
+}

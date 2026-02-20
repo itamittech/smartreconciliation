@@ -1,5 +1,6 @@
 // API endpoint functions - organized by domain
-import { get, post, put, del, uploadFile } from './api'
+import { get, post, put, del, uploadFile, fetchApi } from './api'
+import type { ApiResponse } from './api'
 import type {
   DashboardMetrics,
   Reconciliation,
@@ -27,6 +28,9 @@ import type {
   AiSuggestedMapping,
   AiMappingSuggestionResult,
   AiRuleSuggestionResult,
+  KnowledgeDocument,
+  KnowledgeDomain,
+  DomainDetectionResult,
 } from './types'
 
 // ============================================
@@ -210,6 +214,29 @@ export const aiApi = {
     }),
   suggestResolution: (exceptionId: number) =>
     post<{ suggestion: string }>(`/ai/suggest-resolution/${exceptionId}`),
+}
+
+// ============================================
+// Knowledge Base
+// ============================================
+export const knowledgeApi = {
+  // Classify first ~2000 chars of file content into a domain
+  detectDomain: (sampleContent: string) =>
+    fetchApi<ApiResponse<DomainDetectionResult>>('/knowledge/detect-domain', {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: sampleContent,
+    }),
+
+  // List all knowledge documents for the current org
+  list: () => get<KnowledgeDocument[]>('/knowledge'),
+
+  // Upload and ingest a knowledge file with a given domain
+  upload: (file: File, domain: KnowledgeDomain) =>
+    uploadFile<KnowledgeDocument>('/knowledge/upload', file, { domain }),
+
+  // Delete a knowledge document and its vectors
+  delete: (id: number) => del<void>(`/knowledge/${id}`),
 }
 
 // ============================================

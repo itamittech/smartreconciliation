@@ -9,6 +9,7 @@ import {
   chatApi,
   aiApi,
   healthApi,
+  knowledgeApi,
 } from './endpoints'
 import type {
   CreateReconciliationRequest,
@@ -22,6 +23,7 @@ import type {
   AutoResolveExceptionsRequest,
   ChatMessageRequest,
   AiSuggestedMapping,
+  KnowledgeDomain,
 } from './types'
 import type { ApiResponse } from './api'
 import type { Reconciliation as ApiReconciliation } from './types'
@@ -43,6 +45,7 @@ export const queryKeys = {
   chatSessions: ['chatSessions'] as const,
   chatSession: (id: number) => ['chatSessions', id] as const,
   chatMessages: (sessionId: number) => ['chatMessages', sessionId] as const,
+  knowledgeDocs: ['knowledgeDocs'] as const,
 }
 
 // ============================================
@@ -474,5 +477,42 @@ export function useSuggestRules() {
 export function useSuggestResolution() {
   return useMutation({
     mutationFn: (exceptionId: number) => aiApi.suggestResolution(exceptionId),
+  })
+}
+
+// ============================================
+// Knowledge Base
+// ============================================
+export function useKnowledgeDocuments() {
+  return useQuery({
+    queryKey: queryKeys.knowledgeDocs,
+    queryFn: () => knowledgeApi.list(),
+  })
+}
+
+export function useDetectDomain() {
+  return useMutation({
+    mutationFn: (sampleContent: string) => knowledgeApi.detectDomain(sampleContent),
+  })
+}
+
+export function useUploadKnowledge() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ file, domain }: { file: File; domain: KnowledgeDomain }) =>
+      knowledgeApi.upload(file, domain),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.knowledgeDocs })
+    },
+  })
+}
+
+export function useDeleteKnowledge() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => knowledgeApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.knowledgeDocs })
+    },
   })
 }

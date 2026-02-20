@@ -21,14 +21,19 @@ import {
   Type,
   Maximize2,
   Minimize2,
+  BookOpen,
 } from 'lucide-react'
 import { Button, Input, Card, CardHeader, CardTitle, CardContent, Badge } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { dataSourcesApi, aiConfigApi, adminApi } from '@/services/api'
 import type { DataSource, AiProvider, UserRole, UserDetailResponse, CreateUserRequest, UpdateUserRequest } from '@/types'
 import { useAppStore } from '@/store'
+import { KnowledgeUploadArea } from '@/components/knowledge/KnowledgeUploadArea'
+import { DomainConfirmModal } from '@/components/knowledge/DomainConfirmModal'
+import { KnowledgeDocumentList } from '@/components/knowledge/KnowledgeDocumentList'
+import type { DomainDetectionResult } from '@/services/types'
 
-type SettingsTab = 'profile' | 'connections' | 'ai' | 'notifications' | 'security' | 'appearance' | 'users'
+type SettingsTab = 'profile' | 'connections' | 'ai' | 'notifications' | 'security' | 'appearance' | 'users' | 'knowledge'
 
 const ROLE_OPTIONS: UserRole[] = ['ADMIN', 'ANALYST', 'FINANCE', 'IT_ADMIN', 'OPERATIONS', 'COMPLIANCE', 'VIEWER']
 
@@ -45,6 +50,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
 const SettingsPage = () => {
   const { currentUser } = useAppStore()
   const isAdmin = currentUser?.role === 'ADMIN'
+  const isPrivileged = isAdmin || currentUser?.role === 'ANALYST'
 
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile')
   const queryClient = useQueryClient()
@@ -55,6 +61,11 @@ const SettingsPage = () => {
   const [createdTempPassword, setCreatedTempPassword] = useState<string | null>(null)
   const [editingUserId, setEditingUserId] = useState<number | null>(null)
   const [editingUser, setEditingUser] = useState<UpdateUserRequest>({})
+
+  // --- Knowledge Base state ---
+  const [knowledgePendingFile, setKnowledgePendingFile] = useState<File | null>(null)
+  const [knowledgeDetected, setKnowledgeDetected] = useState<DomainDetectionResult | null>(null)
+  const [showDomainModal, setShowDomainModal] = useState(false)
 
   // Fetch all data sources
   const { data: dataSourcesResponse, isLoading } = useQuery({
@@ -119,7 +130,7 @@ const SettingsPage = () => {
     },
   })
 
-  const allTabs: { id: SettingsTab; label: string; icon: typeof User; adminOnly?: boolean }[] = [
+  const allTabs: { id: SettingsTab; label: string; icon: typeof User; adminOnly?: boolean; privileged?: boolean }[] = [
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'connections', label: 'Data Sources', icon: Database },
     { id: 'ai', label: 'AI Settings', icon: Key },
@@ -127,9 +138,10 @@ const SettingsPage = () => {
     { id: 'security', label: 'Security', icon: Shield },
     { id: 'appearance', label: 'Appearance', icon: Palette },
     { id: 'users', label: 'Users', icon: Users, adminOnly: true },
+    { id: 'knowledge', label: 'Knowledge Base', icon: BookOpen, privileged: true },
   ]
 
-  const visibleTabs = allTabs.filter((t) => !t.adminOnly || isAdmin)
+  const visibleTabs = allTabs.filter((t) => (!t.adminOnly || isAdmin) && (!t.privileged || isPrivileged))
 
   const handleTabClick = (tab: SettingsTab) => setActiveTab(tab)
 
@@ -820,6 +832,37 @@ const SettingsPage = () => {
 
       case 'users':
         return isAdmin ? renderUsersTab() : null
+
+      case 'knowledge':
+        return (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-sm font-semibold mb-1">Upload Knowledge File</h3>
+              <p className="text-xs text-muted-foreground mb-3">
+                Upload domain-specific documents (.md, .pdf, .txt) to enrich AI suggestions with expert knowledge.
+              </p>
+              <KnowledgeUploadArea
+                onDetected={(file, result) => {
+                  setKnowledgePendingFile(file)
+                  setKnowledgeDetected(result)
+                  setShowDomainModal(true)
+                }}
+              />
+            </div>
+            <KnowledgeDocumentList />
+            <DomainConfirmModal
+              file={knowledgePendingFile}
+              detected={knowledgeDetected}
+              isOpen={showDomainModal}
+              onClose={() => setShowDomainModal(false)}
+              onUploaded={() => {
+                setShowDomainModal(false)
+                setKnowledgePendingFile(null)
+                setKnowledgeDetected(null)
+              }}
+            />
+          </div>
+        )
 
       default:
         return null

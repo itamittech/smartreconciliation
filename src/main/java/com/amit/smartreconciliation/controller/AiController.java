@@ -11,6 +11,7 @@ import com.amit.smartreconciliation.service.AiService;
 import com.amit.smartreconciliation.service.SettingsService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -46,6 +47,7 @@ public class AiController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/config")
     public ResponseEntity<ApiResponse<AiConfigResponse>> updateConfig(
             @Valid @RequestBody AiConfigRequest request) {

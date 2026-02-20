@@ -17,6 +17,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -35,6 +36,7 @@ public class ReconciliationController {
         this.exceptionService = exceptionService;
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','ANALYST','FINANCE','IT_ADMIN','OPERATIONS','COMPLIANCE')")
     @PostMapping
     public ResponseEntity<ApiResponse<ReconciliationResponse>> create(
             @Valid @RequestBody ReconciliationRequest request) {
@@ -108,18 +110,21 @@ public class ReconciliationController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','ANALYST','FINANCE','IT_ADMIN','OPERATIONS','COMPLIANCE')")
     @PostMapping("/{id}/start")
     public ResponseEntity<ApiResponse<ReconciliationResponse>> start(@PathVariable Long id) {
         ReconciliationResponse response = reconciliationService.start(id);
         return ResponseEntity.ok(ApiResponse.success("Reconciliation started", response));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','ANALYST','FINANCE','IT_ADMIN','OPERATIONS','COMPLIANCE')")
     @PostMapping("/{id}/cancel")
     public ResponseEntity<ApiResponse<Void>> cancel(@PathVariable Long id) {
         reconciliationService.cancel(id);
         return ResponseEntity.ok(ApiResponse.success("Reconciliation cancelled", null));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','ANALYST')")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
         reconciliationService.delete(id);

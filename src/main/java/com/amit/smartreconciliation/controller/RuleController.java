@@ -9,6 +9,7 @@ import com.amit.smartreconciliation.service.RuleService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +24,7 @@ public class RuleController {
         this.ruleService = ruleService;
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','ANALYST')")
     @PostMapping
     public ResponseEntity<ApiResponse<RuleSetResponse>> create(
             @Valid @RequestBody RuleSetRequest request) {
@@ -43,6 +45,7 @@ public class RuleController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','ANALYST')")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<RuleSetResponse>> update(
             @PathVariable Long id,
@@ -51,6 +54,7 @@ public class RuleController {
         return ResponseEntity.ok(ApiResponse.success("Rule set updated successfully", response));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','ANALYST')")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
         ruleService.delete(id);
@@ -72,6 +76,7 @@ public class RuleController {
         return ResponseEntity.ok(ApiResponse.success("Rule set test completed successfully", testResults));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','ANALYST')")
     @PostMapping("/{id}/mappings")
     public ResponseEntity<ApiResponse<RuleSetResponse>> addFieldMapping(
             @PathVariable Long id,
@@ -80,6 +85,7 @@ public class RuleController {
         return ResponseEntity.ok(ApiResponse.success("Field mapping added successfully", response));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','ANALYST')")
     @PostMapping("/{id}/matching-rules")
     public ResponseEntity<ApiResponse<RuleSetResponse>> addMatchingRule(
             @PathVariable Long id,

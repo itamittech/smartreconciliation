@@ -7,12 +7,17 @@ import com.amit.smartreconciliation.entity.ReconciliationException;
 import com.amit.smartreconciliation.enums.ExceptionSeverity;
 import com.amit.smartreconciliation.enums.ExceptionStatus;
 import com.amit.smartreconciliation.enums.ExceptionType;
+import com.amit.smartreconciliation.enums.UserRole;
 import com.amit.smartreconciliation.exception.ResourceNotFoundException;
 import com.amit.smartreconciliation.repository.ReconciliationExceptionRepository;
+import com.amit.smartreconciliation.security.CustomUserDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,10 +32,23 @@ public class ExceptionService {
 
     private final ReconciliationExceptionRepository exceptionRepository;
     private final AiService aiService;
+    private final ExceptionPermissionService permissionService;
 
-    public ExceptionService(ReconciliationExceptionRepository exceptionRepository, AiService aiService) {
+    public ExceptionService(ReconciliationExceptionRepository exceptionRepository,
+                            AiService aiService,
+                            ExceptionPermissionService permissionService) {
         this.exceptionRepository = exceptionRepository;
         this.aiService = aiService;
+        this.permissionService = permissionService;
+    }
+
+    private UserRole getCurrentUserRole() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof CustomUserDetails userDetails) {
+            return userDetails.getRole();
+        }
+        // Default to VIEWER (most restrictive) when no auth context
+        return UserRole.VIEWER;
     }
 
     public Page<ReconciliationExceptionResponse> getByReconciliationId(
@@ -72,6 +90,12 @@ public class ExceptionService {
         ReconciliationException exception = exceptionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ReconciliationException", id));
 
+        UserRole role = getCurrentUserRole();
+        if (!permissionService.canAction(role, exception.getType())) {
+            throw new AccessDeniedException(
+                    "You do not have permission to action this exception type: " + exception.getType());
+        }
+
         if (request.getStatus() != null) {
             if (exception.getStatus() == ExceptionStatus.RESOLVED
                     && request.getStatus() != ExceptionStatus.RESOLVED) {
@@ -107,13 +131,19 @@ public class ExceptionService {
         List<Long> ids = request.getExceptionIds();
         List<ReconciliationException> exceptions = exceptionRepository.findAllById(ids);
         if (exceptions.size() != ids.size()) {
+            // log missing IDs (existing behavior)
             List<Long> foundIds = exceptions.stream().map(ReconciliationException::getId).toList();
             ids.stream()
                     .filter(id -> !foundIds.contains(id))
                     .forEach(missingId -> log.error("Bulk update failed for missing exception: {}", missingId));
         }
 
+        UserRole role = getCurrentUserRole();
         for (ReconciliationException exception : exceptions) {
+            if (!permissionService.canAction(role, exception.getType())) {
+                throw new AccessDeniedException(
+                        "You do not have permission to action exception type: " + exception.getType());
+            }
             exception.setStatus(request.getStatus());
             if (request.getStatus() == ExceptionStatus.RESOLVED) {
                 exception.setResolvedAt(LocalDateTime.now());

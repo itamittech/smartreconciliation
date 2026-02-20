@@ -18,31 +18,21 @@ Comprehensive AI features documentation:
 - **Prompt Engineering** - Best practices and examples
 - **Cost Management** - Token usage and optimization
 
-### [AI Chat Tools Specification](ai-chat-tools-specification.md)
-
-Phase 1 chat tools implementation:
-- **Function Calling** - Spring AI function calling architecture
-- **Tool Definitions** - Available chat assistant tools
-- **Implementation Status** - Phase 1 completion details
-- **Integration Points** - How tools interact with services
-- **Usage Examples** - Chat tool invocation patterns
-
-### [AI Context Enhancement](ai-context-enhancement.md)
-
-Hybrid context system design:
-- **Context Architecture** - System + dynamic context approach
-- **Context Retrieval** - How context is gathered
-- **Context Building** - Template-based context assembly
-- **Tool Integration** - Context-aware tool execution
-- **Performance** - Context size optimization
-
 ### [AI Tools Implementation Status](ai-tools-implementation-status.md)
 
-Current implementation tracking:
-- **Completed Features** - Phase 1 deliverables
-- **Pending Work** - Future enhancements
-- **Known Limitations** - Current constraints
-- **Performance Metrics** - Response times and accuracy
+Current state of all AI tool implementations:
+- **Tool Services** - 5 `@Tool`-annotated beans wired into ChatClient
+- **AI Capabilities** - Mapping suggestions, rule suggestions, exception analysis, streaming chat
+- **Spring AI Pattern** - `@Tool` + `.tools(beans...)` per prompt (not `defaultFunctions()`)
+- **Implementation Notes** - Correct approach vs. discarded alternatives
+
+### [NotebookLM Knowledge Integration Plan](notebooklm-knowledge-integration-plan.md)
+
+Domain-specific RAG strategy using local PGVector:
+- **Local RAG Approach** - Export from NotebookLM → embed → store in PGVector
+- **Domain Taxonomy** - Banking, Trading, AP, Inventory, Intercompany, E-commerce, Technical
+- **Knowledge Ingestion** - `KnowledgeIngestionService` design
+- **Retrieval Integration** - Pre-flight vector search in `AiService`
 
 ## Audience
 

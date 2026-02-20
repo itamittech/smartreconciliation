@@ -13,13 +13,9 @@ This folder contains documentation that was created during implementation phases
 
 ## Current Contents
 
-### [FileControllerTest-Implementation-Summary.md](FileControllerTest-Implementation-Summary.md)
+### [TC-FrontendApplication.md](TC-FrontendApplication.md)
 
-Implementation summary for FileController test suite:
-- Test implementation details
-- Coverage achieved
-- Issues encountered and resolved
-- Post-implementation notes
+Historical frontend E2E test specification (32 test cases). Superseded by the Playwright test specs in `frontend/test-specs/`.
 
 ## Archive Policy
 

@@ -1,7 +1,7 @@
-# TC-WebConfig - Integration Tests
+# TC-CORS - Integration Tests
 
 **Module**: Cross-Cutting Concerns
-**Component**: WebConfig (CORS)
+**Component**: SecurityConfig (CORS — previously WebConfig, moved to SecurityConfig with JWT integration)
 **Test Level**: Integration Test
 **Total Test Cases**: 3
 

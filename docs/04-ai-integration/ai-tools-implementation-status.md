@@ -34,11 +34,11 @@ Each bean has methods annotated with `@Tool(description = "...")`. Spring AI int
 
 | Bean | File | Tools |
 |------|------|-------|
-| `DashboardTools` | `service/tools/DashboardTools.java` | `getDashboardMetrics()` |
-| `ExceptionTools` | `service/tools/ExceptionTools.java` | `listExceptions()`, `getExceptionDetails()` |
-| `FileTools` | `service/tools/FileTools.java` | `listFiles()`, `getFileSchema()` |
-| `ReconciliationTools` | `service/tools/ReconciliationTools.java` | `getReconciliation()`, `listReconciliations()`, `getReconciliationStatus()` |
-| `RuleSetTools` | `service/tools/RuleSetTools.java` | `listRuleSets()`, `getRuleSetDetails()` |
+| `DashboardTools` | `service/tool/DashboardTools.java` | `getDashboardMetrics()` |
+| `ExceptionTools` | `service/tool/ExceptionTools.java` | `listExceptions()`, `getExceptionDetails()` |
+| `FileTools` | `service/tool/FileTools.java` | `listFiles()`, `getFileSchema()` |
+| `ReconciliationTools` | `service/tool/ReconciliationTools.java` | `getReconciliation()`, `listReconciliations()`, `getReconciliationStatus()` |
+| `RuleSetTools` | `service/tool/RuleSetTools.java` | `listRuleSets()`, `getRuleSetDetails()` |
 
 ---
 

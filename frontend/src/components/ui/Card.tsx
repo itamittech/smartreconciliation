@@ -19,14 +19,14 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
           'rounded-lg transition-smooth overflow-hidden',
           // Variant styles
           {
-            // Default - Clean white card
-            'bg-white border border-neutral-200 shadow-sm': normalizedVariant === 'default',
+            // Default - Clean card
+            'bg-card border border-border shadow-sm': normalizedVariant === 'default',
 
-            // Elevated - More prominent shadow (also handles 'glass' for backward compat)
-            'bg-white border border-neutral-200 shadow-md': normalizedVariant === 'elevated',
+            // Elevated - More prominent shadow
+            'bg-card border border-border shadow-md': normalizedVariant === 'elevated',
 
             // Interactive - Hover effect
-            'bg-white border border-neutral-200 shadow-sm hover:shadow-md hover:border-brand-200 cursor-pointer':
+            'bg-card border border-border shadow-sm hover:shadow-md hover:border-primary/50 cursor-pointer':
               normalizedVariant === 'interactive',
           },
           className
@@ -54,7 +54,7 @@ const CardTitle = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLHeadingEle
     <h3
       ref={ref}
       className={cn(
-        'text-xl font-semibold leading-tight tracking-tight text-neutral-900',
+        'text-xl font-semibold leading-tight tracking-tight text-card-foreground',
         className
       )}
       {...props}
@@ -67,7 +67,7 @@ const CardDescription = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLPara
   ({ className, ...props }, ref) => (
     <p
       ref={ref}
-      className={cn('text-sm text-neutral-600 leading-relaxed', className)}
+      className={cn('text-sm text-muted-foreground leading-relaxed', className)}
       {...props}
     />
   )

@@ -262,15 +262,15 @@ const ConsolidatedExceptionCard = ({ group, onResolve }: ConsolidatedExceptionCa
                       </div>
                       <p className="mt-2 text-sm">{exception.details}</p>
                       {exception.resolution && (
-                        <div className="mt-3 rounded-md border border-slate-300/80 bg-slate-50 px-3 py-2">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                        <div className="mt-3 rounded-md border border-border bg-secondary/30 px-3 py-2">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                             User Remarks
                           </p>
-                          <p className="mt-1 text-base font-semibold leading-relaxed text-slate-900">
+                          <p className="mt-1 text-sm font-semibold leading-relaxed text-foreground">
                             {exception.resolution}
                           </p>
                           {exception.resolvedBy && (
-                            <p className="mt-1 text-xs text-slate-600">
+                            <p className="mt-1 text-xs text-muted-foreground">
                               Entered by: {exception.resolvedBy}
                             </p>
                           )}

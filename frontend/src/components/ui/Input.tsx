@@ -10,19 +10,19 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         type={type}
         className={cn(
           // Base styles - Professional
-          'flex h-11 w-full rounded-md border-2 border-neutral-300 bg-white px-4 py-2 text-sm',
-          'font-medium text-neutral-900',
-          'placeholder:text-neutral-500',
+          'flex h-11 w-full rounded-md border-2 border-border bg-card px-4 py-2 text-sm',
+          'font-medium text-foreground',
+          'placeholder:text-muted-foreground',
           // File input styles
-          'file:border-0 file:bg-transparent file:text-sm file:font-semibold file:text-brand-600',
+          'file:border-0 file:bg-transparent file:text-sm file:font-semibold file:text-primary',
           // Focus states
-          'focus-visible:outline-none focus-visible:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-100',
+          'focus-visible:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/10',
           // Transitions
           'transition-smooth',
           // Disabled state
-          'disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500 disabled:opacity-50',
+          'disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:opacity-50',
           // Hover state
-          'hover:border-neutral-400',
+          'hover:border-primary/30',
           className
         )}
         ref={ref}

@@ -50,8 +50,8 @@ const HomePage = () => {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-10 w-10 animate-spin text-brand-500" />
-          <p className="text-neutral-600">Loading dashboard...</p>
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading dashboard...</p>
         </div>
       </div>
     )
@@ -60,14 +60,14 @@ const HomePage = () => {
   if (isError) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="flex flex-col items-center gap-4 text-center bg-white border border-neutral-200 shadow-md p-8 rounded-lg max-w-md">
-          <AlertCircle className="h-12 w-12 text-error-500" />
+        <div className="flex flex-col items-center gap-4 text-center bg-card border border-border shadow-md p-8 rounded-lg max-w-md">
+          <AlertCircle className="h-12 w-12 text-destructive" />
           <div>
-            <p className="font-semibold text-lg text-neutral-900">Connection Error</p>
-            <p className="text-neutral-600 text-sm mt-2">
+            <p className="font-semibold text-lg text-foreground">Connection Error</p>
+            <p className="text-muted-foreground text-sm mt-2">
               {error instanceof Error ? error.message : 'Unable to connect to backend'}
             </p>
-            <p className="text-neutral-500 text-xs mt-2">
+            <p className="text-muted-foreground text-xs mt-2">
               Verify backend is running on http://localhost:8080
             </p>
           </div>
@@ -90,45 +90,45 @@ const HomePage = () => {
   return (
     <div className="space-y-8 p-6 lg:p-8">
       {/* Welcome Banner - Professional hero section */}
-      <div className="rounded-2xl bg-gradient-to-br from-white to-brand-50 border border-brand-100 p-10">
+      <div className="rounded-2xl bg-gradient-to-br from-card to-primary/5 border border-border p-10 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
-          <div className="flex items-center justify-center h-12 w-12 rounded-md bg-brand-500 shadow-sm">
-            <BarChart3 className="h-6 w-6 text-white" />
+          <div className="flex items-center justify-center h-12 w-12 rounded-md bg-primary shadow-sm">
+            <BarChart3 className="h-6 w-6 text-primary-foreground" />
           </div>
           <div>
-            <h2 className="text-4xl font-bold text-neutral-900">Smart Reconciliation</h2>
-            <p className="text-sm text-neutral-600 font-medium">Professional Platform v1.0</p>
+            <h2 className="text-4xl font-bold text-foreground">Smart Reconciliation</h2>
+            <p className="text-sm text-muted-foreground font-medium">Professional Platform v1.0</p>
           </div>
         </div>
-        <p className="text-xl text-neutral-600 mt-2">
+        <p className="text-xl text-foreground mt-2 font-medium">
           AI-Powered Financial Data Reconciliation
         </p>
-        <p className="text-base text-neutral-500 mt-4 leading-relaxed max-w-2xl">
+        <p className="text-base text-muted-foreground mt-4 leading-relaxed max-w-2xl">
           Automate complex reconciliations, detect discrepancies, and resolve
           exceptions faster with intelligent AI assistance.
         </p>
 
         {/* Feature badges */}
         <div className="flex flex-wrap gap-3 mt-6">
-          <div className="flex items-center gap-2.5 bg-white border border-brand-200 rounded-md px-5 py-3 shadow-sm transition-smooth hover:shadow-md">
-            <Shield className="h-5 w-5 text-brand-600" />
-            <span className="text-sm font-semibold text-neutral-900">Secure Matching</span>
+          <div className="flex items-center gap-2.5 bg-card border border-border rounded-md px-5 py-3 shadow-sm transition-smooth hover:shadow-md">
+            <Shield className="h-5 w-5 text-primary" />
+            <span className="text-sm font-semibold text-foreground">Secure Matching</span>
           </div>
-          <div className="flex items-center gap-2.5 bg-white border border-success-200 rounded-md px-5 py-3 shadow-sm transition-smooth hover:shadow-md">
-            <Activity className="h-5 w-5 text-success-600" />
-            <span className="text-sm font-semibold text-neutral-900">Real-time Analytics</span>
+          <div className="flex items-center gap-2.5 bg-card border border-success/20 rounded-md px-5 py-3 shadow-sm transition-smooth hover:shadow-md">
+            <Activity className="h-5 w-5 text-success" />
+            <span className="text-sm font-semibold text-foreground">Real-time Analytics</span>
           </div>
-          <div className="flex items-center gap-2.5 bg-white border border-info-200 rounded-md px-5 py-3 shadow-sm transition-smooth hover:shadow-md">
-            <Zap className="h-5 w-5 text-info-600" />
-            <span className="text-sm font-semibold text-neutral-900">AI-Powered</span>
+          <div className="flex items-center gap-2.5 bg-card border border-info/20 rounded-md px-5 py-3 shadow-sm transition-smooth hover:shadow-md">
+            <Zap className="h-5 w-5 text-info" />
+            <span className="text-sm font-semibold text-foreground">AI-Powered</span>
           </div>
         </div>
       </div>
 
       {/* Quick Overview */}
       <div>
-        <h3 className="text-2xl font-semibold text-neutral-900 mb-2">Overview</h3>
-        <p className="text-base text-neutral-600">
+        <h3 className="text-2xl font-semibold text-foreground mb-2">Overview</h3>
+        <p className="text-base text-muted-foreground">
           Real-time reconciliation metrics and exception tracking
         </p>
       </div>

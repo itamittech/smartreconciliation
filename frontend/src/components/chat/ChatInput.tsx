@@ -39,8 +39,8 @@ const ChatInput = ({ onSendMessage, onFileUpload, isLoading }: ChatInputProps) =
   }
 
   return (
-    <form onSubmit={handleSubmit} className="border-t border-neutral-200 bg-white p-4">
-      <div className="flex items-center gap-2">
+    <form onSubmit={handleSubmit} className="border-t border-border bg-card p-6 shadow-lg">
+      <div className="flex items-center gap-3">
         <input
           ref={fileInputRef}
           type="file"
@@ -55,41 +55,43 @@ const ChatInput = ({ onSendMessage, onFileUpload, isLoading }: ChatInputProps) =
           size="icon"
           onClick={handleFileClick}
           aria-label="Attach file"
-          className="hover:bg-neutral-100"
+          className="h-11 w-11 rounded-full hover:bg-muted"
         >
-          <Paperclip className="h-5 w-5" />
+          <Paperclip className="h-5 w-5 text-muted-foreground" />
         </Button>
 
-        <Input
-          type="text"
-          placeholder="Ask about your reconciliation data, exceptions, or rules..."
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={handleKeyDown}
-          disabled={isLoading}
-          className="flex-1"
-          aria-label="Chat message"
-        />
+        <div className="relative flex-1">
+          <Input
+            type="text"
+            placeholder="Type a message or use suggestions below..."
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={isLoading}
+            className="flex-1 rounded-2xl border-2 border-border bg-muted/30 focus-visible:border-primary px-5 h-12"
+            aria-label="Chat message"
+          />
+        </div>
 
         <Button
           type="submit"
           disabled={!message.trim() || isLoading}
           aria-label="Send message"
-          className="gap-2"
+          className="h-12 rounded-2xl px-6 font-bold shadow-md hover:shadow-lg transition-all"
         >
           <Send className="h-4 w-4" />
           Send
         </Button>
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="mt-4 flex flex-wrap gap-2 pl-1">
         {['Reconcile bank statement', 'Show exceptions', 'Create matching rule'].map(
           (suggestion) => (
             <button
               key={suggestion}
               type="button"
               onClick={() => setMessage(suggestion)}
-              className="rounded-full border border-neutral-300 bg-neutral-50 px-3 py-1 text-xs font-medium text-neutral-700 transition-smooth hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700"
+              className="rounded-full border border-border bg-muted/40 px-4 py-1.5 text-xs font-semibold text-muted-foreground transition-all hover:border-primary/50 hover:bg-primary/10 hover:text-primary active:scale-95"
               aria-label={`Suggestion: ${suggestion}`}
             >
               {suggestion}

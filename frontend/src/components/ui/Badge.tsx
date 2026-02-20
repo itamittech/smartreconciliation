@@ -17,22 +17,22 @@ const Badge = ({ className, variant = 'default', pulse, ...props }: BadgeProps) 
         // Variant styles - Professional
         {
           // Default - Neutral
-          'bg-neutral-100 text-neutral-700 border border-neutral-300': normalizedVariant === 'default',
+          'bg-muted text-muted-foreground border border-border': normalizedVariant === 'default',
 
           // Success - Green
-          'bg-success-50 text-success-700 border border-success-200': normalizedVariant === 'success',
+          'bg-success/10 text-success border border-success/20': normalizedVariant === 'success',
 
           // Warning - Amber
-          'bg-warning-50 text-warning-700 border border-warning-200': normalizedVariant === 'warning',
+          'bg-warning/10 text-warning border border-warning/20': normalizedVariant === 'warning',
 
           // Destructive - Red
-          'bg-error-50 text-error-700 border border-error-200': normalizedVariant === 'destructive',
+          'bg-destructive/10 text-destructive border border-destructive/20': normalizedVariant === 'destructive',
 
-          // Info - Blue (also handles 'secondary' for backward compat)
-          'bg-info-50 text-info-700 border border-info-200': normalizedVariant === 'info',
+          // Info - Blue
+          'bg-info/10 text-info border border-info/20': normalizedVariant === 'info',
 
           // Outline - Transparent
-          'border border-neutral-300 text-neutral-700 bg-transparent': normalizedVariant === 'outline',
+          'border border-border text-muted-foreground bg-transparent': normalizedVariant === 'outline',
         },
         className
       )}

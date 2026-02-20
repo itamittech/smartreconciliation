@@ -16,7 +16,7 @@ const renderInlineMarkdown = (text: string): ReactNode[] => {
       return (
         <code
           key={`inline-code-${index}`}
-          className="rounded bg-neutral-100 px-1.5 py-0.5 font-mono text-[12px] text-neutral-900"
+          className="rounded bg-muted px-1.5 py-0.5 font-mono text-[12px] text-foreground"
         >
           {token.slice(1, -1)}
         </code>
@@ -25,7 +25,7 @@ const renderInlineMarkdown = (text: string): ReactNode[] => {
 
     if (token.startsWith('**') && token.endsWith('**') && token.length > 3) {
       return (
-        <strong key={`inline-bold-${index}`} className="font-semibold text-neutral-900">
+        <strong key={`inline-bold-${index}`} className="font-semibold text-foreground">
           {token.slice(2, -2)}
         </strong>
       )
@@ -181,13 +181,13 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
         className={cn(
           'h-10 w-10 shrink-0 ring-2',
           isUser
-            ? 'bg-brand-500 ring-brand-200'
-            : 'bg-neutral-700 ring-neutral-200'
+            ? 'bg-primary ring-primary/20'
+            : 'bg-neutral-800 ring-border shadow-sm'
         )}
       >
         <div className="flex h-full w-full items-center justify-center">
           {isUser ? (
-            <User className="h-5 w-5 text-white" />
+            <User className="h-5 w-5 text-primary-foreground" />
           ) : (
             <Bot className="h-5 w-5 text-white" />
           )}
@@ -196,10 +196,10 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
 
       <div
         className={cn(
-          'min-w-0 max-w-[75%] rounded-lg border px-4 py-3',
+          'min-w-0 max-w-[85%] sm:max-w-[75%] rounded-2xl px-5 py-4 shadow-sm',
           isUser
-            ? 'border-brand-300 bg-brand-50 text-neutral-900'
-            : 'border-neutral-200 bg-white text-neutral-900'
+            ? 'border border-primary/20 bg-primary/10 text-foreground'
+            : 'border border-border bg-card text-foreground'
         )}
       >
         {isUser ? (
@@ -211,11 +211,11 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
         )}
         <p
           className={cn(
-            'mt-2 text-xs font-mono',
-            isUser ? 'text-brand-700/80' : 'text-neutral-500'
+            'mt-3 text-[10px] font-mono uppercase tracking-wider',
+            isUser ? 'text-primary/60' : 'text-muted-foreground'
           )}
         >
-          {new Date(message.timestamp).toLocaleTimeString()}
+          {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </p>
       </div>
     </div>

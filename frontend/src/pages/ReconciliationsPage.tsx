@@ -279,7 +279,7 @@ const ReconciliationsPage = () => {
           <div className="flex items-center gap-2">
             {selectedIds.size > 0 && (
               <div className="flex items-center gap-2 mr-4">
-                <span className="text-sm text-gray-400">{selectedIds.size} selected</span>
+                <span className="text-sm text-muted-foreground">{selectedIds.size} selected</span>
                 <Button
                   variant="destructive"
                   size="sm"
@@ -291,7 +291,7 @@ const ReconciliationsPage = () => {
                 </Button>
               </div>
             )}
-            <Button onClick={handleNewReconciliation} glow>
+            <Button onClick={handleNewReconciliation}>
               <Plus className="mr-2 h-4 w-4" />
               New Reconciliation
             </Button>
@@ -300,7 +300,7 @@ const ReconciliationsPage = () => {
 
         <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="search"
               placeholder="Search reconciliations..."
@@ -413,11 +413,11 @@ const ReconciliationsPage = () => {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="rounded-md bg-secondary p-2">
-                            <Database className="h-4 w-4" />
+                          <div className="rounded-md bg-primary/10 p-2">
+                            <Database className="h-4 w-4 text-primary" />
                           </div>
                           <div>
-                            <span className="font-medium">{recon.name}</span>
+                            <span className="font-medium text-foreground">{recon.name}</span>
                             {recon.description && (
                               <p className="text-xs text-muted-foreground mt-0.5">{recon.description}</p>
                             )}
@@ -432,13 +432,13 @@ const ReconciliationsPage = () => {
                       </td>
                       <td className="px-4 py-3">
                         <div className="text-sm">
-                          <p>{(recon.totalSourceRecords || 0).toLocaleString()}</p>
+                          <p className="text-foreground">{(recon.totalSourceRecords || 0).toLocaleString()}</p>
                           <p className="text-muted-foreground text-xs mt-0.5">
                             {(recon.exceptionCount || 0) > 0 ? (
                               <button
                                 type="button"
                                 onClick={(event) => handleOpenExceptions(event, recon)}
-                                className="text-brand-600 hover:underline"
+                                className="text-primary hover:underline font-medium"
                                 aria-label={`Open ${recon.exceptionCount || 0} exceptions for ${recon.name}`}
                               >
                                 {recon.exceptionCount || 0} exceptions
@@ -454,14 +454,14 @@ const ReconciliationsPage = () => {
                           <div className="h-1.5 w-24 overflow-hidden rounded-full bg-muted">
                             <div
                               className={cn('h-full transition-all duration-500', {
-                                'bg-green-500': Number(matchRate) >= 95,
+                                'bg-success': Number(matchRate) >= 95,
                                 'bg-primary': Number(matchRate) >= 80 && Number(matchRate) < 95,
                                 'bg-destructive': Number(matchRate) < 80,
                               })}
                               style={{ width: `${matchRate}%` }}
                             />
                           </div>
-                          <span className="text-sm">{matchRate}%</span>
+                          <span className="text-sm font-medium text-foreground">{matchRate}%</span>
                         </div>
                       </td>
                       <td className="px-4 py-4">

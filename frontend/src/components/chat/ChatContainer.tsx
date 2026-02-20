@@ -210,7 +210,7 @@ const ChatContainer = () => {
   }
 
   return (
-    <div className="flex h-full flex-col bg-neutral-50">
+    <div className="flex h-full flex-col bg-background">
       {error && (
         <div className="shrink-0 border-b border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive">
           <div className="flex items-center gap-2">
@@ -229,13 +229,13 @@ const ChatContainer = () => {
       <div className="flex-1 overflow-y-auto overflow-x-hidden">
         {chatMessages.length === 0 && streamingContent === null ? (
           <div className="flex h-full flex-col items-center justify-center p-8 text-center">
-            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-xl border border-brand-200 bg-brand-50">
-              <MessageSquare className="h-8 w-8 text-brand-600" />
+            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
+              <MessageSquare className="h-8 w-8 text-primary" />
             </div>
-            <h2 className="mb-2 text-xl font-semibold text-neutral-900">
+            <h2 className="mb-2 text-xl font-semibold text-foreground">
               AI Reconciliation Assistant
             </h2>
-            <p className="mb-8 max-w-md text-sm leading-relaxed text-neutral-600">
+            <p className="mb-8 max-w-md text-sm leading-relaxed text-muted-foreground">
               Ask questions about your reconciliation data, get help analysing exceptions,
               or request assistance creating matching rules.
             </p>
@@ -249,12 +249,12 @@ const ChatContainer = () => {
                 <button
                   key={text}
                   onClick={() => handleSendMessage(text)}
-                  className="group rounded-lg border border-neutral-200 bg-white p-4 text-left text-sm transition-smooth hover:border-brand-300 hover:bg-brand-50/40"
+                  className="group rounded-lg border border-border bg-card p-4 text-left text-sm transition-smooth hover:border-primary/50 hover:bg-primary/5"
                   aria-label={`Start conversation: ${text}`}
                   disabled={isLoading}
                 >
-                  <Icon className="mb-2 h-4 w-4 text-neutral-500 transition-colors group-hover:text-brand-600" />
-                  <span className="text-neutral-700 transition-colors group-hover:text-neutral-900">{text}</span>
+                  <Icon className="mb-2 h-4 w-4 text-muted-foreground transition-colors group-hover:text-primary" />
+                  <span className="text-foreground transition-colors group-hover:text-primary">{text}</span>
                 </button>
               ))}
             </div>
@@ -266,26 +266,26 @@ const ChatContainer = () => {
             ))}
 
             {streamingContent !== null && (
-              <div className="flex gap-3 rounded-lg border border-neutral-200 bg-white p-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-700 ring-2 ring-neutral-200">
+              <div className="flex gap-3 rounded-lg border border-border bg-card p-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-800 ring-2 ring-border shadow-sm">
                   <Sparkles className="h-5 w-5 text-white" />
                 </div>
-                <div className="min-w-0 flex-1 text-neutral-900">
+                <div className="min-w-0 flex-1 text-foreground">
                   <AssistantMessageContent content={streamingContent} />
-                  <span className="ml-0.5 inline-block h-4 w-0.5 animate-pulse bg-brand-600" />
+                  <span className="ml-0.5 inline-block h-4 w-0.5 animate-pulse bg-primary" />
                 </div>
               </div>
             )}
 
             {isLoading && streamingContent === '' && (
-              <div className="flex gap-3 rounded-lg border border-neutral-200 bg-white p-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-700 ring-2 ring-neutral-200">
+              <div className="flex gap-3 rounded-lg border border-border bg-card p-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-800 ring-2 ring-border shadow-sm">
                   <Sparkles className="h-5 w-5 text-white" />
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-brand-600 [animation-delay:0ms]" />
-                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-brand-600 [animation-delay:150ms]" />
-                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-brand-600 [animation-delay:300ms]" />
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:0ms]" />
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:150ms]" />
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:300ms]" />
                 </div>
               </div>
             )}

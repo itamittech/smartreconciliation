@@ -170,8 +170,8 @@
     --color-foreground: var(--color-neutral-900);
     --color-primary: var(--color-brand-500);
     --color-primary-foreground: var(--color-neutral-0);
-    --color-secondary: var(--color-neutral-600);
-    --color-secondary-foreground: var(--color-neutral-50);
+    --color-secondary: var(--color-neutral-100);
+    --color-secondary-foreground: var(--color-neutral-900);
     --color-muted: var(--color-neutral-100);
     --color-muted-foreground: var(--color-neutral-500);
     --color-border: var(--color-neutral-200);
@@ -181,6 +181,12 @@
     --color-popover: var(--color-neutral-0);
     --color-popover-foreground: var(--color-neutral-900);
     --color-ring: var(--color-brand-500);
+
+    /* Semantic light theme */
+    --color-success: var(--color-success-500);
+    --color-warning: var(--color-warning-500);
+    --color-destructive: var(--color-error-500);
+    --color-info: var(--color-info-500);
   }
 
   .dark {
@@ -188,8 +194,8 @@
     --color-foreground: var(--color-dark-neutral-900);
     --color-primary: var(--color-brand-400);
     --color-primary-foreground: var(--color-neutral-0);
-    --color-secondary: var(--color-dark-neutral-600);
-    --color-secondary-foreground: var(--color-dark-neutral-50);
+    --color-secondary: var(--color-dark-neutral-100);
+    --color-secondary-foreground: var(--color-dark-neutral-900);
     --color-muted: var(--color-dark-neutral-100);
     --color-muted-foreground: var(--color-dark-neutral-500);
     --color-border: var(--color-dark-neutral-200);
@@ -199,6 +205,12 @@
     --color-popover: var(--color-dark-neutral-50);
     --color-popover-foreground: var(--color-dark-neutral-900);
     --color-ring: var(--color-brand-400);
+
+    /* Semantic dark theme */
+    --color-success: #10B981;
+    --color-warning: #F59E0B;
+    --color-destructive: #EF4444;
+    --color-info: #06B6D4;
 
     /* Override scrollbar for dark mode */
     ::-webkit-scrollbar-track {

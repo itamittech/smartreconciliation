@@ -294,17 +294,17 @@ const RulesPage = () => {
 
       <div className="flex h-full">
         {/* ── Rule List sidebar ─────────────────────────────────────── */}
-        <div className="flex w-80 flex-col border-r border-neutral-200 bg-neutral-50">
-          <div className="border-b border-neutral-200 p-4">
+        <div className="flex w-80 flex-col border-r border-border bg-muted/30">
+          <div className="border-b border-border p-4">
             <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-neutral-900">Rule Library</h2>
+              <h2 className="font-semibold text-foreground">Rule Library</h2>
               <Button size="sm" onClick={() => setIsCreateModalOpen(true)}>
                 <Plus className="mr-1 h-4 w-4" />
                 New
               </Button>
             </div>
             <div className="relative mt-3">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="search"
                 placeholder="Search rules..."
@@ -319,8 +319,8 @@ const RulesPage = () => {
           <div className="flex-1 overflow-auto p-2">
             {filteredRules.length === 0 ? (
               <div className="py-8 text-center">
-                <GitBranch className="mx-auto h-8 w-8 text-neutral-300" />
-                <p className="mt-2 text-sm text-neutral-500">
+                <GitBranch className="mx-auto h-8 w-8 text-muted-foreground/30" />
+                <p className="mt-2 text-sm text-muted-foreground">
                   {ruleSets.length === 0 ? 'No rules yet' : 'No matching rules'}
                 </p>
               </div>
@@ -335,20 +335,20 @@ const RulesPage = () => {
                   className={cn(
                     'mb-1.5 cursor-pointer rounded-lg border p-3 transition-colors',
                     selectedRuleId === rule.id
-                      ? 'border-brand-300 bg-brand-50'
-                      : 'border-transparent bg-white hover:border-neutral-200 hover:bg-white',
+                      ? 'border-primary bg-primary/10'
+                      : 'border-transparent bg-card hover:border-border hover:bg-muted/50',
                     isEditing && selectedRuleId !== rule.id && 'opacity-40 pointer-events-none'
                   )}
                   aria-selected={selectedRuleId === rule.id}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2 min-w-0">
-                      <GitBranch className={cn('h-4 w-4 shrink-0', selectedRuleId === rule.id ? 'text-brand-500' : 'text-neutral-400')} />
-                      <span className="font-medium text-sm text-neutral-900 truncate">{rule.name}</span>
+                      <GitBranch className={cn('h-4 w-4 shrink-0', selectedRuleId === rule.id ? 'text-primary' : 'text-muted-foreground')} />
+                      <span className="font-medium text-sm text-foreground truncate">{rule.name}</span>
                     </div>
                     <div className="flex items-center gap-1 ml-2">
                       {rule.isAiGenerated && (
-                        <Badge variant="outline" className="text-xs flex items-center gap-1 border-brand-200 text-brand-600">
+                        <Badge variant="outline" className="text-[10px] h-4.5 flex items-center gap-1 border-primary/30 text-primary uppercase tracking-tighter">
                           <Sparkles className="h-2.5 w-2.5" />
                           AI
                         </Badge>
@@ -356,9 +356,9 @@ const RulesPage = () => {
                     </div>
                   </div>
                   {rule.description && (
-                    <p className="mt-1 text-xs text-neutral-500 line-clamp-1 pl-6">{rule.description}</p>
+                    <p className="mt-1 text-xs text-muted-foreground line-clamp-1 pl-6">{rule.description}</p>
                   )}
-                  <div className="mt-2 flex items-center gap-3 text-xs text-neutral-400 pl-6">
+                  <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground/60 pl-6 font-medium">
                     <span>{rule.fieldMappings?.length || 0} mappings</span>
                     <span>·</span>
                     <span>{rule.matchingRules?.length || 0} rules</span>
@@ -370,7 +370,7 @@ const RulesPage = () => {
         </div>
 
         {/* ── Detail / Builder panel ───────────────────────────────── */}
-        <div className="flex-1 overflow-auto bg-white">
+        <div className="flex-1 overflow-auto bg-background">
           {selectedRule ? (
             <div className="p-6 max-w-4xl">
 
@@ -382,7 +382,7 @@ const RulesPage = () => {
                       <Input
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
-                        className="text-xl font-semibold h-11 border-brand-300 focus:border-brand-500"
+                        className="text-xl font-semibold h-11 border-primary/30 focus:border-primary"
                         placeholder="Rule set name"
                         aria-label="Rule set name"
                       />
@@ -396,9 +396,9 @@ const RulesPage = () => {
                   ) : (
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h2 className="text-xl font-semibold text-neutral-900">{selectedRule.name}</h2>
+                        <h2 className="text-xl font-semibold text-foreground">{selectedRule.name}</h2>
                         {selectedRule.isAiGenerated && (
-                          <Badge variant="outline" className="flex items-center gap-1 border-brand-200 text-brand-600">
+                          <Badge variant="outline" className="flex items-center gap-1 border-primary/30 text-primary">
                             <Sparkles className="h-3 w-3" />
                             AI-Generated
                           </Badge>
@@ -408,7 +408,7 @@ const RulesPage = () => {
                         )}
                       </div>
                       {selectedRule.description && (
-                        <p className="mt-1 text-sm text-neutral-500">{selectedRule.description}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">{selectedRule.description}</p>
                       )}
                     </div>
                   )}
@@ -472,9 +472,9 @@ const RulesPage = () => {
               <Card className="mt-6">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-base font-semibold text-neutral-900">
+                    <CardTitle className="text-base font-semibold text-foreground">
                       Field Mappings
-                      <span className="ml-2 text-sm font-normal text-neutral-400">
+                      <span className="ml-2 text-sm font-normal text-muted-foreground">
                         ({isEditing ? editMappings.length : selectedRule.fieldMappings?.length || 0})
                       </span>
                     </CardTitle>
@@ -498,25 +498,25 @@ const RulesPage = () => {
                         <span className="w-8" />
                       </div>
                       {editMappings.length === 0 ? (
-                        <p className="py-3 text-center text-sm text-neutral-400">
+                        <p className="py-3 text-center text-sm text-muted-foreground">
                           No mappings yet — click Add Row to begin.
                         </p>
                       ) : (
                         editMappings.map((m) => (
-                          <div key={m._key} className="grid grid-cols-[1fr_auto_1fr_auto_auto] items-center gap-2 rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2">
+                          <div key={m._key} className="grid grid-cols-[1fr_auto_1fr_auto_auto] items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-2">
                             <Input
                               value={m.sourceField}
                               onChange={(e) => updateMapping(m._key, { sourceField: e.target.value })}
                               placeholder="source_field"
-                              className="h-8 text-sm font-mono bg-white"
+                              className="h-8 text-sm font-mono bg-card"
                               aria-label="Source field"
                             />
-                            <ArrowRight className="h-4 w-4 text-brand-400 shrink-0" />
+                            <ArrowRight className="h-4 w-4 text-primary/40 shrink-0" />
                             <Input
                               value={m.targetField}
                               onChange={(e) => updateMapping(m._key, { targetField: e.target.value })}
                               placeholder="target_field"
-                              className="h-8 text-sm font-mono bg-white"
+                              className="h-8 text-sm font-mono bg-card"
                               aria-label="Target field"
                             />
                             <button
@@ -525,8 +525,8 @@ const RulesPage = () => {
                               className={cn(
                                 'flex h-7 w-7 items-center justify-center rounded border transition-colors',
                                 m.isKeyField
-                                  ? 'border-brand-400 bg-brand-50 text-brand-600'
-                                  : 'border-neutral-300 bg-white text-neutral-300 hover:border-neutral-400'
+                                  ? 'border-primary/40 bg-primary/10 text-primary'
+                                  : 'border-border bg-card text-muted-foreground hover:border-muted-foreground/50'
                               )}
                               aria-label="Toggle key field"
                               title="Mark as key field"
@@ -536,7 +536,7 @@ const RulesPage = () => {
                             <button
                               type="button"
                               onClick={() => removeMapping(m._key)}
-                              className="flex h-7 w-7 items-center justify-center rounded text-neutral-400 hover:bg-error-50 hover:text-error-500 transition-colors"
+                              className="flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                               aria-label="Remove mapping"
                             >
                               <X className="h-3.5 w-3.5" />
@@ -548,24 +548,24 @@ const RulesPage = () => {
                   ) : (
                     <div className="space-y-2">
                       {!selectedRule.fieldMappings || selectedRule.fieldMappings.length === 0 ? (
-                        <p className="py-3 text-sm text-neutral-400">
+                        <p className="py-3 text-sm text-muted-foreground">
                           No field mappings defined. Click Edit to add some.
                         </p>
                       ) : (
                         selectedRule.fieldMappings.map((mapping) => (
                           <div
                             key={mapping.id}
-                            className="flex items-center gap-3 rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2.5"
+                            className="flex items-center gap-3 rounded-md border border-border bg-muted/40 px-3 py-2.5"
                           >
-                            <span className="flex-1 rounded bg-white border border-neutral-200 px-3 py-1.5 text-sm font-mono text-neutral-800">
+                            <span className="flex-1 rounded bg-card border border-border px-3 py-1.5 text-sm font-mono text-foreground">
                               {mapping.sourceField}
                             </span>
-                            <ArrowRight className="h-4 w-4 text-brand-400 shrink-0" />
-                            <span className="flex-1 rounded bg-white border border-neutral-200 px-3 py-1.5 text-sm font-mono text-neutral-800">
+                            <ArrowRight className="h-4 w-4 text-primary/40 shrink-0" />
+                            <span className="flex-1 rounded bg-card border border-border px-3 py-1.5 text-sm font-mono text-foreground">
                               {mapping.targetField}
                             </span>
                             {mapping.isKeyField && (
-                              <Badge variant="outline" className="text-xs border-brand-200 text-brand-600 shrink-0">
+                              <Badge variant="outline" className="text-xs border-primary/20 text-primary shrink-0">
                                 Key
                               </Badge>
                             )}
@@ -581,9 +581,9 @@ const RulesPage = () => {
               <Card className="mt-4">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-base font-semibold text-neutral-900">
+                    <CardTitle className="text-base font-semibold text-foreground">
                       Matching Rules
-                      <span className="ml-2 text-sm font-normal text-neutral-400">
+                      <span className="ml-2 text-sm font-normal text-muted-foreground">
                         ({isEditing ? editRules.length : selectedRule.matchingRules?.length || 0})
                       </span>
                     </CardTitle>
@@ -599,24 +599,24 @@ const RulesPage = () => {
                   {isEditing ? (
                     <div className="space-y-3">
                       {editRules.length === 0 ? (
-                        <p className="py-3 text-center text-sm text-neutral-400">
+                        <p className="py-3 text-center text-sm text-muted-foreground">
                           No rules yet — click Add Rule to begin.
                         </p>
                       ) : (
                         editRules.map((r) => (
-                          <div key={r._key} className="rounded-md border border-neutral-200 bg-neutral-50 p-3 space-y-2">
+                          <div key={r._key} className="rounded-md border border-border bg-muted/40 p-3 space-y-2">
                             <div className="flex items-center gap-2">
                               <Input
                                 value={r.name}
                                 onChange={(e) => updateRule(r._key, { name: e.target.value })}
                                 placeholder="Rule name"
-                                className="h-8 text-sm font-medium bg-white flex-1"
+                                className="h-8 text-sm font-medium bg-card flex-1"
                                 aria-label="Rule name"
                               />
                               <button
                                 type="button"
                                 onClick={() => removeRule(r._key)}
-                                className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-neutral-400 hover:bg-error-50 hover:text-error-500 transition-colors"
+                                className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                                 aria-label="Remove rule"
                               >
                                 <X className="h-3.5 w-3.5" />
@@ -627,15 +627,15 @@ const RulesPage = () => {
                                 value={r.sourceField}
                                 onChange={(e) => updateRule(r._key, { sourceField: e.target.value })}
                                 placeholder="source_field"
-                                className="h-8 text-sm font-mono bg-white"
+                                className="h-8 text-sm font-mono bg-card"
                                 aria-label="Source field"
                               />
-                              <ArrowRight className="h-4 w-4 text-brand-400 shrink-0" />
+                              <ArrowRight className="h-4 w-4 text-primary/40 shrink-0" />
                               <Input
                                 value={r.targetField}
                                 onChange={(e) => updateRule(r._key, { targetField: e.target.value })}
                                 placeholder="target_field"
-                                className="h-8 text-sm font-mono bg-white"
+                                className="h-8 text-sm font-mono bg-card"
                                 aria-label="Target field"
                               />
                             </div>
@@ -644,14 +644,14 @@ const RulesPage = () => {
                                 <select
                                   value={r.matchType}
                                   onChange={(e) => updateRule(r._key, { matchType: e.target.value as MatchType, threshold: null })}
-                                  className="w-full appearance-none rounded-md border border-neutral-300 bg-white px-3 py-1.5 pr-8 text-sm text-neutral-900 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                                  className="w-full appearance-none rounded-md border border-border bg-card px-3 py-1.5 pr-8 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                                   aria-label="Match type"
                                 >
                                   {MATCH_TYPES.map((t) => (
                                     <option key={t} value={t}>{t}</option>
                                   ))}
                                 </select>
-                                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-neutral-400" />
+                                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                               </div>
                               {(r.matchType === 'FUZZY' || r.matchType === 'RANGE') && (
                                 <div className="flex items-center gap-1.5">
@@ -663,10 +663,10 @@ const RulesPage = () => {
                                     value={r.threshold ?? ''}
                                     onChange={(e) => updateRule(r._key, { threshold: e.target.value ? Number(e.target.value) : null })}
                                     placeholder={r.matchType === 'FUZZY' ? '80' : '0.01'}
-                                    className="h-8 w-24 text-sm bg-white"
+                                    className="h-8 w-24 text-sm bg-card"
                                     aria-label="Threshold"
                                   />
-                                  <span className="text-xs text-neutral-500 shrink-0">
+                                  <span className="text-xs text-muted-foreground shrink-0">
                                     {r.matchType === 'FUZZY' ? '%' : 'tolerance'}
                                   </span>
                                 </div>
@@ -679,22 +679,22 @@ const RulesPage = () => {
                   ) : (
                     <div className="space-y-2">
                       {!selectedRule.matchingRules || selectedRule.matchingRules.length === 0 ? (
-                        <p className="py-3 text-sm text-neutral-400">
+                        <p className="py-3 text-sm text-muted-foreground">
                           No matching rules defined. Click Edit to add some.
                         </p>
                       ) : (
                         selectedRule.matchingRules.map((rule) => (
                           <div
                             key={rule.id}
-                            className="flex items-center justify-between rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2.5"
+                            className="flex items-center justify-between rounded-md border border-border bg-muted/40 px-3 py-2.5"
                           >
                             <div className="flex items-center gap-3">
-                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-50">
-                                <Check className="h-4 w-4 text-brand-600" />
+                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                                <Check className="h-4 w-4 text-primary" />
                               </div>
                               <div>
-                                <p className="text-sm font-medium text-neutral-900">{rule.name}</p>
-                                <p className="text-xs text-neutral-500 font-mono">
+                                <p className="text-sm font-medium text-foreground">{rule.name}</p>
+                                <p className="text-xs text-muted-foreground font-mono">
                                   {rule.sourceField} → {rule.targetField}
                                 </p>
                               </div>
@@ -723,22 +723,22 @@ const RulesPage = () => {
                   <CardContent className="pt-4 pb-4">
                     <div className="grid gap-4 grid-cols-3">
                       <div className="text-center">
-                        <p className="text-2xl font-bold text-neutral-900">
+                        <p className="text-2xl font-bold text-foreground">
                           {selectedRule.fieldMappings?.length || 0}
                         </p>
-                        <p className="text-xs text-neutral-500 mt-0.5">Field Mappings</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Field Mappings</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-2xl font-bold text-neutral-900">
+                        <p className="text-2xl font-bold text-foreground">
                           {selectedRule.matchingRules?.length || 0}
                         </p>
-                        <p className="text-xs text-neutral-500 mt-0.5">Matching Rules</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Matching Rules</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-2xl font-bold text-neutral-900">
+                        <p className="text-2xl font-bold text-foreground">
                           {selectedRule.fieldMappings?.filter(m => m.isKeyField).length || 0}
                         </p>
-                        <p className="text-xs text-neutral-500 mt-0.5">Key Fields</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Key Fields</p>
                       </div>
                     </div>
                   </CardContent>
@@ -748,11 +748,11 @@ const RulesPage = () => {
           ) : (
             <div className="flex h-full items-center justify-center">
               <div className="text-center max-w-xs">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-neutral-100">
-                  <GitBranch className="h-8 w-8 text-neutral-400" />
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                  <GitBranch className="h-8 w-8 text-muted-foreground/50" />
                 </div>
-                <h3 className="mt-4 font-semibold text-neutral-900">Select a Rule Set</h3>
-                <p className="mt-1 text-sm text-neutral-500">
+                <h3 className="mt-4 font-semibold text-foreground">Select a Rule Set</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
                   Choose a rule set from the library to view or edit its configuration
                 </p>
                 <Button className="mt-5" onClick={() => setIsCreateModalOpen(true)}>

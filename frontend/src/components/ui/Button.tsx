@@ -18,24 +18,24 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           // Base styles - Professional
           'inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold',
           'transition-smooth relative overflow-hidden',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
           'disabled:pointer-events-none disabled:opacity-40 disabled:cursor-not-allowed',
           // Variant styles
           {
-            // Primary - Professional blue (also handles 'default' for backward compat)
-            'bg-brand-500 text-white hover:bg-brand-600 shadow-sm hover:shadow-brand rounded-md':
+            // Primary - Brand color
+            'bg-primary text-primary-foreground hover:opacity-90 shadow-sm rounded-md':
               normalizedVariant === 'primary',
 
-            // Secondary - Neutral with border (also handles 'outline' for backward compat)
-            'bg-neutral-100 text-neutral-900 hover:bg-neutral-200 border-2 border-neutral-300 rounded-md':
+            // Secondary - Neutral with border
+            'bg-secondary text-secondary-foreground hover:bg-secondary/80 border-2 border-border rounded-md':
               normalizedVariant === 'secondary',
 
             // Ghost - Subtle
-            'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 rounded-md':
+            'text-muted-foreground hover:bg-muted hover:text-foreground rounded-md':
               normalizedVariant === 'ghost',
 
             // Destructive - Red
-            'bg-error-500 text-white hover:bg-error-600 shadow-sm rounded-md':
+            'bg-destructive text-destructive-foreground hover:opacity-90 shadow-sm rounded-md':
               normalizedVariant === 'destructive',
           },
           // Size styles

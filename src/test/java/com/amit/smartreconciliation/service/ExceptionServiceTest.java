@@ -22,6 +22,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -320,7 +321,7 @@ class ExceptionServiceTest {
         exception.setDescription("Value mismatch");
 
         when(exceptionRepository.findById(55L)).thenReturn(Optional.of(exception));
-        when(aiService.getExceptionSuggestion(any(), any(), any(), any(), any()))
+        when(aiService.getExceptionSuggestion(any(), any(), any(), any(), any(), any()))
                 .thenReturn("Possible typo in source. Suggested: Update source to 'Jon Smith'");
         when(exceptionRepository.save(any(ReconciliationException.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -330,7 +331,7 @@ class ExceptionServiceTest {
         // Then
         assertThat(suggestion).contains("Possible typo in source");
         assertThat(exception.getAiSuggestion()).isNotNull();
-        verify(aiService).getExceptionSuggestion(any(), any(), any(), any(), any());
+        verify(aiService).getExceptionSuggestion(any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -346,7 +347,7 @@ class ExceptionServiceTest {
 
         // Then
         assertThat(suggestion).isEqualTo("Cached suggestion");
-        verify(aiService, never()).getExceptionSuggestion(any(), any(), any(), any(), any());
+        verify(aiService, never()).getExceptionSuggestion(any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -425,14 +426,8 @@ class ExceptionServiceTest {
         LocalDate fromDate = LocalDate.of(2026, 2, 20);
         LocalDate toDate = LocalDate.of(2026, 2, 20);
 
-        when(exceptionRepository.findByScope(
-                123L,
-                ExceptionType.VALUE_MISMATCH,
-                ExceptionSeverity.HIGH,
-                ExceptionStatus.OPEN,
-                fromDate.atStartOfDay(),
-                toDate.plusDays(1).atStartOfDay(),
-                pageable)).thenReturn(new PageImpl<>(exceptions, pageable, 2));
+        when(exceptionRepository.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(exceptions, pageable, 2));
 
         // When
         Page<ReconciliationExceptionResponse> response = exceptionService.getByReconciliationId(
@@ -464,13 +459,7 @@ class ExceptionServiceTest {
         notOpen.setStatus(ExceptionStatus.IN_REVIEW);
         notOpen.setAiSuggestion("Not eligible due to status");
 
-        when(exceptionRepository.findAllByScope(
-                123L,
-                null,
-                null,
-                null,
-                LocalDate.of(2026, 2, 20).atStartOfDay(),
-                LocalDate.of(2026, 2, 21).atStartOfDay()))
+        when(exceptionRepository.findAll(any(Specification.class)))
                 .thenReturn(List.of(withSuggestion, withoutSuggestion, notOpen));
         when(exceptionRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
 

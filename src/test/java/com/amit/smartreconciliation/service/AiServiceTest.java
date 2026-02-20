@@ -56,6 +56,9 @@ class AiServiceTest {
     @Mock
     private PromptTemplateService promptTemplateService;
 
+    @Mock
+    private KnowledgeRetrievalService knowledgeRetrievalService;
+
     private ObjectMapper objectMapper;
     private AiService aiService;
     private SchemaResponse sourceSchema;
@@ -121,7 +124,7 @@ class AiServiceTest {
                 """;
 
             // When - Parse the response using reflection
-            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService);
+            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService, knowledgeRetrievalService);
             AiMappingSuggestionResponse response = invokeParseMethod(aiService, mockAiResponse);
 
             // Then
@@ -173,7 +176,7 @@ class AiServiceTest {
                 """;
 
             // When
-            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService);
+            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService, knowledgeRetrievalService);
             AiMappingSuggestionResponse response = invokeParseMethod(aiService, aiResponseWithMarkdown);
 
             // Then - JSON should be extracted from markdown block
@@ -206,7 +209,7 @@ class AiServiceTest {
                 """;
 
             // When
-            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService);
+            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService, knowledgeRetrievalService);
             AiMappingSuggestionResponse response = invokeParseMethod(aiService, plainJsonResponse);
 
             // Then - JSON should be parsed directly
@@ -233,7 +236,7 @@ class AiServiceTest {
                 """;
 
             // When
-            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService);
+            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService, knowledgeRetrievalService);
             AiMappingSuggestionResponse response = invokeParseMethod(aiService, responseWithMissingFields);
 
             // Then - Default values should be applied
@@ -276,7 +279,7 @@ class AiServiceTest {
                 """;
 
             // When
-            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService);
+            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService, knowledgeRetrievalService);
             AiMappingSuggestionResponse response = invokeParseMethod(aiService, aiResponse);
 
             // Then - Key fields should be properly identified
@@ -317,7 +320,7 @@ class AiServiceTest {
                 """;
 
             // When
-            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService);
+            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService, knowledgeRetrievalService);
             AiMappingSuggestionResponse response = invokeParseMethod(aiService, responseWithTripleBackticks);
 
             // Then - Should handle triple backticks
@@ -339,7 +342,7 @@ class AiServiceTest {
             List<String> mappedFields = Arrays.asList("customer_name", "amount", "reference");
 
             // When creating service
-            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService);
+            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService, knowledgeRetrievalService);
 
             // Then - Service should be properly configured
             assertThat(aiService).isNotNull();
@@ -371,7 +374,7 @@ class AiServiceTest {
             List<String> mappedFields = Arrays.asList("invoice_ref");
 
             // When
-            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService);
+            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService, knowledgeRetrievalService);
 
             // Then - Mapped fields should be validated
             assertThat(mappedFields).isNotEmpty();
@@ -400,7 +403,7 @@ class AiServiceTest {
             String context = "Name field comparison with potential typo";
 
             // When
-            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService);
+            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService, knowledgeRetrievalService);
 
             // Then - All inputs should be properly validated
             assertThat(exceptionType).isNotBlank();
@@ -426,7 +429,7 @@ class AiServiceTest {
             String context = "Record exists in source but not in target. Possible data synchronization issue.";
 
             // When
-            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService);
+            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService, knowledgeRetrievalService);
 
             // Then - Exception type and context should be valid
             assertThat(exceptionType).isNotBlank();
@@ -454,7 +457,7 @@ class AiServiceTest {
             String context = "Recent reconciliation statistics: 95% match rate, 50 exceptions";
 
             // When
-            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService);
+            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService, knowledgeRetrievalService);
 
             // Then - Context should be properly formatted
             assertThat(userMessage).isNotBlank();
@@ -472,7 +475,7 @@ class AiServiceTest {
             String context = "User asking about matching algorithms";
 
             // When
-            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService);
+            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService, knowledgeRetrievalService);
 
             // Then - Test streaming setup with Flux
             List<String> testTokens = Arrays.asList(
@@ -513,7 +516,7 @@ class AiServiceTest {
                 .thenThrow(new RuntimeException("Database connection failed"));
 
             // When
-            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService);
+            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService, knowledgeRetrievalService);
             AiMappingSuggestionRequest request = new AiMappingSuggestionRequest();
             request.setSourceFileId(1L);
             request.setTargetFileId(2L);
@@ -532,7 +535,7 @@ class AiServiceTest {
             String invalidJson = "This is not valid JSON {incomplete";
 
             // When
-            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService);
+            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService, knowledgeRetrievalService);
 
             // Then - Should throw exception when parsing invalid JSON
             assertThatThrownBy(() -> invokeParseMethod(aiService, invalidJson))
@@ -560,7 +563,7 @@ class AiServiceTest {
                 """;
 
             // When
-            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService);
+            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService, knowledgeRetrievalService);
             AiMappingSuggestionResponse response = invokeParseMethod(aiService, emptyResponse);
 
             // Then - Should handle empty mappings gracefully
@@ -584,7 +587,7 @@ class AiServiceTest {
                 """;
 
             // When
-            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService);
+            aiService = new AiService(chatModel, fileUploadService, objectMapper, chatContextService, promptTemplateService, knowledgeRetrievalService);
             AiMappingSuggestionResponse response = invokeParseMethod(aiService, malformedMarkdown);
 
             // Then - Should still parse if JSON is valid
@@ -683,3 +686,4 @@ class AiServiceTest {
             .build();
     }
 }
+

@@ -13,6 +13,7 @@ import com.amit.smartreconciliation.repository.ReconciliationRepository;
 import com.amit.smartreconciliation.service.tool.DashboardTools;
 import com.amit.smartreconciliation.service.tool.ExceptionTools;
 import com.amit.smartreconciliation.service.tool.FileTools;
+import com.amit.smartreconciliation.service.tool.KnowledgeTool;
 import com.amit.smartreconciliation.service.tool.ReconciliationTools;
 import com.amit.smartreconciliation.service.tool.RuleSetTools;
 import org.junit.jupiter.api.BeforeEach;
@@ -81,6 +82,8 @@ class ChatServiceTest {
     @Mock
     private FileTools fileTools;
     @Mock
+    private KnowledgeTool knowledgeTool;
+    @Mock
     private ReconciliationTools reconciliationTools;
     @Mock
     private RuleSetTools ruleSetTools;
@@ -105,6 +108,7 @@ class ChatServiceTest {
             dashboardTools,
             exceptionTools,
             fileTools,
+            knowledgeTool,
             reconciliationTools,
             ruleSetTools
         );
@@ -255,7 +259,8 @@ class ChatServiceTest {
             when(chatContextService.buildDynamicContext(any(), anyLong())).thenReturn("Context");
             when(chatContextService.buildSmartContext(anyString(), anyLong())).thenReturn("");
             when(messageRepository.findBySessionIdOrderByCreatedAtAsc(anyLong())).thenReturn(Arrays.asList());
-            when(aiService.chatSync(anyString(), anyString())).thenReturn("The match rate is 85.5%");
+            when(aiService.chatSync(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
+                .thenReturn("The match rate is 85.5%");
 
             // When - sendMessage() is called with sessionId and message
             ChatResponse response = chatService.sendMessage(request);
@@ -303,7 +308,8 @@ class ChatServiceTest {
             when(messageRepository.findBySessionIdOrderByCreatedAtAsc(anyLong())).thenReturn(Arrays.asList());
 
             String aiResponse = "Based on the reconciliation data, the current match rate is 85.5%";
-            when(aiService.chatSync(anyString(), anyString())).thenReturn(aiResponse);
+            when(aiService.chatSync(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(aiResponse);
 
             ChatMessage savedAssistantMessage = ChatMessage.builder()
                 .role("assistant")
@@ -322,7 +328,8 @@ class ChatServiceTest {
             verify(chatContextService).buildDynamicContext(testSession, testOrganization.getId());
 
             // And AI service is invoked with context + user message
-            verify(aiService).chatSync(eq("What is the match rate?"), anyString());
+            verify(aiService).chatSync(
+                eq("What is the match rate?"), anyString(), any(), any(), any(), any(), any(), any());
 
             // And AI response is returned
             assertThat(response.getResponse()).isEqualTo(aiResponse);
@@ -372,7 +379,8 @@ class ChatServiceTest {
             when(chatContextService.buildDynamicContext(any(), anyLong())).thenReturn("Context");
             when(chatContextService.buildSmartContext(anyString(), anyLong())).thenReturn("");
             when(messageRepository.findBySessionIdOrderByCreatedAtAsc(anyLong())).thenReturn(Arrays.asList());
-            when(aiService.chatSync(anyString(), anyString())).thenReturn("AI Response");
+            when(aiService.chatSync(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
+                .thenReturn("AI Response");
 
             ChatMessage savedMessage = ChatMessage.builder()
                 .role("assistant")
@@ -431,7 +439,8 @@ class ChatServiceTest {
 
             // Simulate streaming response
             Flux<String> streamResponse = Flux.just("Fuzzy ", "matching ", "uses ", "Levenshtein ", "distance");
-            when(aiService.chat(anyString(), anyString())).thenReturn(streamResponse);
+            when(aiService.chat(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(streamResponse);
 
             when(messageRepository.save(any(ChatMessage.class))).thenReturn(new ChatMessage());
 
@@ -487,7 +496,8 @@ class ChatServiceTest {
                 Flux.just("Partial ", "response "),
                 Flux.error(new RuntimeException("Connection dropped"))
             );
-            when(aiService.chat(anyString(), anyString())).thenReturn(errorStream);
+            when(aiService.chat(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(errorStream);
             when(messageRepository.save(any(ChatMessage.class))).thenReturn(new ChatMessage());
 
             // When - Flux error occurs
@@ -668,7 +678,8 @@ class ChatServiceTest {
                 .thenReturn(expectedContext);
             when(chatContextService.buildSmartContext(anyString(), anyLong())).thenReturn("");
             when(messageRepository.findBySessionIdOrderByCreatedAtAsc(anyLong())).thenReturn(Arrays.asList());
-            when(aiService.chatSync(anyString(), anyString())).thenReturn("Response");
+            when(aiService.chatSync(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
+                .thenReturn("Response");
             when(messageRepository.save(any(ChatMessage.class))).thenReturn(new ChatMessage());
 
             // When - message is sent (context is built internally)
@@ -679,7 +690,8 @@ class ChatServiceTest {
 
             // Verify the context was passed to AI service
             ArgumentCaptor<String> contextCaptor = ArgumentCaptor.forClass(String.class);
-            verify(aiService).chatSync(anyString(), contextCaptor.capture());
+            verify(aiService).chatSync(
+                anyString(), contextCaptor.capture(), any(), any(), any(), any(), any(), any());
 
             String actualContext = contextCaptor.getValue();
             assertThat(actualContext).contains(expectedContext);
@@ -704,7 +716,8 @@ class ChatServiceTest {
             when(messageRepository.findBySessionIdOrderByCreatedAtAsc(sessionId))
                 .thenReturn(previousMessages);
 
-            when(aiService.chatSync(anyString(), anyString())).thenReturn("Response");
+            when(aiService.chatSync(anyString(), anyString(), any(), any(), any(), any(), any(), any()))
+                .thenReturn("Response");
             when(messageRepository.save(any(ChatMessage.class))).thenReturn(new ChatMessage());
 
             // When - message is sent
@@ -715,7 +728,8 @@ class ChatServiceTest {
 
             // And context is built with conversation history
             ArgumentCaptor<String> contextCaptor = ArgumentCaptor.forClass(String.class);
-            verify(aiService).chatSync(anyString(), contextCaptor.capture());
+            verify(aiService).chatSync(
+                anyString(), contextCaptor.capture(), any(), any(), any(), any(), any(), any());
 
             String actualContext = contextCaptor.getValue();
             assertThat(actualContext).contains("RECENT CONVERSATION");

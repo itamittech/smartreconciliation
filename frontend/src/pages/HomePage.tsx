@@ -15,6 +15,7 @@ import {
   RecentReconciliations,
   MatchRateChart,
   QuickActions,
+  ExceptionsBreakdown,
 } from '@/components/dashboard'
 import { useDashboardMetrics } from '@/services/hooks'
 import type { Reconciliation } from '@/types'
@@ -169,8 +170,13 @@ const HomePage = () => {
             onViewDetails={handleViewDetails}
           />
         </div>
-        <div>
+        <div className="space-y-6">
           <QuickActions />
+          <ExceptionsBreakdown
+            byType={metrics?.exceptionsByType ?? {}}
+            bySeverity={metrics?.exceptionsBySeverity ?? {}}
+            total={metrics?.totalExceptions ?? 0}
+          />
         </div>
       </div>
     </div>

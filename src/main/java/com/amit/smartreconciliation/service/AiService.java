@@ -8,6 +8,7 @@ import com.amit.smartreconciliation.dto.response.SchemaResponse;
 import com.amit.smartreconciliation.enums.KnowledgeDomain;
 import com.amit.smartreconciliation.entity.FieldMapping;
 import com.amit.smartreconciliation.exception.AiServiceException;
+import com.amit.smartreconciliation.security.SecurityUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,18 +35,21 @@ public class AiService {
     private final ObjectMapper objectMapper;
     private final ChatContextService chatContextService;
     private final PromptTemplateService promptTemplateService;
+    private final KnowledgeRetrievalService knowledgeRetrievalService;
     private final ChatClient chatClient;
 
     public AiService(ChatModel chatModel,
                      FileUploadService fileUploadService,
                      ObjectMapper objectMapper,
                      ChatContextService chatContextService,
-                     PromptTemplateService promptTemplateService) {
+                     PromptTemplateService promptTemplateService,
+                     KnowledgeRetrievalService knowledgeRetrievalService) {
         this.chatModel = chatModel;
         this.fileUploadService = fileUploadService;
         this.objectMapper = objectMapper;
         this.chatContextService = chatContextService;
         this.promptTemplateService = promptTemplateService;
+        this.knowledgeRetrievalService = knowledgeRetrievalService;
 
         // Build ChatClient - Spring AI will auto-discover @Tool annotated methods from @Component classes
         this.chatClient = ChatClient.builder(chatModel).build();
@@ -57,6 +61,12 @@ public class AiService {
             SchemaResponse targetSchema = fileUploadService.getSchema(request.getTargetFileId());
 
             String prompt = buildMappingSuggestionPrompt(sourceSchema, targetSchema);
+
+            // RAG: prepend domain knowledge if available
+            String ragQuery = "column mapping field definitions: "
+                    + formatColumnNames(sourceSchema.getColumns())
+                    + " " + formatColumnNames(targetSchema.getColumns());
+            prompt = prependKnowledge(prompt, ragQuery, KnowledgeDomain.GENERAL);
 
             ChatClient chatClient = ChatClient.create(chatModel);
             String response = chatClient.prompt()
@@ -79,6 +89,10 @@ public class AiService {
 
             String prompt = buildRuleSuggestionPrompt(sourceSchema, targetSchema, mappings);
 
+            // RAG: prepend domain knowledge if available
+            String ragQuery = "matching rules tolerances for: " + formatFieldMappings(mappings);
+            prompt = prependKnowledge(prompt, ragQuery, KnowledgeDomain.GENERAL);
+
             ChatClient chatClient = ChatClient.create(chatModel);
             String response = chatClient.prompt()
                     .user(prompt)
@@ -96,6 +110,10 @@ public class AiService {
                                          String fieldName, String context) {
         try {
             String prompt = buildExceptionSuggestionPrompt(exceptionType, sourceValue, targetValue, fieldName, context);
+
+            // RAG: prepend domain knowledge if available
+            String ragQuery = exceptionType + " " + fieldName + " resolution strategy";
+            prompt = prependKnowledge(prompt, ragQuery, KnowledgeDomain.GENERAL);
 
             ChatClient chatClient = ChatClient.create(chatModel);
             return chatClient.prompt()
@@ -187,6 +205,34 @@ public class AiService {
             log.error("Error in AI chat: {}", e.getMessage(), e);
             throw new AiServiceException("Chat error: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Fetches relevant knowledge snippets and prepends them to the prompt under
+     * a "## DOMAIN KNOWLEDGE" heading. No-ops silently if the knowledge base is
+     * empty or the vector store call fails.
+     */
+    private String prependKnowledge(String prompt, String query, KnowledgeDomain domain) {
+        try {
+            Long orgId = SecurityUtils.getCurrentOrgId();
+            List<String> snippets = knowledgeRetrievalService.search(query, domain, orgId);
+            if (snippets.isEmpty()) {
+                return prompt;
+            }
+            String knowledgeBlock = "\n\n## DOMAIN KNOWLEDGE\n"
+                    + snippets.stream().map(s -> "- " + s).collect(Collectors.joining("\n"))
+                    + "\n\n";
+            log.debug("RAG: injecting {} knowledge snippets for query='{}'", snippets.size(), query);
+            return knowledgeBlock + prompt;
+        } catch (Exception e) {
+            log.debug("RAG knowledge lookup skipped: {}", e.getMessage());
+            return prompt;
+        }
+    }
+
+    private String formatColumnNames(List<SchemaResponse.ColumnSchema> columns) {
+        if (columns == null || columns.isEmpty()) return "";
+        return columns.stream().map(SchemaResponse.ColumnSchema::getName).collect(Collectors.joining(", "));
     }
 
     private String buildMappingSuggestionPrompt(SchemaResponse sourceSchema, SchemaResponse targetSchema) {

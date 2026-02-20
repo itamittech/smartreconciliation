@@ -15,6 +15,7 @@ import com.amit.smartreconciliation.repository.ReconciliationRepository;
 import com.amit.smartreconciliation.service.tool.DashboardTools;
 import com.amit.smartreconciliation.service.tool.ExceptionTools;
 import com.amit.smartreconciliation.service.tool.FileTools;
+import com.amit.smartreconciliation.service.tool.KnowledgeTool;
 import com.amit.smartreconciliation.service.tool.ReconciliationTools;
 import com.amit.smartreconciliation.service.tool.RuleSetTools;
 import org.slf4j.Logger;
@@ -40,6 +41,7 @@ public class ChatService {
     private final DashboardTools dashboardTools;
     private final ExceptionTools exceptionTools;
     private final FileTools fileTools;
+    private final KnowledgeTool knowledgeTool;
     private final ReconciliationTools reconciliationTools;
     private final RuleSetTools ruleSetTools;
 
@@ -52,6 +54,7 @@ public class ChatService {
                       DashboardTools dashboardTools,
                       ExceptionTools exceptionTools,
                       FileTools fileTools,
+                      KnowledgeTool knowledgeTool,
                       ReconciliationTools reconciliationTools,
                       RuleSetTools ruleSetTools) {
         this.sessionRepository = sessionRepository;
@@ -63,6 +66,7 @@ public class ChatService {
         this.dashboardTools = dashboardTools;
         this.exceptionTools = exceptionTools;
         this.fileTools = fileTools;
+        this.knowledgeTool = knowledgeTool;
         this.reconciliationTools = reconciliationTools;
         this.ruleSetTools = ruleSetTools;
     }
@@ -126,7 +130,7 @@ public class ChatService {
         // Build comprehensive context using the new context service
         String context = buildEnhancedContext(session, request.getMessage());
         String aiResponse = aiService.chatSync(request.getMessage(), context,
-                dashboardTools, exceptionTools, fileTools, reconciliationTools, ruleSetTools);
+                dashboardTools, exceptionTools, fileTools, knowledgeTool, reconciliationTools, ruleSetTools);
 
         ChatMessage assistantMessage = ChatMessage.builder()
                 .role("assistant")
@@ -171,7 +175,7 @@ public class ChatService {
         ChatSession finalSession = session;
 
         return aiService.chat(request.getMessage(), context,
-                dashboardTools, exceptionTools, fileTools, reconciliationTools, ruleSetTools)
+                dashboardTools, exceptionTools, fileTools, knowledgeTool, reconciliationTools, ruleSetTools)
                 .doOnNext(fullResponse::append)
                 .doOnComplete(() -> {
                     ChatMessage assistantMessage = ChatMessage.builder()

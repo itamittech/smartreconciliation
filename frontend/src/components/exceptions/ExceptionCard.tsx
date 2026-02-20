@@ -1,7 +1,9 @@
-import { AlertTriangle, AlertCircle, Info, Sparkles, Check, X } from 'lucide-react'
+import { AlertTriangle, AlertCircle, Info, Sparkles, Check, X, Search } from 'lucide-react'
 import { Card, CardContent, Badge, Button } from '@/components/ui'
 import type { ReconciliationException, ExceptionSeverity, ExceptionType } from '@/types'
 import { cn } from '@/lib/utils'
+import { useAppStore } from '@/store'
+import { canActionException } from '@/utils/exceptionPermissions'
 
 interface ExceptionCardProps {
   exception: ReconciliationException
@@ -18,15 +20,23 @@ const severityConfig: Record<
 }
 
 const typeLabels: Record<ExceptionType, string> = {
-  missing_source: 'Missing in Source',
-  missing_target: 'Missing in Target',
-  mismatch: 'Data Mismatch',
-  duplicate: 'Duplicate Detected',
+  MISSING_SOURCE: 'Missing in Source',
+  MISSING_TARGET: 'Missing in Target',
+  VALUE_MISMATCH: 'Value Mismatch',
+  DUPLICATE: 'Duplicate Detected',
+  FORMAT_ERROR: 'Format Error',
+  TOLERANCE_EXCEEDED: 'Tolerance Exceeded',
+  POTENTIAL_MATCH: 'Potential Match',
 }
 
 const ExceptionCard = ({ exception, onResolve }: ExceptionCardProps) => {
+  const { currentUser } = useAppStore()
   const config = severityConfig[exception.severity]
   const SeverityIcon = config.icon
+
+  const canAction = currentUser
+    ? canActionException(currentUser.role, exception.type)
+    : false
 
   const handleAction = (action: 'accept' | 'reject' | 'investigate') => {
     onResolve?.(exception.id, action)
@@ -52,7 +62,7 @@ const ExceptionCard = ({ exception, onResolve }: ExceptionCardProps) => {
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge variant={config.variant} className="text-xs">
-                  {typeLabels[exception.type]}
+                  {typeLabels[exception.type] ?? exception.type}
                 </Badge>
                 <Badge variant="outline" className="text-xs">
                   {exception.reconciliationName}
@@ -86,7 +96,7 @@ const ExceptionCard = ({ exception, onResolve }: ExceptionCardProps) => {
           </div>
         )}
 
-        {exception.status === 'open' && (
+        {exception.status === 'open' && canAction && (
           <div className="mt-4 flex gap-2">
             <Button
               size="sm"
@@ -111,6 +121,7 @@ const ExceptionCard = ({ exception, onResolve }: ExceptionCardProps) => {
               onClick={() => handleAction('investigate')}
               aria-label="Investigate further"
             >
+              <Search className="mr-1 h-3 w-3" />
               Investigate
             </Button>
           </div>

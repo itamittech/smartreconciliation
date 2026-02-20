@@ -1,3 +1,4 @@
+export { LoginPage } from './LoginPage'
 export { HomePage } from './HomePage'
 export { ChatPage } from './ChatPage'
 export { ReconciliationsPage } from './ReconciliationsPage'

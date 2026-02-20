@@ -51,21 +51,16 @@ function mapSeverity(backendSeverity: string): ExceptionSeverity {
   }
 }
 
-// Map backend type to frontend
+// Map backend type to frontend (backend already sends uppercase matching ExceptionType)
 function mapType(backendType: string): ExceptionType {
-  switch (backendType.toUpperCase()) {
-    case 'MISSING_SOURCE':
-      return 'missing_source'
-    case 'MISSING_TARGET':
-      return 'missing_target'
-    case 'VALUE_MISMATCH':
-    case 'MISMATCH':
-      return 'mismatch'
-    case 'DUPLICATE':
-      return 'duplicate'
-    default:
-      return 'mismatch'
-  }
+  const upper = backendType.toUpperCase() as ExceptionType
+  const valid: ExceptionType[] = [
+    'MISSING_SOURCE', 'MISSING_TARGET', 'VALUE_MISMATCH',
+    'DUPLICATE', 'FORMAT_ERROR', 'TOLERANCE_EXCEEDED', 'POTENTIAL_MATCH',
+  ]
+  // Legacy alias
+  if (upper === ('MISMATCH' as ExceptionType)) return 'VALUE_MISMATCH'
+  return valid.includes(upper) ? upper : 'VALUE_MISMATCH'
 }
 
 function mapStatus(backendStatus: string): ExceptionStatus {

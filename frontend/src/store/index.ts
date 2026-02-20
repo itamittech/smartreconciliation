@@ -1,7 +1,14 @@
 import { create } from 'zustand'
-import type { ChatMessage, Reconciliation, ReconciliationException, UploadedFile } from '@/types'
+import type { ChatMessage, CurrentUser, Reconciliation, ReconciliationException, UploadedFile } from '@/types'
 
 interface AppState {
+  // Auth
+  currentUser: CurrentUser | null
+  token: string | null
+  refreshToken: string | null
+  setAuth: (user: CurrentUser, token: string, refreshToken: string) => void
+  clearAuth: () => void
+
   // Sidebar
   sidebarOpen: boolean
   toggleSidebar: () => void
@@ -31,7 +38,30 @@ interface AppState {
   setActiveView: (view: AppState['activeView']) => void
 }
 
+// Rehydrate token + refreshToken from localStorage on startup
+const storedToken = localStorage.getItem('auth_token')
+const storedRefreshToken = localStorage.getItem('auth_refresh_token')
+const storedUser = localStorage.getItem('auth_user')
+const initialUser: CurrentUser | null = storedUser ? JSON.parse(storedUser) : null
+
 export const useAppStore = create<AppState>((set) => ({
+  // Auth
+  currentUser: initialUser,
+  token: storedToken,
+  refreshToken: storedRefreshToken,
+  setAuth: (user, token, refreshToken) => {
+    localStorage.setItem('auth_token', token)
+    localStorage.setItem('auth_refresh_token', refreshToken)
+    localStorage.setItem('auth_user', JSON.stringify(user))
+    set({ currentUser: user, token, refreshToken })
+  },
+  clearAuth: () => {
+    localStorage.removeItem('auth_token')
+    localStorage.removeItem('auth_refresh_token')
+    localStorage.removeItem('auth_user')
+    set({ currentUser: null, token: null, refreshToken: null })
+  },
+
   // Sidebar
   sidebarOpen: true,
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),

@@ -1,5 +1,6 @@
 import { Sidebar, Header, Footer } from '@/components/layout'
 import {
+  LoginPage,
   HomePage,
   ChatPage,
   ReconciliationsPage,
@@ -11,7 +12,12 @@ import {
 import { useAppStore } from '@/store'
 
 const App = () => {
-  const { activeView } = useAppStore()
+  const { activeView, token } = useAppStore()
+
+  // Auth guard — show login if no token
+  if (!token) {
+    return <LoginPage />
+  }
 
   const renderPage = () => {
     switch (activeView) {

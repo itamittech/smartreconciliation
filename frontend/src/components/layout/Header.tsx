@@ -1,9 +1,19 @@
-import { Bell, Search, BarChart3 } from 'lucide-react'
+import { Bell, Search, BarChart3, LogOut } from 'lucide-react'
 import { Button, Input, Avatar, Badge } from '@/components/ui'
 import { useAppStore } from '@/store'
 
+const ROLE_LABELS: Record<string, string> = {
+  ADMIN: 'System Admin',
+  ANALYST: 'Analyst',
+  FINANCE: 'Finance',
+  IT_ADMIN: 'IT Admin',
+  OPERATIONS: 'Operations',
+  COMPLIANCE: 'Compliance',
+  VIEWER: 'Viewer',
+}
+
 const Header = () => {
-  const { activeView } = useAppStore()
+  const { activeView, currentUser, clearAuth } = useAppStore()
 
   const getPageTitle = () => {
     switch (activeView) {
@@ -46,6 +56,10 @@ const Header = () => {
         return 'AI-powered reconciliation platform'
     }
   }
+
+  const userInitials = currentUser
+    ? currentUser.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
+    : '?'
 
   return (
     <header className="sticky top-0 z-50 flex h-20 items-center justify-between border-b border-neutral-200 px-6 bg-white backdrop-blur-sm">
@@ -96,13 +110,26 @@ const Header = () => {
         {/* User Menu */}
         <div className="flex items-center gap-3 pl-4 border-l border-neutral-200">
           <div className="hidden md:block text-right">
-            <p className="text-sm font-semibold text-neutral-900">John Doe</p>
-            <p className="text-xs text-neutral-500">Financial Analyst</p>
+            <p className="text-sm font-semibold text-neutral-900">
+              {currentUser?.name ?? 'Unknown'}
+            </p>
+            <p className="text-xs text-neutral-500">
+              {currentUser ? ROLE_LABELS[currentUser.role] ?? currentUser.role : ''}
+            </p>
           </div>
           <Avatar
-            fallback="JD"
+            fallback={userInitials}
             className="h-10 w-10 ring-2 ring-neutral-200 hover:ring-brand-300 transition-smooth cursor-pointer"
           />
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Sign out"
+            className="rounded-md text-neutral-500 hover:text-red-600"
+            onClick={clearAuth}
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </header>

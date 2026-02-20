@@ -1,6 +1,29 @@
+// Auth types
+export type UserRole = 'ADMIN' | 'ANALYST' | 'FINANCE' | 'IT_ADMIN' | 'OPERATIONS' | 'COMPLIANCE' | 'VIEWER'
+
+export interface CurrentUser {
+  id: number
+  name: string
+  email: string
+  role: UserRole
+}
+
+export interface AuthState {
+  currentUser: CurrentUser | null
+  token: string | null
+  refreshToken: string | null
+}
+
+export interface AuthResponse {
+  token: string
+  refreshToken: string
+  expiresIn: number
+  user: CurrentUser
+}
+
 export type ReconciliationStatus = 'pending' | 'processing' | 'completed' | 'failed'
 
-export type ExceptionType = 'missing_source' | 'missing_target' | 'mismatch' | 'duplicate'
+export type ExceptionType = 'MISSING_SOURCE' | 'MISSING_TARGET' | 'VALUE_MISMATCH' | 'DUPLICATE' | 'FORMAT_ERROR' | 'TOLERANCE_EXCEEDED' | 'POTENTIAL_MATCH'
 
 export type ExceptionSeverity = 'critical' | 'warning' | 'info'
 
@@ -110,4 +133,27 @@ export interface AiConfig {
 
 export interface AiConfigRequest {
   provider: AiProvider
+}
+
+// Admin user management types
+export interface UserDetailResponse {
+  id: number
+  name: string
+  email: string
+  role: UserRole
+  active: boolean
+  mustChangePassword: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreateUserRequest {
+  name: string
+  email: string
+  role: UserRole
+}
+
+export interface UpdateUserRequest {
+  role?: UserRole
+  active?: boolean
 }

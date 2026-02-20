@@ -16,9 +16,9 @@ interface MatchRateChartProps {
 }
 
 const getBarColor = (matchRate: number) => {
-  if (matchRate >= 90) return '#10B981' // success green
-  if (matchRate >= 70) return '#F59E0B' // warning amber
-  return '#EF4444'                       // error red
+  if (matchRate >= 90) return '#10B981'
+  if (matchRate >= 70) return '#F59E0B'
+  return '#EF4444'
 }
 
 const MatchRateChart = ({ data }: MatchRateChartProps) => {
@@ -69,7 +69,7 @@ const MatchRateChart = ({ data }: MatchRateChartProps) => {
                     borderRadius: '8px',
                     fontSize: '12px',
                   }}
-                  formatter={(value: number | undefined) => [`${(value ?? 0).toFixed(1)}%`, 'Match Rate']}
+                  formatter={(value: number) => [`${value.toFixed(1)}%`, 'Match Rate']}
                 />
                 <Bar dataKey="matchRate" radius={[4, 4, 0, 0]} maxBarSize={48}>
                   {data.map((entry, index) => (
@@ -80,7 +80,6 @@ const MatchRateChart = ({ data }: MatchRateChartProps) => {
             </ResponsiveContainer>
           </div>
         )}
-        {/* Legend */}
         <div className="mt-3 flex items-center gap-4 text-xs text-neutral-500">
           <span className="flex items-center gap-1.5">
             <span className="inline-block h-2.5 w-2.5 rounded-sm bg-success-500" />

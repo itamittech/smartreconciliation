@@ -42,10 +42,13 @@ interface ConsolidatedExceptionCardProps {
 }
 
 const typeLabels: Record<ExceptionType, string> = {
-  missing_source: 'Missing in Source',
-  missing_target: 'Missing in Target',
-  mismatch: 'Data Mismatch',
-  duplicate: 'Duplicate',
+  MISSING_SOURCE: 'Missing in Source',
+  MISSING_TARGET: 'Missing in Target',
+  VALUE_MISMATCH: 'Value Mismatch',
+  DUPLICATE: 'Duplicate',
+  FORMAT_ERROR: 'Format Error',
+  TOLERANCE_EXCEEDED: 'Tolerance Exceeded',
+  POTENTIAL_MATCH: 'Potential Match',
 }
 
 const statusLabelMap: Record<ExceptionStatus, string> = {

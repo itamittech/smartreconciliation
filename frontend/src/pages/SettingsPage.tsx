@@ -11,26 +11,43 @@ import {
   TestTube,
   CheckCircle2,
   AlertCircle,
+  Users,
+  Plus,
+  Pencil,
 } from 'lucide-react'
 import { Button, Input, Card, CardHeader, CardTitle, CardContent, Badge } from '@/components/ui'
 import { cn } from '@/lib/utils'
-import { dataSourcesApi, aiConfigApi } from '@/services/api'
-import type { DataSource, AiProvider } from '@/types'
+import { dataSourcesApi, aiConfigApi, adminApi } from '@/services/api'
+import type { DataSource, AiProvider, UserRole, UserDetailResponse, CreateUserRequest, UpdateUserRequest } from '@/types'
+import { useAppStore } from '@/store'
 
-type SettingsTab = 'profile' | 'connections' | 'ai' | 'notifications' | 'security' | 'appearance'
+type SettingsTab = 'profile' | 'connections' | 'ai' | 'notifications' | 'security' | 'appearance' | 'users'
 
-const tabs: { id: SettingsTab; label: string; icon: typeof User }[] = [
-  { id: 'profile', label: 'Profile', icon: User },
-  { id: 'connections', label: 'Data Sources', icon: Database },
-  { id: 'ai', label: 'AI Settings', icon: Key },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
-  { id: 'security', label: 'Security', icon: Shield },
-  { id: 'appearance', label: 'Appearance', icon: Palette },
-]
+const ROLE_OPTIONS: UserRole[] = ['ADMIN', 'ANALYST', 'FINANCE', 'IT_ADMIN', 'OPERATIONS', 'COMPLIANCE', 'VIEWER']
+
+const ROLE_LABELS: Record<UserRole, string> = {
+  ADMIN: 'Admin',
+  ANALYST: 'Analyst',
+  FINANCE: 'Finance',
+  IT_ADMIN: 'IT Admin',
+  OPERATIONS: 'Operations',
+  COMPLIANCE: 'Compliance',
+  VIEWER: 'Viewer',
+}
 
 const SettingsPage = () => {
+  const { currentUser } = useAppStore()
+  const isAdmin = currentUser?.role === 'ADMIN'
+
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile')
   const queryClient = useQueryClient()
+
+  // --- User Management state ---
+  const [showCreateUser, setShowCreateUser] = useState(false)
+  const [newUserForm, setNewUserForm] = useState<CreateUserRequest>({ name: '', email: '', role: 'VIEWER' })
+  const [createdTempPassword, setCreatedTempPassword] = useState<string | null>(null)
+  const [editingUserId, setEditingUserId] = useState<number | null>(null)
+  const [editingUser, setEditingUser] = useState<UpdateUserRequest>({})
 
   // Fetch all data sources
   const { data: dataSourcesResponse, isLoading } = useQuery({
@@ -64,9 +81,50 @@ const SettingsPage = () => {
     },
   })
 
-  const handleTabClick = (tab: SettingsTab) => {
-    setActiveTab(tab)
-  }
+  // Fetch users (admin only)
+  const { data: usersResponse, isLoading: isUsersLoading } = useQuery({
+    queryKey: ['admin-users'],
+    queryFn: () => adminApi.listUsers(),
+    enabled: isAdmin,
+  })
+
+  const users = usersResponse?.data || []
+
+  // Create user mutation
+  const createUserMutation = useMutation({
+    mutationFn: (data: CreateUserRequest) => adminApi.createUser(data),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] })
+      setCreatedTempPassword(res.data.tempPassword)
+      setShowCreateUser(false)
+      setNewUserForm({ name: '', email: '', role: 'VIEWER' })
+    },
+  })
+
+  // Update user mutation
+  const updateUserMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: UpdateUserRequest }) =>
+      adminApi.updateUser(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] })
+      setEditingUserId(null)
+      setEditingUser({})
+    },
+  })
+
+  const allTabs: { id: SettingsTab; label: string; icon: typeof User; adminOnly?: boolean }[] = [
+    { id: 'profile', label: 'Profile', icon: User },
+    { id: 'connections', label: 'Data Sources', icon: Database },
+    { id: 'ai', label: 'AI Settings', icon: Key },
+    { id: 'notifications', label: 'Notifications', icon: Bell },
+    { id: 'security', label: 'Security', icon: Shield },
+    { id: 'appearance', label: 'Appearance', icon: Palette },
+    { id: 'users', label: 'Users', icon: Users, adminOnly: true },
+  ]
+
+  const visibleTabs = allTabs.filter((t) => !t.adminOnly || isAdmin)
+
+  const handleTabClick = (tab: SettingsTab) => setActiveTab(tab)
 
   const handleTabKeyDown = (e: React.KeyboardEvent, tab: SettingsTab) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -78,6 +136,179 @@ const SettingsPage = () => {
   const handleTestConnection = (id: number) => {
     testConnectionMutation.mutate(id)
   }
+
+  const renderUsersTab = () => (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>User Management</CardTitle>
+            <Button size="sm" onClick={() => { setShowCreateUser(true); setCreatedTempPassword(null) }}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add User
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {/* Temp password display after creation */}
+          {createdTempPassword && (
+            <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
+              <p className="text-sm font-medium text-amber-800">User created — share this temp password out-of-band:</p>
+              <code className="mt-1 block text-sm font-mono text-amber-900 bg-amber-100 px-2 py-1 rounded">
+                {createdTempPassword}
+              </code>
+              <Button variant="ghost" size="sm" className="mt-2 text-amber-700" onClick={() => setCreatedTempPassword(null)}>
+                Dismiss
+              </Button>
+            </div>
+          )}
+
+          {/* Create user form */}
+          {showCreateUser && (
+            <div className="mb-4 rounded-lg border p-4 space-y-3">
+              <h3 className="text-sm font-semibold">New User</h3>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div>
+                  <label className="text-xs font-medium text-neutral-600">Name</label>
+                  <Input
+                    className="mt-1"
+                    value={newUserForm.name}
+                    onChange={(e) => setNewUserForm({ ...newUserForm, name: e.target.value })}
+                    placeholder="Full name"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-neutral-600">Email</label>
+                  <Input
+                    className="mt-1"
+                    type="email"
+                    value={newUserForm.email}
+                    onChange={(e) => setNewUserForm({ ...newUserForm, email: e.target.value })}
+                    placeholder="user@company.com"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-neutral-600">Role</label>
+                  <select
+                    className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    value={newUserForm.role}
+                    onChange={(e) => setNewUserForm({ ...newUserForm, role: e.target.value as UserRole })}
+                  >
+                    {ROLE_OPTIONS.map((r) => (
+                      <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => createUserMutation.mutate(newUserForm)}
+                  disabled={createUserMutation.isPending || !newUserForm.name || !newUserForm.email}
+                >
+                  {createUserMutation.isPending ? 'Creating…' : 'Create User'}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setShowCreateUser(false)}>Cancel</Button>
+              </div>
+              {createUserMutation.isError && (
+                <p className="text-sm text-destructive">
+                  {createUserMutation.error instanceof Error ? createUserMutation.error.message : 'Failed to create user'}
+                </p>
+              )}
+            </div>
+          )}
+
+          {isUsersLoading ? (
+            <div className="flex items-center justify-center p-8 text-muted-foreground">
+              Loading users...
+            </div>
+          ) : users.length === 0 ? (
+            <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
+              <Users className="mb-2 h-12 w-12 opacity-20" />
+              <p>No users found</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left text-xs font-medium text-neutral-500">
+                    <th className="pb-2 pr-4">Name</th>
+                    <th className="pb-2 pr-4">Email</th>
+                    <th className="pb-2 pr-4">Role</th>
+                    <th className="pb-2 pr-4">Status</th>
+                    <th className="pb-2">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(users as UserDetailResponse[]).map((u) => (
+                    <tr key={u.id} className="border-b last:border-0">
+                      <td className="py-3 pr-4 font-medium">{u.name}</td>
+                      <td className="py-3 pr-4 text-neutral-600">{u.email}</td>
+                      <td className="py-3 pr-4">
+                        {editingUserId === u.id ? (
+                          <select
+                            className="rounded border border-input bg-background px-2 py-1 text-xs"
+                            value={editingUser.role ?? u.role}
+                            onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value as UserRole })}
+                          >
+                            {ROLE_OPTIONS.map((r) => (
+                              <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <Badge variant="outline" className="text-xs">{ROLE_LABELS[u.role]}</Badge>
+                        )}
+                      </td>
+                      <td className="py-3 pr-4">
+                        {editingUserId === u.id ? (
+                          <select
+                            className="rounded border border-input bg-background px-2 py-1 text-xs"
+                            value={editingUser.active !== undefined ? String(editingUser.active) : String(u.active)}
+                            onChange={(e) => setEditingUser({ ...editingUser, active: e.target.value === 'true' })}
+                          >
+                            <option value="true">Active</option>
+                            <option value="false">Inactive</option>
+                          </select>
+                        ) : (
+                          <Badge variant={u.active ? 'success' : 'secondary'} className="text-xs">
+                            {u.active ? 'Active' : 'Inactive'}
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="py-3">
+                        {editingUserId === u.id ? (
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => updateUserMutation.mutate({ id: u.id, data: editingUser })}
+                              disabled={updateUserMutation.isPending}
+                            >
+                              Save
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => { setEditingUserId(null); setEditingUser({}) }}>
+                              Cancel
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => { setEditingUserId(u.id); setEditingUser({ role: u.role, active: u.active }) }}
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
 
   const renderContent = () => {
     switch (activeTab) {
@@ -93,13 +324,13 @@ const SettingsPage = () => {
                   <label className="text-sm font-medium" htmlFor="firstName">
                     First Name
                   </label>
-                  <Input id="firstName" defaultValue="John" className="mt-1" />
+                  <Input id="firstName" defaultValue={currentUser?.name.split(' ')[0] ?? ''} className="mt-1" />
                 </div>
                 <div>
                   <label className="text-sm font-medium" htmlFor="lastName">
                     Last Name
                   </label>
-                  <Input id="lastName" defaultValue="Doe" className="mt-1" />
+                  <Input id="lastName" defaultValue={currentUser?.name.split(' ').slice(1).join(' ') ?? ''} className="mt-1" />
                 </div>
               </div>
               <div>
@@ -109,8 +340,9 @@ const SettingsPage = () => {
                 <Input
                   id="email"
                   type="email"
-                  defaultValue="john.doe@company.com"
+                  defaultValue={currentUser?.email ?? ''}
                   className="mt-1"
+                  disabled
                 />
               </div>
               <div>
@@ -119,7 +351,7 @@ const SettingsPage = () => {
                 </label>
                 <Input
                   id="role"
-                  defaultValue="Finance Analyst"
+                  defaultValue={currentUser?.role ? ROLE_LABELS[currentUser.role] : ''}
                   disabled
                   className="mt-1"
                 />
@@ -259,14 +491,16 @@ const SettingsPage = () => {
                         const provider = e.target.value as AiProvider
                         updateAiProviderMutation.mutate(provider)
                       }}
-                      disabled={updateAiProviderMutation.isPending}
+                      disabled={updateAiProviderMutation.isPending || !isAdmin}
                     >
                       <option value="anthropic">Anthropic Claude</option>
                       <option value="openai">OpenAI GPT-4</option>
                       <option value="deepseek">DeepSeek</option>
                     </select>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {updateAiProviderMutation.isPending
+                      {!isAdmin
+                        ? 'Only admins can change the AI provider.'
+                        : updateAiProviderMutation.isPending
                         ? 'Saving...'
                         : updateAiProviderMutation.isSuccess
                         ? '✅ Saved! Restart the application for changes to take effect.'
@@ -474,6 +708,9 @@ const SettingsPage = () => {
           </Card>
         )
 
+      case 'users':
+        return isAdmin ? renderUsersTab() : null
+
       default:
         return null
     }
@@ -485,7 +722,7 @@ const SettingsPage = () => {
       <nav className="w-64 border-r p-4">
         <h2 className="mb-4 font-semibold">Settings</h2>
         <div className="space-y-1">
-          {tabs.map((tab) => {
+          {visibleTabs.map((tab) => {
             const Icon = tab.icon
             return (
               <div

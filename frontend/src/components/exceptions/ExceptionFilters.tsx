@@ -34,10 +34,13 @@ const statusOptions: { value: ExceptionStatus | 'all'; label: string }[] = [
 
 const typeOptions: { value: ExceptionType | 'all'; label: string }[] = [
   { value: 'all', label: 'All Types' },
-  { value: 'missing_source', label: 'Missing Source' },
-  { value: 'missing_target', label: 'Missing Target' },
-  { value: 'mismatch', label: 'Mismatch' },
-  { value: 'duplicate', label: 'Duplicate' },
+  { value: 'MISSING_SOURCE', label: 'Missing Source' },
+  { value: 'MISSING_TARGET', label: 'Missing Target' },
+  { value: 'VALUE_MISMATCH', label: 'Value Mismatch' },
+  { value: 'DUPLICATE', label: 'Duplicate' },
+  { value: 'FORMAT_ERROR', label: 'Format Error' },
+  { value: 'TOLERANCE_EXCEEDED', label: 'Tolerance Exceeded' },
+  { value: 'POTENTIAL_MATCH', label: 'Potential Match' },
 ]
 
 const ExceptionFilters = ({

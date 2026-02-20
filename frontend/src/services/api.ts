@@ -22,22 +22,76 @@ export class ApiError extends Error {
   }
 }
 
-// Base fetch wrapper with error handling
+// Access Zustand store state directly (no hook, works outside React components)
+import { useAppStore } from '@/store'
+
+function getStore() {
+  return useAppStore.getState()
+}
+
+// Flag to prevent infinite refresh loops
+let isRefreshing = false
+
+// Base fetch wrapper with auth header + 401 refresh handling
 async function fetchApi<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  skipAuthRetry = false
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`
+  const store = getStore()
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string>),
+  }
+
+  if (store.token) {
+    headers['Authorization'] = `Bearer ${store.token}`
+  }
 
   const config: RequestInit = {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
+    headers,
   }
 
   const response = await fetch(url, config)
+
+  if (response.status === 401 && !skipAuthRetry && !isRefreshing) {
+    const currentRefreshToken = store.refreshToken
+
+    if (currentRefreshToken) {
+      isRefreshing = true
+      try {
+        const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken: currentRefreshToken }),
+        })
+
+        if (refreshResponse.ok) {
+          const refreshData = await refreshResponse.json()
+          const newToken = refreshData.data.token
+          const newRefreshToken = refreshData.data.refreshToken
+          const currentUser = store.currentUser
+          if (currentUser) {
+            store.setAuth(currentUser, newToken, newRefreshToken)
+          }
+
+          // Retry the original request with the new token
+          return fetchApi<T>(endpoint, options, true)
+        }
+      } catch {
+        // Refresh failed — fall through to clearAuth
+      } finally {
+        isRefreshing = false
+      }
+    }
+
+    // Refresh failed or no refresh token — clear auth
+    store.clearAuth()
+    throw new ApiError('Session expired. Please log in again.', 401)
+  }
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => null)
@@ -103,9 +157,16 @@ export async function uploadFile<T>(
     })
   }
 
+  const store = getStore()
   const url = `${API_BASE_URL}${endpoint}`
+  const headers: Record<string, string> = {}
+  if (store.token) {
+    headers['Authorization'] = `Bearer ${store.token}`
+  }
+
   const response = await fetch(url, {
     method: 'POST',
+    headers,
     body: formData,
     // Note: Don't set Content-Type header for FormData, browser sets it automatically
   })
@@ -131,6 +192,14 @@ export async function streamPost(
   onError: (error: Error) => void
 ): Promise<void> {
   const url = `${API_BASE_URL}${endpoint}`
+  const store = getStore()
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    Accept: 'text/event-stream',
+  }
+  if (store.token) {
+    headers['Authorization'] = `Bearer ${store.token}`
+  }
 
   const parseEvent = (eventPayload: string): string | null => {
     const lines = eventPayload.split('\n')
@@ -182,10 +251,7 @@ export async function streamPost(
   try {
     const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'text/event-stream',
-      },
+      headers,
       body: JSON.stringify(data),
     })
 
@@ -236,6 +302,25 @@ export async function streamPost(
   }
 }
 
+// Auth API
+export const authApi = {
+  login: (email: string, password: string) =>
+    post<import('@/types').AuthResponse>('/auth/login', { email, password }),
+  refresh: (refreshToken: string) =>
+    post<{ token: string; refreshToken: string; expiresIn: number }>('/auth/refresh', { refreshToken }),
+  me: () => get<import('@/types').CurrentUser>('/auth/me'),
+}
+
+// Admin API
+export const adminApi = {
+  listUsers: () => get<import('@/types').UserDetailResponse[]>('/admin/users'),
+  createUser: (data: import('@/types').CreateUserRequest) =>
+    post<{ user: import('@/types').UserDetailResponse; tempPassword: string }>('/admin/users', data),
+  updateUser: (id: number, data: import('@/types').UpdateUserRequest) =>
+    put<import('@/types').UserDetailResponse>(`/admin/users/${id}`, data),
+  getUser: (id: number) => get<import('@/types').UserDetailResponse>(`/admin/users/${id}`),
+}
+
 // DataSource API
 export const dataSourcesApi = {
   getAll: () => get<import('@/types').DataSource[]>('/datasources'),
@@ -254,4 +339,3 @@ export const aiConfigApi = {
 }
 
 export { API_BASE_URL }
-

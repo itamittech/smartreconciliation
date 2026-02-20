@@ -55,7 +55,7 @@ const QuickActions = () => {
                 <Icon className="h-5 w-5" />
                 <div className="text-left">
                   <p className="font-medium">{action.label}</p>
-                  <p className="text-xs font-normal text-muted-foreground">
+                  <p className="text-xs font-normal opacity-70">
                     {action.description}
                   </p>
                 </div>

@@ -37,13 +37,6 @@ function transformReconciliation(
   }
 }
 
-// Placeholder chart data when no real data available
-const defaultChartData = [
-  { date: 'Day 1', matchRate: 0, exceptions: 0 },
-  { date: 'Day 2', matchRate: 0, exceptions: 0 },
-  { date: 'Day 3', matchRate: 0, exceptions: 0 },
-]
-
 const HomePage = () => {
   const { data: metricsResponse, isLoading, isError, error } = useDashboardMetrics()
   const metrics = metricsResponse?.data
@@ -85,14 +78,13 @@ const HomePage = () => {
   // Transform recent reconciliations for the component
   const recentReconciliations = metrics?.recentReconciliations?.map(transformReconciliation) || []
 
-  // Build chart data from exceptions breakdown
-  const chartData = metrics?.exceptionsByType
-    ? Object.entries(metrics.exceptionsByType).map(([type, count]) => ({
-        date: type.replace('_', ' '),
-        matchRate: metrics.overallMatchRate || 0,
-        exceptions: count,
-      }))
-    : defaultChartData
+  // Build chart data from recent reconciliations (completed ones with a match rate)
+  const matchRateChartData = (metrics?.recentReconciliations ?? [])
+    .filter((r) => r.matchRate != null)
+    .map((r) => ({
+      name: r.name,
+      matchRate: r.matchRate ?? 0,
+    }))
 
   return (
     <div className="space-y-8 p-6 lg:p-8">
@@ -171,7 +163,7 @@ const HomePage = () => {
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
-          <MatchRateChart data={chartData.length > 0 ? chartData : defaultChartData} />
+          <MatchRateChart data={matchRateChartData} />
           <RecentReconciliations
             reconciliations={recentReconciliations}
             onViewDetails={handleViewDetails}

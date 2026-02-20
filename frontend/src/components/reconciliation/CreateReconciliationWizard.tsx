@@ -388,7 +388,11 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
                 <span className="flex-1 text-xs font-mono">
                   {m.sourceField} <span className="text-muted-foreground">→</span> {m.targetField}
                 </span>
-                {m.isKey && <Key className="h-3.5 w-3.5 text-amber-500" title="Key field" />}
+                {m.isKey && (
+                  <span title="Key field">
+                    <Key className="h-3.5 w-3.5 text-amber-500" />
+                  </span>
+                )}
                 {confidenceBadge(m.confidence)}
               </div>
             ))}
@@ -448,7 +452,11 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
                       {r.sourceField} <span className="text-muted-foreground">→</span> {r.targetField}
                     </span>
                     {matchTypeBadge(r.matchType)}
-                    {r.isKey && <Key className="h-3.5 w-3.5 text-amber-500 shrink-0" title="Key field" />}
+                    {r.isKey && (
+                      <span title="Key field">
+                        <Key className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>

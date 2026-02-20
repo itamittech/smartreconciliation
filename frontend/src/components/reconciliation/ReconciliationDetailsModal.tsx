@@ -1,4 +1,4 @@
-import { X, CheckCircle2, Clock, XCircle, FileText, Database, GitBranch } from 'lucide-react'
+import { X, CheckCircle2, Clock, XCircle, FileText, GitBranch } from 'lucide-react'
 import { Button, Card, Badge } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import type { Reconciliation } from '@/services/types'

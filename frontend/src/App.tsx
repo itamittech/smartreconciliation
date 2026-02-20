@@ -13,7 +13,39 @@ import {
 import { useAppStore } from '@/store'
 
 const App = () => {
-  const { activeView, token, setActiveView } = useAppStore()
+  const { activeView, token, setActiveView, theme, accentColor, compactMode } = useAppStore()
+
+  useEffect(() => {
+    const root = window.document.documentElement
+    root.classList.remove('light', 'dark')
+
+    if (theme === 'system') {
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light'
+      root.classList.add(systemTheme)
+    } else {
+      root.classList.add(theme)
+    }
+  }, [theme])
+
+  useEffect(() => {
+    const root = window.document.documentElement
+    // Remove existing accent classes
+    root.classList.forEach((cls) => {
+      if (cls.startsWith('accent-')) root.classList.remove(cls)
+    })
+    root.classList.add(`accent-${accentColor}`)
+  }, [accentColor])
+
+  useEffect(() => {
+    const root = window.document.documentElement
+    if (compactMode) {
+      root.classList.add('compact')
+    } else {
+      root.classList.remove('compact')
+    }
+  }, [compactMode])
 
   useEffect(() => {
     const validViews = new Set(['home', 'chat', 'reconciliations', 'exceptions', 'rules', 'files', 'settings'])

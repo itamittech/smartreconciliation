@@ -69,7 +69,7 @@ const MatchRateChart = ({ data }: MatchRateChartProps) => {
                     borderRadius: '8px',
                     fontSize: '12px',
                   }}
-                  formatter={(value: number) => [`${value.toFixed(1)}%`, 'Match Rate']}
+                  formatter={(value: any) => [`${Number(value || 0).toFixed(1)}%`, 'Match Rate']}
                 />
                 <Bar dataKey="matchRate" radius={[4, 4, 0, 0]} maxBarSize={48}>
                   {data.map((entry, index) => (

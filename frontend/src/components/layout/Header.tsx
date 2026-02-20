@@ -62,18 +62,18 @@ const Header = () => {
     : '?'
 
   return (
-    <header className="sticky top-0 z-50 flex h-20 items-center justify-between border-b border-neutral-200 px-6 bg-white backdrop-blur-sm">
+    <header className="sticky top-0 z-50 flex h-20 items-center justify-between border-b border-border px-6 bg-card backdrop-blur-sm">
       <div className="flex items-center gap-4">
         {/* Page Icon */}
-        <div className="hidden md:flex items-center justify-center h-11 w-11 rounded-md bg-brand-50">
-          <BarChart3 className="h-5 w-5 text-brand-600" />
+        <div className="hidden md:flex items-center justify-center h-11 w-11 rounded-md bg-primary/10">
+          <BarChart3 className="h-5 w-5 text-primary" />
         </div>
         <div>
           {/* Page title */}
-          <h1 className="text-xl font-bold text-neutral-900">
+          <h1 className="text-xl font-bold text-foreground">
             {getPageTitle()}
           </h1>
-          <p className="text-xs text-neutral-500 hidden md:block mt-0.5">
+          <p className="text-xs text-muted-foreground hidden md:block mt-0.5">
             {getPageDescription()}
           </p>
         </div>
@@ -82,7 +82,7 @@ const Header = () => {
       <div className="flex items-center gap-4">
         {/* Search */}
         <div className="relative hidden lg:block">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
             placeholder="Search..."
@@ -108,24 +108,24 @@ const Header = () => {
         </Button>
 
         {/* User Menu */}
-        <div className="flex items-center gap-3 pl-4 border-l border-neutral-200">
+        <div className="flex items-center gap-3 pl-4 border-l border-border">
           <div className="hidden md:block text-right">
-            <p className="text-sm font-semibold text-neutral-900">
+            <p className="text-sm font-semibold text-foreground">
               {currentUser?.name ?? 'Unknown'}
             </p>
-            <p className="text-xs text-neutral-500">
+            <p className="text-xs text-muted-foreground">
               {currentUser ? ROLE_LABELS[currentUser.role] ?? currentUser.role : ''}
             </p>
           </div>
           <Avatar
             fallback={userInitials}
-            className="h-10 w-10 ring-2 ring-neutral-200 hover:ring-brand-300 transition-smooth cursor-pointer"
+            className="h-10 w-10 ring-2 ring-border hover:ring-primary transition-smooth cursor-pointer"
           />
           <Button
             variant="ghost"
             size="icon"
             aria-label="Sign out"
-            className="rounded-md text-neutral-500 hover:text-red-600"
+            className="rounded-md text-muted-foreground hover:text-destructive"
             onClick={clearAuth}
           >
             <LogOut className="h-4 w-4" />

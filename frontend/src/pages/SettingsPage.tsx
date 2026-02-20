@@ -14,6 +14,13 @@ import {
   Users,
   Plus,
   Pencil,
+  Check,
+  Sun,
+  Moon,
+  Monitor,
+  Type,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react'
 import { Button, Input, Card, CardHeader, CardTitle, CardContent, Badge } from '@/components/ui'
 import { cn } from '@/lib/utils'
@@ -644,68 +651,171 @@ const SettingsPage = () => {
 
       case 'appearance':
         return (
-          <Card>
-            <CardHeader>
-              <CardTitle>Appearance Settings</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <label className="text-sm font-medium">Theme</label>
-                <div className="mt-2 grid grid-cols-3 gap-3">
-                  {['Light', 'Dark', 'System'].map((theme) => (
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Palette className="h-5 w-5 text-primary" />
+                  Theme & Visuals
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-8">
+                {/* Theme Selector */}
+                <div className="space-y-3">
+                  <label className="text-sm font-semibold tracking-tight">Interface Theme</label>
+                  <div className="grid grid-cols-3 gap-4">
+                    {[
+                      { id: 'light', label: 'Light', icon: Sun, color: 'bg-white border-neutral-200' },
+                      { id: 'dark', label: 'Dark', icon: Moon, color: 'bg-neutral-900 border-neutral-800 text-white' },
+                      { id: 'system', label: 'System', icon: Monitor, color: 'bg-gradient-to-br from-white to-neutral-900 border-neutral-200' },
+                    ].map((t) => {
+                      const Icon = t.icon
+                      const isActive = useAppStore.getState().theme === t.id
+                      return (
+                        <button
+                          key={t.id}
+                          onClick={() => useAppStore.getState().setTheme(t.id as any)}
+                          className={cn(
+                            'group relative flex flex-col items-center gap-3 rounded-xl border-2 p-4 transition-all duration-200 hover:border-primary/50',
+                            isActive ? 'border-primary bg-primary/5 ring-4 ring-primary/10' : 'border-transparent bg-muted/30 hover:bg-muted/50'
+                          )}
+                        >
+                          <div className={cn('flex h-12 w-full items-center justify-center rounded-lg border shadow-sm transition-transform group-hover:scale-105', t.color)}>
+                            <Icon className={cn('h-6 w-6', isActive ? 'text-primary' : 'text-muted-foreground')} />
+                          </div>
+                          <span className="text-xs font-bold uppercase tracking-wider">{t.label}</span>
+                          {isActive && (
+                            <div className="absolute -right-1 -top-1 rounded-full bg-primary p-1 text-primary-foreground shadow-lg">
+                              <Check className="h-3 w-3" />
+                            </div>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Accent Color */}
+                <div className="space-y-3 pt-4 border-t">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-semibold tracking-tight">Accent Color</label>
+                    <Badge variant="outline" className="font-mono text-[10px] uppercase">SmartRecon Palette</Badge>
+                  </div>
+                  <div className="flex flex-wrap gap-4">
+                    {[
+                      { id: 'indigo', color: 'bg-indigo-500', label: 'Indigo' },
+                      { id: 'emerald', color: 'bg-emerald-500', label: 'Emerald' },
+                      { id: 'rose', color: 'bg-rose-500', label: 'Rose' },
+                      { id: 'amber', color: 'bg-amber-500', label: 'Amber' },
+                      { id: 'slate', color: 'bg-slate-700', label: 'Slate' },
+                    ].map((c) => {
+                      const isActive = useAppStore.getState().accentColor === c.id
+                      return (
+                        <button
+                          key={c.id}
+                          onClick={() => useAppStore.getState().setAccentColor(c.id as any)}
+                          className={cn(
+                            'flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all hover:scale-110 active:scale-95',
+                            isActive ? 'border-primary ring-2 ring-primary ring-offset-2' : 'border-transparent'
+                          )}
+                          title={c.label}
+                        >
+                          <div className={cn('h-7 w-7 rounded-full shadow-inner', c.color)} />
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Display Density */}
+                <div className="space-y-3 pt-4 border-t">
+                  <label className="text-sm font-semibold tracking-tight">Interface Density</label>
+                  <div className="grid grid-cols-2 gap-4">
                     <button
-                      key={theme}
+                      onClick={() => { if (useAppStore.getState().compactMode) useAppStore.getState().toggleCompactMode() }}
                       className={cn(
-                        'rounded-lg border p-3 text-center transition-colors',
-                        theme === 'Light'
-                          ? 'border-primary bg-primary/5'
-                          : 'hover:bg-muted'
+                        'flex items-center gap-3 rounded-lg border p-4 transition-all',
+                        !useAppStore.getState().compactMode ? 'border-primary bg-primary/5' : 'border-transparent bg-muted/30 hover:bg-muted/50'
                       )}
                     >
-                      <Palette className="mx-auto h-6 w-6 text-muted-foreground" />
-                      <p className="mt-1 text-sm font-medium">{theme}</p>
+                      <div className="flex h-10 w-10 items-center justify-center rounded bg-background shadow-sm">
+                        <Maximize2 className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-sm font-bold">Standard</p>
+                        <p className="text-xs text-muted-foreground">Spacious & comfortable</p>
+                      </div>
                     </button>
-                  ))}
+                    <button
+                      onClick={() => { if (!useAppStore.getState().compactMode) useAppStore.getState().toggleCompactMode() }}
+                      className={cn(
+                        'flex items-center gap-3 rounded-lg border p-4 transition-all',
+                        useAppStore.getState().compactMode ? 'border-primary bg-primary/5' : 'border-transparent bg-muted/30 hover:bg-muted/50'
+                      )}
+                    >
+                      <div className="flex h-10 w-10 items-center justify-center rounded bg-background shadow-sm">
+                        <Minimize2 className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-sm font-bold">Compact</p>
+                        <p className="text-xs text-muted-foreground">More data on screen</p>
+                      </div>
+                    </button>
+                  </div>
                 </div>
-              </div>
+              </CardContent>
+            </Card>
 
-              <div>
-                <label className="text-sm font-medium" htmlFor="language">
-                  Language
-                </label>
-                <select
-                  id="language"
-                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  defaultValue="en"
-                >
-                  <option value="en">English</option>
-                  <option value="es">Spanish</option>
-                  <option value="fr">French</option>
-                  <option value="de">German</option>
-                </select>
-              </div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Type className="h-5 w-5 text-primary" />
+                  Localization & Regional
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium" htmlFor="language">Language</label>
+                    <select
+                      id="language"
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary"
+                      defaultValue="en"
+                    >
+                      <option value="en">English (US)</option>
+                      <option value="es">Spanish</option>
+                      <option value="fr">French</option>
+                      <option value="de">German</option>
+                      <option value="ja">Japanese</option>
+                    </select>
+                  </div>
 
-              <div>
-                <label className="text-sm font-medium" htmlFor="dateFormat">
-                  Date Format
-                </label>
-                <select
-                  id="dateFormat"
-                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  defaultValue="mdy"
-                >
-                  <option value="mdy">MM/DD/YYYY</option>
-                  <option value="dmy">DD/MM/YYYY</option>
-                  <option value="ymd">YYYY-MM-DD</option>
-                </select>
-              </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium" htmlFor="dateFormat">Date Format</label>
+                    <select
+                      id="dateFormat"
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary"
+                      defaultValue="mdy"
+                    >
+                      <option value="mdy">MM/DD/YYYY</option>
+                      <option value="dmy">DD/MM/YYYY</option>
+                      <option value="ymd">YYYY-MM-DD</option>
+                    </select>
+                  </div>
+                </div>
 
-              <Button>
-                <Save className="mr-2 h-4 w-4" />
-                Save Preferences
-              </Button>
-            </CardContent>
-          </Card>
+                <div className="flex items-center justify-between pt-4 border-t">
+                  <p className="text-xs text-muted-foreground italic">
+                    Changes will be saved automatically to your profile.
+                  </p>
+                  <Button size="sm">
+                    <Save className="mr-2 h-4 w-4" />
+                    Apply Globally
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         )
 
       case 'users':

@@ -385,7 +385,9 @@ export const CreateRuleSetModal = ({ isOpen, onClose, onSubmit }: CreateRuleSetM
                           {m.targetField}
                         </span>
                         {m.isKey && (
-                          <Key className="h-3 w-3 text-amber-500 shrink-0" title="Key field" />
+                          <span title="Key field">
+                            <Key className="h-3 w-3 text-amber-500 shrink-0" />
+                          </span>
                         )}
                       </div>
                       {confidenceBadge(m.confidence)}
@@ -469,7 +471,9 @@ export const CreateRuleSetModal = ({ isOpen, onClose, onSubmit }: CreateRuleSetM
                         {r.matchType}
                       </Badge>
                       {r.isKey && (
-                        <Key className="h-3 w-3 text-amber-500 shrink-0" title="Key field" />
+                        <span title="Key field">
+                          <Key className="h-3 w-3 text-amber-500 shrink-0" />
+                        </span>
                       )}
                     </div>
                   ))}

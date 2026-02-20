@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Plus,
   Search,
@@ -22,6 +22,7 @@ import type { ReconciliationStatus } from '@/types'
 import { cn } from '@/lib/utils'
 import { useReconciliations, useDeleteReconciliation, useStartReconciliation, useBulkDeleteReconciliations } from '@/services/hooks'
 import type { Reconciliation as ApiReconciliation } from '@/services/types'
+import { useAppStore } from '@/store'
 
 const statusConfig: Record<
   string,
@@ -39,16 +40,36 @@ type SortField = 'name' | 'status' | 'matchRate' | 'createdAt' | 'completedAt'
 type SortDirection = 'asc' | 'desc'
 
 const ReconciliationsPage = () => {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<ReconciliationStatus | 'all'>('all')
+  const params = new URLSearchParams(window.location.search)
+  const [searchQuery, setSearchQuery] = useState(() => params.get('reconSearch') || '')
+  const [statusFilter, setStatusFilter] = useState<ReconciliationStatus | 'all'>(() => {
+    const status = params.get('reconStatus')
+    if (status === 'completed' || status === 'processing' || status === 'pending' || status === 'failed' || status === 'all') {
+      return status
+    }
+    return 'all'
+  })
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [showWizard, setShowWizard] = useState(false)
   const [showDetailsModal, setShowDetailsModal] = useState(false)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [sortField, setSortField] = useState<SortField>('createdAt')
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
+  const [currentPage, setCurrentPage] = useState(() => {
+    const value = Number(params.get('reconPage') || '1')
+    return Number.isNaN(value) || value < 1 ? 1 : value
+  })
+  const [sortField, setSortField] = useState<SortField>(() => {
+    const value = params.get('reconSort')
+    if (value === 'name' || value === 'status' || value === 'matchRate' || value === 'createdAt' || value === 'completedAt') {
+      return value
+    }
+    return 'createdAt'
+  })
+  const [sortDirection, setSortDirection] = useState<SortDirection>(() => {
+    const value = params.get('reconOrder')
+    return value === 'asc' || value === 'desc' ? value : 'desc'
+  })
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [startingIds, setStartingIds] = useState<Set<number>>(new Set())
+  const setActiveView = useAppStore((state) => state.setActiveView)
 
   const { data: reconciliationsResponse, isLoading, isError, error } = useReconciliations({
     page: currentPage - 1, // Backend uses 0-based indexing
@@ -62,14 +83,14 @@ const ReconciliationsPage = () => {
 
   // Handle both paginated and non-paginated responses
   const isPaginated = reconciliationsResponse?.data && 'content' in reconciliationsResponse.data
-  const reconciliations = isPaginated
+  const reconciliations: ApiReconciliation[] = isPaginated
     ? (reconciliationsResponse.data as any).content || []
     : (reconciliationsResponse?.data as any) || []
   const totalElements = isPaginated ? (reconciliationsResponse.data as any).totalElements : reconciliations.length
   const totalPages = isPaginated ? (reconciliationsResponse.data as any).totalPages : 1
 
   // Client-side filtering for search and status (could be moved to backend later)
-  const filteredReconciliations = reconciliations.filter((recon) => {
+  const filteredReconciliations = reconciliations.filter((recon: ApiReconciliation) => {
     const matchesSearch = searchQuery ? recon.name.toLowerCase().includes(searchQuery.toLowerCase()) : true
     const backendStatus = recon.status?.toString().toLowerCase()
     const filterStatus = statusFilter === 'all' ? true :
@@ -113,7 +134,7 @@ const ReconciliationsPage = () => {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedIds(new Set(paginatedReconciliations.map((r) => r.id)))
+      setSelectedIds(new Set(paginatedReconciliations.map((r: ApiReconciliation) => r.id)))
     } else {
       setSelectedIds(new Set())
     }
@@ -148,8 +169,8 @@ const ReconciliationsPage = () => {
   }
 
   const allSelected = paginatedReconciliations.length > 0 &&
-    paginatedReconciliations.every((r) => selectedIds.has(r.id))
-  const someSelected = paginatedReconciliations.some((r) => selectedIds.has(r.id)) && !allSelected
+    paginatedReconciliations.every((r: ApiReconciliation) => selectedIds.has(r.id))
+  const someSelected = paginatedReconciliations.some((r: ApiReconciliation) => selectedIds.has(r.id)) && !allSelected
 
   const handleNewReconciliation = () => {
     setShowWizard(true)
@@ -192,6 +213,29 @@ const ReconciliationsPage = () => {
     if (!recon.totalSourceRecords || recon.totalSourceRecords === 0) return '0.0'
     if (!recon.matchedRecords) return '0.0'
     return ((recon.matchedRecords / recon.totalSourceRecords) * 100).toFixed(1)
+  }
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    urlParams.set('view', 'reconciliations')
+    urlParams.set('reconPage', String(currentPage))
+    urlParams.set('reconSort', sortField)
+    urlParams.set('reconOrder', sortDirection)
+    if (searchQuery) urlParams.set('reconSearch', searchQuery)
+    else urlParams.delete('reconSearch')
+    urlParams.set('reconStatus', statusFilter)
+    window.history.replaceState(window.history.state, '', `${window.location.pathname}?${urlParams.toString()}`)
+  }, [currentPage, searchQuery, sortField, sortDirection, statusFilter])
+
+  const handleOpenExceptions = (event: React.MouseEvent, recon: ApiReconciliation) => {
+    event.stopPropagation()
+    const urlParams = new URLSearchParams(window.location.search)
+    urlParams.set('view', 'exceptions')
+    urlParams.set('reconciliationId', recon.id.toString())
+    urlParams.set('businessDate', recon.createdAt.slice(0, 10))
+    urlParams.set('status', 'open')
+    window.history.pushState(window.history.state, '', `${window.location.pathname}?${urlParams.toString()}`)
+    setActiveView('exceptions')
   }
 
   if (isLoading) {
@@ -340,7 +384,7 @@ const ReconciliationsPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {paginatedReconciliations.map((recon) => {
+                {paginatedReconciliations.map((recon: ApiReconciliation) => {
                   const config = statusConfig[recon.status] || statusConfig.PENDING
                   const StatusIcon = config.icon
                   const matchRate = getMatchRate(recon)
@@ -390,7 +434,18 @@ const ReconciliationsPage = () => {
                         <div className="text-sm">
                           <p>{(recon.totalSourceRecords || 0).toLocaleString()}</p>
                           <p className="text-muted-foreground text-xs mt-0.5">
-                            {recon.exceptionCount || 0} exceptions
+                            {(recon.exceptionCount || 0) > 0 ? (
+                              <button
+                                type="button"
+                                onClick={(event) => handleOpenExceptions(event, recon)}
+                                className="text-brand-600 hover:underline"
+                                aria-label={`Open ${recon.exceptionCount || 0} exceptions for ${recon.name}`}
+                              >
+                                {recon.exceptionCount || 0} exceptions
+                              </button>
+                            ) : (
+                              '0 exceptions'
+                            )}
                           </p>
                         </div>
                       </td>
@@ -542,7 +597,7 @@ const ReconciliationsPage = () => {
       {/* Reconciliation Details Modal */}
       {showDetailsModal && selectedId && (
         <ReconciliationDetailsModal
-          reconciliation={reconciliations.find((r) => r.id === selectedId)!}
+          reconciliation={reconciliations.find((r: ApiReconciliation) => r.id === selectedId)!}
           onClose={() => {
             setShowDetailsModal(false)
             setSelectedId(null)

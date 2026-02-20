@@ -1,7 +1,9 @@
 package com.amit.smartreconciliation.service;
 
 import com.amit.smartreconciliation.dto.request.BulkExceptionRequest;
+import com.amit.smartreconciliation.dto.request.AutoResolveExceptionsRequest;
 import com.amit.smartreconciliation.dto.request.ExceptionUpdateRequest;
+import com.amit.smartreconciliation.dto.response.AutoResolveExceptionsResponse;
 import com.amit.smartreconciliation.dto.response.ReconciliationExceptionResponse;
 import com.amit.smartreconciliation.entity.Reconciliation;
 import com.amit.smartreconciliation.entity.ReconciliationException;
@@ -21,6 +23,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -50,6 +54,9 @@ class ExceptionServiceTest {
     @Mock
     private AiService aiService;
 
+    @Mock
+    private ExceptionPermissionService permissionService;
+
     @InjectMocks
     private ExceptionService exceptionService;
 
@@ -60,6 +67,7 @@ class ExceptionServiceTest {
         reconciliation = new Reconciliation();
         reconciliation.setId(123L);
         reconciliation.setName("recon-123");
+        lenient().when(permissionService.canAction(any(), any())).thenReturn(true);
     }
 
     @Test
@@ -406,6 +414,80 @@ class ExceptionServiceTest {
         assertThat(response.getStatus()).isEqualTo(ExceptionStatus.IGNORED);
         assertThat(response.getIgnoredAt()).isNotNull();
         assertThat(response.getResolvedBy()).isEqualTo("user-902");
+    }
+
+    @Test
+    @DisplayName("TC-ES-019: Filter Exceptions by Business Date Scope")
+    void testFilterExceptionsByBusinessDateScope() {
+        // Given
+        Pageable pageable = PageRequest.of(0, 20);
+        List<ReconciliationException> exceptions = buildExceptions(2, ExceptionStatus.OPEN);
+        LocalDate fromDate = LocalDate.of(2026, 2, 20);
+        LocalDate toDate = LocalDate.of(2026, 2, 20);
+
+        when(exceptionRepository.findByScope(
+                123L,
+                ExceptionType.VALUE_MISMATCH,
+                ExceptionSeverity.HIGH,
+                ExceptionStatus.OPEN,
+                fromDate.atStartOfDay(),
+                toDate.plusDays(1).atStartOfDay(),
+                pageable)).thenReturn(new PageImpl<>(exceptions, pageable, 2));
+
+        // When
+        Page<ReconciliationExceptionResponse> response = exceptionService.getByReconciliationId(
+                123L,
+                ExceptionType.VALUE_MISMATCH,
+                ExceptionSeverity.HIGH,
+                ExceptionStatus.OPEN,
+                fromDate,
+                toDate,
+                pageable);
+
+        // Then
+        assertThat(response.getTotalElements()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("TC-ES-020: Auto Resolve Open Exceptions with AI Suggestions")
+    void testAutoResolveOpenExceptionsWithAiSuggestions() {
+        // Given
+        ReconciliationException withSuggestion = buildExceptionWithId(201L);
+        withSuggestion.setStatus(ExceptionStatus.OPEN);
+        withSuggestion.setAiSuggestion("Use source amount");
+
+        ReconciliationException withoutSuggestion = buildExceptionWithId(202L);
+        withoutSuggestion.setStatus(ExceptionStatus.OPEN);
+        withoutSuggestion.setAiSuggestion(null);
+
+        ReconciliationException notOpen = buildExceptionWithId(203L);
+        notOpen.setStatus(ExceptionStatus.IN_REVIEW);
+        notOpen.setAiSuggestion("Not eligible due to status");
+
+        when(exceptionRepository.findAllByScope(
+                123L,
+                null,
+                null,
+                null,
+                LocalDate.of(2026, 2, 20).atStartOfDay(),
+                LocalDate.of(2026, 2, 21).atStartOfDay()))
+                .thenReturn(List.of(withSuggestion, withoutSuggestion, notOpen));
+        when(exceptionRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        AutoResolveExceptionsRequest request = new AutoResolveExceptionsRequest();
+        request.setReconciliationId(123L);
+        request.setFromDate(LocalDate.of(2026, 2, 20));
+        request.setToDate(LocalDate.of(2026, 2, 20));
+        request.setResolutionTemplate("Resolved from AI");
+        request.setResolvedBy("System");
+
+        // When
+        AutoResolveExceptionsResponse response = exceptionService.bulkAutoResolve(request);
+
+        // Then
+        assertThat(response.getUpdatedCount()).isEqualTo(1);
+        assertThat(response.getSkippedCount()).isEqualTo(2);
+        assertThat(response.getUpdatedIds()).containsExactly(201L);
     }
 
     private List<ReconciliationException> buildExceptions(int count, ExceptionStatus status) {

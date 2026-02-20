@@ -1,17 +1,27 @@
-import { useMemo, useState } from 'react'
-import { AlertTriangle, CheckCircle2, Sparkles, Loader2, AlertCircle } from 'lucide-react'
-import { Button, Card, CardContent, Modal } from '@/components/ui'
-import { ConsolidatedExceptionCard, ExceptionFilters } from '@/components/exceptions'
+import { useEffect, useMemo, useState } from 'react'
+import { AlertCircle, AlertTriangle, CheckCircle2, Loader2, Sparkles } from 'lucide-react'
+import { Button, Card, CardContent, Modal, Input, Badge } from '@/components/ui'
+import { ConsolidatedExceptionCard } from '@/components/exceptions'
 import type { ConsolidatedExceptionGroup, ConsolidatedExceptionItem } from '@/components/exceptions/ConsolidatedExceptionCard'
 import type { ReconciliationException as FrontendException, ExceptionSeverity, ExceptionStatus, ExceptionType } from '@/types'
-import { useExceptions, useUpdateException, useBulkResolveExceptions } from '@/services/hooks'
-import type { ReconciliationException as ApiException } from '@/services/types'
+import { useBulkAutoResolveExceptions, useExceptionRunSummaries, useExceptions, useUpdateException } from '@/services/hooks'
+import type {
+  ReconciliationException as ApiException,
+  ExceptionRunSummary,
+  PaginatedResponse,
+  AutoResolveExceptionsRequest,
+  ExceptionStatus as ApiExceptionStatus,
+  ExceptionSeverity as ApiExceptionSeverity,
+  ExceptionType as ApiExceptionType,
+} from '@/services/types'
 
 type ExceptionViewModel = FrontendException & {
   fieldName?: string
   sourceValue?: string
   targetValue?: string
 }
+
+const PAGE_SIZE = 20
 
 const severityRank: Record<ExceptionSeverity, number> = {
   info: 1,
@@ -37,7 +47,22 @@ interface ActionDialogState {
   error: string | null
 }
 
-// Map backend severity to frontend
+function getTodayDateString(): string {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function parseStatusParam(param: string | null): ExceptionStatus | 'all' {
+  if (!param) return 'open'
+  if (param === 'open' || param === 'in_review' || param === 'acknowledged' || param === 'resolved' || param === 'ignored' || param === 'all') {
+    return param
+  }
+  return 'open'
+}
+
 function mapSeverity(backendSeverity: string): ExceptionSeverity {
   switch (backendSeverity.toUpperCase()) {
     case 'HIGH':
@@ -51,14 +76,12 @@ function mapSeverity(backendSeverity: string): ExceptionSeverity {
   }
 }
 
-// Map backend type to frontend (backend already sends uppercase matching ExceptionType)
 function mapType(backendType: string): ExceptionType {
   const upper = backendType.toUpperCase() as ExceptionType
   const valid: ExceptionType[] = [
     'MISSING_SOURCE', 'MISSING_TARGET', 'VALUE_MISMATCH',
     'DUPLICATE', 'FORMAT_ERROR', 'TOLERANCE_EXCEEDED', 'POTENTIAL_MATCH',
   ]
-  // Legacy alias
   if (upper === ('MISMATCH' as ExceptionType)) return 'VALUE_MISMATCH'
   return valid.includes(upper) ? upper : 'VALUE_MISMATCH'
 }
@@ -80,7 +103,6 @@ function mapStatus(backendStatus: string): ExceptionStatus {
   }
 }
 
-// Transform backend exception to frontend format
 function transformException(apiException: ApiException): ExceptionViewModel {
   return {
     id: apiException.id.toString(),
@@ -150,10 +172,7 @@ function consolidateExceptions(exceptions: ExceptionViewModel[]): ConsolidatedEx
 
     if (!existing) {
       const normalizedFieldName = exception.fieldName?.trim().toLowerCase()
-      const fieldSeverity =
-        normalizedFieldName
-          ? { [normalizedFieldName]: exception.severity }
-          : {}
+      const fieldSeverity = normalizedFieldName ? { [normalizedFieldName]: exception.severity } : {}
 
       groups.set(key, {
         id: key,
@@ -211,11 +230,15 @@ function consolidateExceptions(exceptions: ExceptionViewModel[]): ConsolidatedEx
 }
 
 const ExceptionsPage = () => {
+  const urlParams = new URLSearchParams(window.location.search)
+
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedReconciliationId, setSelectedReconciliationId] = useState<string>('all')
+  const [businessDate, setBusinessDate] = useState(urlParams.get('businessDate') || getTodayDateString())
+  const [selectedReconciliationId, setSelectedReconciliationId] = useState<string>(urlParams.get('reconciliationId') || 'all')
   const [selectedSeverity, setSelectedSeverity] = useState<ExceptionSeverity | 'all'>('all')
-  const [selectedStatus, setSelectedStatus] = useState<ExceptionStatus | 'all'>('all')
+  const [selectedStatus, setSelectedStatus] = useState<ExceptionStatus | 'all'>(parseStatusParam(urlParams.get('status')))
   const [selectedType, setSelectedType] = useState<ExceptionType | 'all'>('all')
+  const [currentPage, setCurrentPage] = useState(0)
   const [actionDialog, setActionDialog] = useState<ActionDialogState>({
     isOpen: false,
     exceptionId: null,
@@ -224,66 +247,70 @@ const ExceptionsPage = () => {
     error: null,
   })
 
-  // API filters
+  useEffect(() => {
+    setCurrentPage(0)
+  }, [businessDate, selectedReconciliationId, selectedSeverity, selectedStatus, selectedType])
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    params.set('view', 'exceptions')
+    params.set('businessDate', businessDate)
+    if (selectedReconciliationId !== 'all') params.set('reconciliationId', selectedReconciliationId)
+    else params.delete('reconciliationId')
+    if (selectedStatus !== 'all') params.set('status', selectedStatus)
+    else params.delete('status')
+    window.history.replaceState(window.history.state, '', `${window.location.pathname}?${params.toString()}`)
+  }, [businessDate, selectedReconciliationId, selectedStatus])
+
   const baseApiFilters = {
     status: selectedStatus !== 'all' ? selectedStatus.toUpperCase() : undefined,
     type: selectedType !== 'all' ? selectedType.toUpperCase() : undefined,
     severity: selectedSeverity !== 'all' ? selectedSeverity.toUpperCase() : undefined,
+    fromDate: businessDate,
+    toDate: businessDate,
   }
+
   const apiFilters = {
     ...baseApiFilters,
     reconciliationId: selectedReconciliationId !== 'all' ? Number(selectedReconciliationId) : undefined,
+    page: currentPage,
+    size: PAGE_SIZE,
+    sortBy: 'createdAt',
+    sortDir: 'desc' as const,
   }
 
   const { data: exceptionsResponse, isLoading, isError, error } = useExceptions(apiFilters)
-  const { data: reconciliationScopeResponse } = useExceptions(baseApiFilters)
+  const { data: runSummaryResponse } = useExceptionRunSummaries(baseApiFilters)
   const updateException = useUpdateException()
-  const bulkResolve = useBulkResolveExceptions()
+  const bulkAutoResolve = useBulkAutoResolveExceptions()
 
-  // Handle paginated response - data.content contains the array
-  const pageData = exceptionsResponse?.data as { content?: ApiException[] } | ApiException[] | undefined
-  const exceptions = useMemo(() => {
-    const apiExceptions = Array.isArray(pageData) ? pageData : (pageData?.content || [])
-    return apiExceptions.map(transformException)
-  }, [pageData])
+  const pageData = exceptionsResponse?.data as PaginatedResponse<ApiException> | ApiException[] | undefined
+  const pageContent = Array.isArray(pageData) ? pageData : pageData?.content || []
+  const totalPages = Array.isArray(pageData) ? 1 : pageData?.totalPages || 1
+  const totalElements = Array.isArray(pageData) ? pageContent.length : pageData?.totalElements || pageContent.length
 
-  const reconciliationScopePageData = reconciliationScopeResponse?.data as { content?: ApiException[] } | ApiException[] | undefined
-  const reconciliationScopeExceptions = useMemo(() => {
-    const apiExceptions = Array.isArray(reconciliationScopePageData)
-      ? reconciliationScopePageData
-      : (reconciliationScopePageData?.content || [])
-    return apiExceptions.map(transformException)
-  }, [reconciliationScopePageData])
+  const exceptions = useMemo(() => pageContent.map(transformException), [pageContent])
+  const runSummaries = useMemo(() => (runSummaryResponse?.data || []) as ExceptionRunSummary[], [runSummaryResponse])
 
-  const reconciliationOptions = useMemo(() => {
-    const map = new Map<string, string>()
-    reconciliationScopeExceptions.forEach((exception) => {
-      if (!map.has(exception.reconciliationId)) {
-        map.set(exception.reconciliationId, exception.reconciliationName)
-      }
-    })
-    return Array.from(map.entries())
-      .map(([id, name]) => ({ id, name }))
-      .sort((a, b) => a.name.localeCompare(b.name))
-  }, [reconciliationScopeExceptions])
+  const selectedRunSummary = useMemo(
+    () => runSummaries.find((run) => run.reconciliationId.toString() === selectedReconciliationId),
+    [runSummaries, selectedReconciliationId]
+  )
 
   const consolidatedGroups = useMemo(() => consolidateExceptions(exceptions), [exceptions])
 
-  // Client-side search filter (search query not sent to API)
   const filteredGroups = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
     if (!query) return consolidatedGroups
 
     return consolidatedGroups.filter((group) => {
       const exceptionText = group.exceptions
-        .map((exception) =>
-          [
-            exception.details,
-            exception.fieldName || '',
-            exception.sourceValue || '',
-            exception.targetValue || '',
-          ].join(' ')
-        )
+        .map((exception) => [
+          exception.details,
+          exception.fieldName || '',
+          exception.sourceValue || '',
+          exception.targetValue || '',
+        ].join(' '))
         .join(' ')
       const aiText = group.aiSuggestions.join(' ')
       const sourceText = stableStringify(group.sourceData || {})
@@ -299,8 +326,26 @@ const ExceptionsPage = () => {
     })
   }, [consolidatedGroups, searchQuery])
 
-  const openCount = exceptions.filter((e) => e.status === 'open').length
-  const criticalCount = exceptions.filter((e) => e.severity === 'critical' && e.status === 'open').length
+  const totalsFromRuns = useMemo(() => {
+    if (selectedRunSummary) {
+      return {
+        open: selectedRunSummary.openCount,
+        criticalOpen: selectedRunSummary.criticalOpenCount,
+        inReview: selectedRunSummary.inReviewCount,
+        aiActionable: selectedRunSummary.aiActionableCount,
+      }
+    }
+
+    return runSummaries.reduce(
+      (acc, run) => ({
+        open: acc.open + run.openCount,
+        criticalOpen: acc.criticalOpen + run.criticalOpenCount,
+        inReview: acc.inReview + run.inReviewCount,
+        aiActionable: acc.aiActionable + run.aiActionableCount,
+      }),
+      { open: 0, criticalOpen: 0, inReview: 0, aiActionable: 0 }
+    )
+  }, [runSummaries, selectedRunSummary])
 
   const handleResolve = (id: string, action: 'accept' | 'reject' | 'investigate') => {
     setActionDialog({
@@ -441,14 +486,18 @@ const ExceptionsPage = () => {
     )
   }
 
-  const handleBulkAccept = () => {
-    const highConfidence = exceptions.filter(
-      (e) => e.status === 'open' && e.aiSuggestion
-    )
-    const ids = highConfidence.map((e) => parseInt(e.id, 10))
-    if (ids.length > 0) {
-      bulkResolve.mutate({ ids, resolution: 'Bulk accepted based on AI suggestions' })
+  const handleBulkAutoResolve = () => {
+    const request: AutoResolveExceptionsRequest = {
+      reconciliationId: selectedReconciliationId !== 'all' ? Number(selectedReconciliationId) : undefined,
+      status: selectedStatus !== 'all' ? (selectedStatus.toUpperCase() as ApiExceptionStatus) : undefined,
+      type: selectedType !== 'all' ? (selectedType as ApiExceptionType) : undefined,
+      severity: selectedSeverity !== 'all' ? (selectedSeverity.toUpperCase() as ApiExceptionSeverity) : undefined,
+      fromDate: businessDate,
+      toDate: businessDate,
+      resolutionTemplate: 'Resolved automatically from AI suggestion',
+      resolvedBy: 'UI User',
     }
+    bulkAutoResolve.mutate(request)
   }
 
   if (isLoading) {
@@ -482,37 +531,33 @@ const ExceptionsPage = () => {
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header */}
       <div className="border-b p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-lg font-semibold">Exception Queue</h2>
-            <p className="text-sm text-muted-foreground">
-              Review and resolve reconciliation exceptions
-            </p>
+            <h2 className="text-lg font-semibold">Exception Workspace</h2>
+            <p className="text-sm text-muted-foreground">Run-focused triage for daily reconciliation operations</p>
           </div>
           <div className="flex gap-2">
             <Button
               variant="outline"
-              onClick={handleBulkAccept}
-              disabled={bulkResolve.isPending || openCount === 0}
+              onClick={handleBulkAutoResolve}
+              disabled={bulkAutoResolve.isPending || totalsFromRuns.aiActionable === 0}
             >
               <Sparkles className="mr-2 h-4 w-4" />
-              Accept All AI Suggestions
+              Auto-resolve AI Suggestions
             </Button>
           </div>
         </div>
 
-        {/* Summary Cards */}
-        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+        <div className="mt-4 grid gap-4 sm:grid-cols-4">
           <Card>
             <CardContent className="flex items-center gap-4 p-4">
               <div className="rounded-full bg-destructive/10 p-2">
                 <AlertTriangle className="h-5 w-5 text-destructive" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{criticalCount}</p>
-                <p className="text-sm text-muted-foreground">Critical</p>
+                <p className="text-2xl font-bold">{totalsFromRuns.criticalOpen}</p>
+                <p className="text-sm text-muted-foreground">Critical Open</p>
               </div>
             </CardContent>
           </Card>
@@ -522,69 +567,197 @@ const ExceptionsPage = () => {
                 <AlertTriangle className="h-5 w-5 text-warning" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{openCount}</p>
+                <p className="text-2xl font-bold">{totalsFromRuns.open}</p>
                 <p className="text-sm text-muted-foreground">Open</p>
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="flex items-center gap-4 p-4">
-              <div className="rounded-full bg-success/10 p-2">
-                <CheckCircle2 className="h-5 w-5 text-success" />
+              <div className="rounded-full bg-primary/10 p-2">
+                <CheckCircle2 className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">
-                  {exceptions.length - openCount}
-                </p>
-                <p className="text-sm text-muted-foreground">Resolved</p>
+                <p className="text-2xl font-bold">{totalsFromRuns.inReview}</p>
+                <p className="text-sm text-muted-foreground">In Review</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex items-center gap-4 p-4">
+              <div className="rounded-full bg-success/10 p-2">
+                <Sparkles className="h-5 w-5 text-success" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{totalsFromRuns.aiActionable}</p>
+                <p className="text-sm text-muted-foreground">AI Actionable</p>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Filters */}
-        <div className="mt-4">
-          <ExceptionFilters
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            selectedReconciliationId={selectedReconciliationId}
-            reconciliationOptions={reconciliationOptions}
-            onReconciliationChange={setSelectedReconciliationId}
-            selectedSeverity={selectedSeverity}
-            onSeverityChange={setSelectedSeverity}
-            selectedStatus={selectedStatus}
-            onStatusChange={setSelectedStatus}
-            selectedType={selectedType}
-            onTypeChange={setSelectedType}
+        <div className="mt-4 grid gap-3 lg:grid-cols-[1.2fr_1fr_1fr_1fr_1fr]">
+          <Input
+            type="search"
+            placeholder="Search exceptions..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            aria-label="Search exceptions"
           />
+          <Input
+            type="date"
+            value={businessDate}
+            onChange={(e) => setBusinessDate(e.target.value || getTodayDateString())}
+            aria-label="Business date"
+          />
+          <select
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value as ExceptionStatus | 'all')}
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+            aria-label="Filter by status"
+          >
+            <option value="all">All Status</option>
+            <option value="open">Open</option>
+            <option value="in_review">In Review</option>
+            <option value="acknowledged">Acknowledged</option>
+            <option value="resolved">Resolved</option>
+            <option value="ignored">Ignored</option>
+          </select>
+          <select
+            value={selectedSeverity}
+            onChange={(e) => setSelectedSeverity(e.target.value as ExceptionSeverity | 'all')}
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+            aria-label="Filter by severity"
+          >
+            <option value="all">All Severities</option>
+            <option value="critical">Critical</option>
+            <option value="warning">Warning</option>
+            <option value="info">Info</option>
+          </select>
+          <select
+            value={selectedType}
+            onChange={(e) => setSelectedType(e.target.value as ExceptionType | 'all')}
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+            aria-label="Filter by type"
+          >
+            <option value="all">All Types</option>
+            <option value="MISSING_SOURCE">Missing Source</option>
+            <option value="MISSING_TARGET">Missing Target</option>
+            <option value="VALUE_MISMATCH">Value Mismatch</option>
+            <option value="DUPLICATE">Duplicate</option>
+            <option value="FORMAT_ERROR">Format Error</option>
+            <option value="TOLERANCE_EXCEEDED">Tolerance Exceeded</option>
+            <option value="POTENTIAL_MATCH">Potential Match</option>
+          </select>
         </div>
+
+        {selectedReconciliationId !== 'all' && (
+          <div className="mt-3 flex items-center gap-2">
+            <Badge variant="outline">
+              Scoped to {selectedRunSummary?.reconciliationName || `Reconciliation #${selectedReconciliationId}`}
+            </Badge>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedReconciliationId('all')}
+            >
+              Clear scope
+            </Button>
+          </div>
+        )}
       </div>
 
-      {/* Exception List */}
-      <div className="flex-1 overflow-auto p-6">
-        <div className="space-y-4">
-          {filteredGroups.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <CheckCircle2 className="mx-auto h-12 w-12 text-success" />
-                <p className="mt-2 font-medium">All caught up!</p>
+      <div className="flex-1 overflow-hidden p-6">
+        <div className="grid h-full gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
+          <Card className="h-full overflow-hidden">
+            <CardContent className="h-full overflow-auto p-0">
+              <div className="border-b px-4 py-3">
+                <p className="font-semibold">Runs on {businessDate}</p>
+                <p className="text-xs text-muted-foreground">Select one reconciliation to isolate noise</p>
+              </div>
+              <div className="space-y-2 p-3">
+                <button
+                  type="button"
+                  className={`w-full rounded-md border px-3 py-2 text-left text-sm ${selectedReconciliationId === 'all' ? 'border-primary bg-primary/5' : 'border-border bg-background'}`}
+                  onClick={() => setSelectedReconciliationId('all')}
+                >
+                  <p className="font-medium">All Runs</p>
+                  <p className="text-xs text-muted-foreground">{runSummaries.length} runs in scope</p>
+                </button>
+                {runSummaries.length === 0 && (
+                  <p className="px-1 py-4 text-sm text-muted-foreground">No runs available for this date.</p>
+                )}
+                {runSummaries.map((run) => {
+                  const runId = run.reconciliationId.toString()
+                  const selected = selectedReconciliationId === runId
+                  return (
+                    <button
+                      key={run.reconciliationId}
+                      type="button"
+                      onClick={() => setSelectedReconciliationId(runId)}
+                      className={`w-full rounded-md border px-3 py-2 text-left ${selected ? 'border-primary bg-primary/5' : 'border-border bg-background hover:bg-muted/40'}`}
+                    >
+                      <p className="text-sm font-medium truncate">{run.reconciliationName}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Open: {run.openCount} | Critical: {run.criticalOpenCount}</p>
+                      <p className="text-xs text-muted-foreground">AI: {run.aiActionableCount} | Total: {run.totalInScope}</p>
+                    </button>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="flex h-full flex-col overflow-hidden">
+            <Card className="mb-4">
+              <CardContent className="flex flex-wrap items-center justify-between gap-2 p-4">
                 <p className="text-sm text-muted-foreground">
-                  {exceptions.length === 0
-                    ? 'No exceptions found. Great job!'
-                    : 'No exceptions match your current filters.'
-                  }
+                  Showing page {currentPage + 1} of {Math.max(totalPages, 1)} ({totalElements} exceptions in scope)
                 </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((page) => Math.max(0, page - 1))}
+                    disabled={currentPage === 0}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((page) => Math.min(totalPages - 1, page + 1))}
+                    disabled={currentPage >= totalPages - 1 || totalPages === 0}
+                  >
+                    Next
+                  </Button>
+                </div>
               </CardContent>
             </Card>
-          ) : (
-            filteredGroups.map((group) => (
-              <ConsolidatedExceptionCard
-                key={group.id}
-                group={group}
-                onResolve={handleResolve}
-              />
-            ))
-          )}
+
+            <div className="flex-1 overflow-auto space-y-4">
+              {filteredGroups.length === 0 ? (
+                <Card>
+                  <CardContent className="py-12 text-center">
+                    <CheckCircle2 className="mx-auto h-12 w-12 text-success" />
+                    <p className="mt-2 font-medium">All caught up!</p>
+                    <p className="text-sm text-muted-foreground">
+                      {exceptions.length === 0
+                        ? 'No exceptions found in this scope.'
+                        : 'No exceptions match your current filters.'}
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                filteredGroups.map((group) => (
+                  <ConsolidatedExceptionCard
+                    key={group.id}
+                    group={group}
+                    onResolve={handleResolve}
+                  />
+                ))
+              )}
+            </div>
+          </div>
         </div>
       </div>
 

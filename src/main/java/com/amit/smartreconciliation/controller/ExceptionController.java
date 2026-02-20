@@ -1,8 +1,11 @@
 package com.amit.smartreconciliation.controller;
 
+import com.amit.smartreconciliation.dto.request.AutoResolveExceptionsRequest;
 import com.amit.smartreconciliation.dto.request.BulkExceptionRequest;
 import com.amit.smartreconciliation.dto.request.ExceptionUpdateRequest;
+import com.amit.smartreconciliation.dto.response.AutoResolveExceptionsResponse;
 import com.amit.smartreconciliation.dto.response.ApiResponse;
+import com.amit.smartreconciliation.dto.response.ExceptionRunSummaryResponse;
 import com.amit.smartreconciliation.dto.response.ReconciliationExceptionResponse;
 import com.amit.smartreconciliation.enums.ExceptionSeverity;
 import com.amit.smartreconciliation.enums.ExceptionStatus;
@@ -14,8 +17,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -34,6 +39,8 @@ public class ExceptionController {
             @RequestParam(required = false) ExceptionType type,
             @RequestParam(required = false) ExceptionSeverity severity,
             @RequestParam(required = false) ExceptionStatus status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -45,10 +52,24 @@ public class ExceptionController {
 
         Page<ReconciliationExceptionResponse> response;
         if (reconciliationId != null) {
-            response = exceptionService.getByReconciliationId(reconciliationId, type, severity, status, pageable);
+            response = exceptionService.getByReconciliationId(
+                    reconciliationId, type, severity, status, fromDate, toDate, pageable);
         } else {
-            response = exceptionService.getAll(type, severity, status, pageable);
+            response = exceptionService.getAll(type, severity, status, fromDate, toDate, pageable);
         }
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @GetMapping("/runs")
+    public ResponseEntity<ApiResponse<List<ExceptionRunSummaryResponse>>> getRunSummaries(
+            @RequestParam(required = false) ExceptionType type,
+            @RequestParam(required = false) ExceptionSeverity severity,
+            @RequestParam(required = false) ExceptionStatus status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+
+        List<ExceptionRunSummaryResponse> response =
+                exceptionService.getRunSummaries(type, severity, status, fromDate, toDate);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -79,6 +100,13 @@ public class ExceptionController {
         List<ReconciliationExceptionResponse> response = exceptionService.bulkUpdate(request);
         String message = response.size() + " exceptions updated successfully";
         return ResponseEntity.ok(ApiResponse.success(message, response));
+    }
+
+    @PostMapping("/bulk-auto-resolve")
+    public ResponseEntity<ApiResponse<AutoResolveExceptionsResponse>> bulkAutoResolve(
+            @Valid @RequestBody AutoResolveExceptionsRequest request) {
+        AutoResolveExceptionsResponse response = exceptionService.bulkAutoResolve(request);
+        return ResponseEntity.ok(ApiResponse.success("Auto-resolve completed", response));
     }
 
     @GetMapping("/{id}/suggestions")

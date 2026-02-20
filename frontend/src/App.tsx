@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Sidebar, Header, Footer } from '@/components/layout'
 import {
   LoginPage,
@@ -12,7 +13,22 @@ import {
 import { useAppStore } from '@/store'
 
 const App = () => {
-  const { activeView, token } = useAppStore()
+  const { activeView, token, setActiveView } = useAppStore()
+
+  useEffect(() => {
+    const validViews = new Set(['home', 'chat', 'reconciliations', 'exceptions', 'rules', 'files', 'settings'])
+    const syncViewFromUrl = () => {
+      const params = new URLSearchParams(window.location.search)
+      const view = params.get('view')
+      if (view && validViews.has(view)) {
+        setActiveView(view as typeof activeView)
+      }
+    }
+
+    syncViewFromUrl()
+    window.addEventListener('popstate', syncViewFromUrl)
+    return () => window.removeEventListener('popstate', syncViewFromUrl)
+  }, [setActiveView])
 
   // Auth guard — show login if no token
   if (!token) {

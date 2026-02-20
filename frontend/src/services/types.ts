@@ -92,6 +92,56 @@ export interface ReconciliationException {
   updatedAt: string
 }
 
+export interface PaginatedResponse<T> {
+  content: T[]
+  totalElements: number
+  totalPages: number
+  size: number
+  number: number
+}
+
+export interface ExceptionQueryParams {
+  reconciliationId?: number
+  status?: string
+  type?: string
+  severity?: string
+  fromDate?: string
+  toDate?: string
+  page?: number
+  size?: number
+  sortBy?: string
+  sortDir?: 'asc' | 'desc'
+}
+
+export interface ExceptionRunSummary {
+  reconciliationId: number
+  reconciliationName: string
+  createdAt: string
+  openCount: number
+  inReviewCount: number
+  criticalOpenCount: number
+  aiActionableCount: number
+  totalInScope: number
+}
+
+export interface AutoResolveExceptionsRequest {
+  reconciliationId?: number
+  status?: ExceptionStatus
+  type?: ExceptionType
+  severity?: ExceptionSeverity
+  fromDate?: string
+  toDate?: string
+  resolutionTemplate?: string
+  resolvedBy?: string
+}
+
+export interface AutoResolveExceptionsResponse {
+  updatedCount: number
+  skippedCount: number
+  updatedIds: number[]
+  skippedReasonCounts?: Record<string, number>
+}
+
 // Uploaded file from UploadedFileResponse
 export interface UploadedFile {
   id: number

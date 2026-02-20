@@ -18,9 +18,13 @@ import type {
   CreateMatchingRuleRequest,
   ResolveExceptionRequest,
   UpdateExceptionRequest,
+  ExceptionQueryParams,
+  AutoResolveExceptionsRequest,
   ChatMessageRequest,
   AiSuggestedMapping,
 } from './types'
+import type { ApiResponse } from './api'
+import type { Reconciliation as ApiReconciliation } from './types'
 
 // Query keys for cache management
 export const queryKeys = {
@@ -31,7 +35,8 @@ export const queryKeys = {
   filePreview: (id: number) => ['files', id, 'preview'] as const,
   reconciliations: ['reconciliations'] as const,
   reconciliation: (id: number) => ['reconciliations', id] as const,
-  exceptions: (filters?: Record<string, unknown>) => ['exceptions', filters] as const,
+  exceptions: (filters?: object) => ['exceptions', filters] as const,
+  exceptionRunSummaries: (filters?: object) => ['exceptions', 'run-summaries', filters] as const,
   exception: (id: number) => ['exceptions', id] as const,
   ruleSets: ['ruleSets'] as const,
   ruleSet: (id: number) => ['ruleSets', id] as const,
@@ -120,7 +125,13 @@ export function useReconciliations(params?: {
   sort?: string
   order?: 'asc' | 'desc'
 }) {
-  return useQuery({
+  return useQuery<ApiResponse<{
+    content: ApiReconciliation[]
+    totalElements: number
+    totalPages: number
+    size: number
+    number: number
+  } | ApiReconciliation[]>>({
     queryKey: [...queryKeys.reconciliations, params],
     queryFn: () => reconciliationsApi.getAll(params),
   })
@@ -199,15 +210,17 @@ export function useBulkDeleteReconciliations() {
 // ============================================
 // Exceptions
 // ============================================
-export function useExceptions(filters?: {
-  reconciliationId?: number
-  status?: string
-  type?: string
-  severity?: string
-}) {
+export function useExceptions(filters?: ExceptionQueryParams) {
   return useQuery({
     queryKey: queryKeys.exceptions(filters),
     queryFn: () => exceptionsApi.getAll(filters),
+  })
+}
+
+export function useExceptionRunSummaries(filters?: Omit<ExceptionQueryParams, 'reconciliationId' | 'page' | 'size' | 'sortBy' | 'sortDir'>) {
+  return useQuery({
+    queryKey: queryKeys.exceptionRunSummaries(filters),
+    queryFn: () => exceptionsApi.getRunSummaries(filters),
   })
 }
 
@@ -270,6 +283,18 @@ export function useBulkIgnoreExceptions() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (ids: number[]) => exceptionsApi.bulkIgnore(ids),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['exceptions'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard })
+    },
+  })
+}
+
+export function useBulkAutoResolveExceptions() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: AutoResolveExceptionsRequest) =>
+      exceptionsApi.bulkAutoResolve(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['exceptions'] })
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard })

@@ -1,7 +1,10 @@
 package com.amit.smartreconciliation.service;
 
+import com.amit.smartreconciliation.dto.request.AutoResolveExceptionsRequest;
 import com.amit.smartreconciliation.dto.request.BulkExceptionRequest;
 import com.amit.smartreconciliation.dto.request.ExceptionUpdateRequest;
+import com.amit.smartreconciliation.dto.response.AutoResolveExceptionsResponse;
+import com.amit.smartreconciliation.dto.response.ExceptionRunSummaryResponse;
 import com.amit.smartreconciliation.dto.response.ReconciliationExceptionResponse;
 import com.amit.smartreconciliation.entity.ReconciliationException;
 import com.amit.smartreconciliation.enums.ExceptionSeverity;
@@ -21,8 +24,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -62,6 +68,26 @@ public class ExceptionService {
                 .map(ReconciliationExceptionResponse::fromEntity);
     }
 
+    public Page<ReconciliationExceptionResponse> getByReconciliationId(
+            Long reconciliationId,
+            ExceptionType type,
+            ExceptionSeverity severity,
+            ExceptionStatus status,
+            LocalDate fromDate,
+            LocalDate toDate,
+            Pageable pageable) {
+
+        return exceptionRepository.findByScope(
+                        reconciliationId,
+                        type,
+                        severity,
+                        status,
+                        toStartOfDay(fromDate),
+                        toEndExclusive(toDate),
+                        pageable)
+                .map(ReconciliationExceptionResponse::fromEntity);
+    }
+
     public Page<ReconciliationExceptionResponse> getAll(
             ExceptionType type,
             ExceptionSeverity severity,
@@ -72,10 +98,58 @@ public class ExceptionService {
                 .map(ReconciliationExceptionResponse::fromEntity);
     }
 
+    public Page<ReconciliationExceptionResponse> getAll(
+            ExceptionType type,
+            ExceptionSeverity severity,
+            ExceptionStatus status,
+            LocalDate fromDate,
+            LocalDate toDate,
+            Pageable pageable) {
+
+        return exceptionRepository.findByScope(
+                        null,
+                        type,
+                        severity,
+                        status,
+                        toStartOfDay(fromDate),
+                        toEndExclusive(toDate),
+                        pageable)
+                .map(ReconciliationExceptionResponse::fromEntity);
+    }
+
     public List<ReconciliationExceptionResponse> getAllByReconciliationId(Long reconciliationId) {
         return exceptionRepository.findByReconciliationId(reconciliationId)
                 .stream()
                 .map(ReconciliationExceptionResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    public List<ExceptionRunSummaryResponse> getRunSummaries(
+            ExceptionType type,
+            ExceptionSeverity severity,
+            ExceptionStatus status,
+            LocalDate fromDate,
+            LocalDate toDate) {
+
+        return exceptionRepository.summarizeByRun(
+                        type,
+                        severity,
+                        status,
+                        toStartOfDay(fromDate),
+                        toEndExclusive(toDate))
+                .stream()
+                .map(summary -> {
+                    ExceptionRunSummaryResponse response = new ExceptionRunSummaryResponse();
+                    response.setReconciliationId(summary.getReconciliationId());
+                    response.setReconciliationName(summary.getReconciliationName());
+                    response.setCreatedAt(summary.getReconciliationCreatedAt());
+                    response.setOpenCount(summary.getOpenCount());
+                    response.setInReviewCount(summary.getInReviewCount());
+                    response.setCriticalOpenCount(summary.getCriticalOpenCount());
+                    response.setAiActionableCount(summary.getAiActionableCount());
+                    response.setTotalInScope(summary.getTotalInScope());
+                    return response;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -169,6 +243,60 @@ public class ExceptionService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
+    public AutoResolveExceptionsResponse bulkAutoResolve(AutoResolveExceptionsRequest request) {
+        List<ReconciliationException> exceptions = exceptionRepository.findAllByScope(
+                request.getReconciliationId(),
+                request.getType(),
+                request.getSeverity(),
+                request.getStatus(),
+                toStartOfDay(request.getFromDate()),
+                toEndExclusive(request.getToDate()));
+
+        List<ReconciliationException> candidates = exceptions.stream()
+                .filter(e -> e.getStatus() == ExceptionStatus.OPEN)
+                .filter(e -> e.getAiSuggestion() != null && !e.getAiSuggestion().isBlank())
+                .collect(Collectors.toList());
+
+        Map<String, Long> skippedReasonCounts = new HashMap<>();
+        skippedReasonCounts.put("not_open", exceptions.stream().filter(e -> e.getStatus() != ExceptionStatus.OPEN).count());
+        skippedReasonCounts.put("missing_ai_suggestion", exceptions.stream()
+                .filter(e -> e.getStatus() == ExceptionStatus.OPEN)
+                .filter(e -> e.getAiSuggestion() == null || e.getAiSuggestion().isBlank())
+                .count());
+
+        UserRole role = getCurrentUserRole();
+        for (ReconciliationException exception : candidates) {
+            if (!permissionService.canAction(role, exception.getType())) {
+                throw new AccessDeniedException(
+                        "You do not have permission to action exception type: " + exception.getType());
+            }
+        }
+
+        String resolutionTemplate = request.getResolutionTemplate() != null
+                ? request.getResolutionTemplate()
+                : "Resolved automatically from AI suggestion";
+        String resolvedBy = request.getResolvedBy() != null
+                ? request.getResolvedBy()
+                : "AI Auto Resolver";
+        LocalDateTime now = LocalDateTime.now();
+
+        for (ReconciliationException exception : candidates) {
+            exception.setStatus(ExceptionStatus.RESOLVED);
+            exception.setResolution(resolutionTemplate);
+            exception.setResolvedBy(resolvedBy);
+            exception.setResolvedAt(now);
+        }
+
+        List<ReconciliationException> saved = exceptionRepository.saveAll(candidates);
+        AutoResolveExceptionsResponse response = new AutoResolveExceptionsResponse();
+        response.setUpdatedCount(saved.size());
+        response.setSkippedCount(Math.max(0, exceptions.size() - saved.size()));
+        response.setUpdatedIds(saved.stream().map(ReconciliationException::getId).toList());
+        response.setSkippedReasonCounts(skippedReasonCounts);
+        return response;
+    }
+
     public String getSuggestion(Long id) {
         ReconciliationException exception = exceptionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ReconciliationException", id));
@@ -205,5 +333,13 @@ public class ExceptionService {
 
     public ExceptionSeverity assignSeverity(boolean isKeyField) {
         return isKeyField ? ExceptionSeverity.CRITICAL : ExceptionSeverity.MEDIUM;
+    }
+
+    private LocalDateTime toStartOfDay(LocalDate date) {
+        return date != null ? date.atStartOfDay() : null;
+    }
+
+    private LocalDateTime toEndExclusive(LocalDate date) {
+        return date != null ? date.plusDays(1).atStartOfDay() : null;
     }
 }

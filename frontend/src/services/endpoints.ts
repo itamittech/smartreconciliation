@@ -4,6 +4,11 @@ import type {
   DashboardMetrics,
   Reconciliation,
   ReconciliationException,
+  PaginatedResponse,
+  ExceptionQueryParams,
+  ExceptionRunSummary,
+  AutoResolveExceptionsRequest,
+  AutoResolveExceptionsResponse,
   UploadedFile,
   RuleSet,
   FieldMapping,
@@ -91,14 +96,30 @@ export const reconciliationsApi = {
 // Exceptions
 // ============================================
 export const exceptionsApi = {
-  getAll: (filters?: { reconciliationId?: number; status?: string; type?: string; severity?: string }) => {
+  getAll: (filters?: ExceptionQueryParams) => {
     const params = new URLSearchParams()
     if (filters?.reconciliationId) params.append('reconciliationId', filters.reconciliationId.toString())
     if (filters?.status) params.append('status', filters.status)
     if (filters?.type) params.append('type', filters.type)
     if (filters?.severity) params.append('severity', filters.severity)
+    if (filters?.fromDate) params.append('fromDate', filters.fromDate)
+    if (filters?.toDate) params.append('toDate', filters.toDate)
+    if (filters?.page !== undefined) params.append('page', filters.page.toString())
+    if (filters?.size !== undefined) params.append('size', filters.size.toString())
+    if (filters?.sortBy) params.append('sortBy', filters.sortBy)
+    if (filters?.sortDir) params.append('sortDir', filters.sortDir)
     const queryString = params.toString()
-    return get<ReconciliationException[]>(`/exceptions${queryString ? `?${queryString}` : ''}`)
+    return get<PaginatedResponse<ReconciliationException> | ReconciliationException[]>(`/exceptions${queryString ? `?${queryString}` : ''}`)
+  },
+  getRunSummaries: (filters?: Omit<ExceptionQueryParams, 'reconciliationId' | 'page' | 'size' | 'sortBy' | 'sortDir'>) => {
+    const params = new URLSearchParams()
+    if (filters?.status) params.append('status', filters.status)
+    if (filters?.type) params.append('type', filters.type)
+    if (filters?.severity) params.append('severity', filters.severity)
+    if (filters?.fromDate) params.append('fromDate', filters.fromDate)
+    if (filters?.toDate) params.append('toDate', filters.toDate)
+    const queryString = params.toString()
+    return get<ExceptionRunSummary[]>(`/exceptions/runs${queryString ? `?${queryString}` : ''}`)
   },
   getById: (id: number) => get<ReconciliationException>(`/exceptions/${id}`),
   update: (id: number, data: UpdateExceptionRequest) =>
@@ -110,6 +131,8 @@ export const exceptionsApi = {
     post<ReconciliationException[]>('/exceptions/bulk-resolve', { ids, resolution }),
   bulkIgnore: (ids: number[]) =>
     post<ReconciliationException[]>('/exceptions/bulk-ignore', { ids }),
+  bulkAutoResolve: (data: AutoResolveExceptionsRequest) =>
+    post<AutoResolveExceptionsResponse>('/exceptions/bulk-auto-resolve', data),
 }
 
 // ============================================

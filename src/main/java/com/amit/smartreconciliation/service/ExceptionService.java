@@ -13,11 +13,13 @@ import com.amit.smartreconciliation.enums.ExceptionType;
 import com.amit.smartreconciliation.enums.UserRole;
 import com.amit.smartreconciliation.exception.ResourceNotFoundException;
 import com.amit.smartreconciliation.repository.ReconciliationExceptionRepository;
+import com.amit.smartreconciliation.repository.ReconciliationExceptionSpec;
 import com.amit.smartreconciliation.security.CustomUserDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -77,14 +80,9 @@ public class ExceptionService {
             LocalDate toDate,
             Pageable pageable) {
 
-        return exceptionRepository.findByScope(
-                        reconciliationId,
-                        type,
-                        severity,
-                        status,
-                        toStartOfDay(fromDate),
-                        toEndExclusive(toDate),
-                        pageable)
+        Specification<ReconciliationException> spec = buildSpec(
+                reconciliationId, type, severity, status, fromDate, toDate);
+        return exceptionRepository.findAll(spec, pageable)
                 .map(ReconciliationExceptionResponse::fromEntity);
     }
 
@@ -94,7 +92,9 @@ public class ExceptionService {
             ExceptionStatus status,
             Pageable pageable) {
 
-        return exceptionRepository.findAllByFilters(type, severity, status, pageable)
+        Specification<ReconciliationException> spec = buildSpec(
+                null, type, severity, status, null, null);
+        return exceptionRepository.findAll(spec, pageable)
                 .map(ReconciliationExceptionResponse::fromEntity);
     }
 
@@ -106,14 +106,9 @@ public class ExceptionService {
             LocalDate toDate,
             Pageable pageable) {
 
-        return exceptionRepository.findByScope(
-                        null,
-                        type,
-                        severity,
-                        status,
-                        toStartOfDay(fromDate),
-                        toEndExclusive(toDate),
-                        pageable)
+        Specification<ReconciliationException> spec = buildSpec(
+                null, type, severity, status, fromDate, toDate);
+        return exceptionRepository.findAll(spec, pageable)
                 .map(ReconciliationExceptionResponse::fromEntity);
     }
 
@@ -131,25 +126,36 @@ public class ExceptionService {
             LocalDate fromDate,
             LocalDate toDate) {
 
-        return exceptionRepository.summarizeByRun(
-                        type,
-                        severity,
-                        status,
-                        toStartOfDay(fromDate),
-                        toEndExclusive(toDate))
-                .stream()
-                .map(summary -> {
+        Specification<ReconciliationException> spec = buildSpec(
+                null, type, severity, status, fromDate, toDate);
+        List<ReconciliationException> exceptions = exceptionRepository.findAll(spec);
+
+        return exceptions.stream()
+                .collect(Collectors.groupingBy(e -> e.getReconciliation().getId()))
+                .entrySet().stream()
+                .map(entry -> {
+                    List<ReconciliationException> group = entry.getValue();
+                    ReconciliationException first = group.get(0);
                     ExceptionRunSummaryResponse response = new ExceptionRunSummaryResponse();
-                    response.setReconciliationId(summary.getReconciliationId());
-                    response.setReconciliationName(summary.getReconciliationName());
-                    response.setCreatedAt(summary.getReconciliationCreatedAt());
-                    response.setOpenCount(summary.getOpenCount());
-                    response.setInReviewCount(summary.getInReviewCount());
-                    response.setCriticalOpenCount(summary.getCriticalOpenCount());
-                    response.setAiActionableCount(summary.getAiActionableCount());
-                    response.setTotalInScope(summary.getTotalInScope());
+                    response.setReconciliationId(first.getReconciliation().getId());
+                    response.setReconciliationName(first.getReconciliation().getName());
+                    response.setCreatedAt(first.getReconciliation().getCreatedAt());
+                    response.setOpenCount(group.stream()
+                            .filter(e -> e.getStatus() == ExceptionStatus.OPEN).count());
+                    response.setInReviewCount(group.stream()
+                            .filter(e -> e.getStatus() == ExceptionStatus.IN_REVIEW).count());
+                    response.setCriticalOpenCount(group.stream()
+                            .filter(e -> e.getStatus() == ExceptionStatus.OPEN
+                                    && e.getSeverity() == ExceptionSeverity.CRITICAL).count());
+                    response.setAiActionableCount(group.stream()
+                            .filter(e -> e.getStatus() == ExceptionStatus.OPEN
+                                    && e.getAiSuggestion() != null
+                                    && !e.getAiSuggestion().isBlank()).count());
+                    response.setTotalInScope((long) group.size());
                     return response;
                 })
+                .sorted(Comparator.comparing(ExceptionRunSummaryResponse::getCreatedAt,
+                        Comparator.nullsLast(Comparator.reverseOrder())))
                 .collect(Collectors.toList());
     }
 
@@ -245,13 +251,14 @@ public class ExceptionService {
 
     @Transactional
     public AutoResolveExceptionsResponse bulkAutoResolve(AutoResolveExceptionsRequest request) {
-        List<ReconciliationException> exceptions = exceptionRepository.findAllByScope(
+        Specification<ReconciliationException> spec = buildSpec(
                 request.getReconciliationId(),
                 request.getType(),
                 request.getSeverity(),
                 request.getStatus(),
-                toStartOfDay(request.getFromDate()),
-                toEndExclusive(request.getToDate()));
+                request.getFromDate(),
+                request.getToDate());
+        List<ReconciliationException> exceptions = exceptionRepository.findAll(spec);
 
         List<ReconciliationException> candidates = exceptions.stream()
                 .filter(e -> e.getStatus() == ExceptionStatus.OPEN)
@@ -333,6 +340,22 @@ public class ExceptionService {
 
     public ExceptionSeverity assignSeverity(boolean isKeyField) {
         return isKeyField ? ExceptionSeverity.CRITICAL : ExceptionSeverity.MEDIUM;
+    }
+
+    private Specification<ReconciliationException> buildSpec(
+            Long reconciliationId,
+            ExceptionType type,
+            ExceptionSeverity severity,
+            ExceptionStatus status,
+            LocalDate fromDate,
+            LocalDate toDate) {
+        return Specification
+                .where(ReconciliationExceptionSpec.withReconciliationId(reconciliationId))
+                .and(ReconciliationExceptionSpec.withType(type))
+                .and(ReconciliationExceptionSpec.withSeverity(severity))
+                .and(ReconciliationExceptionSpec.withStatus(status))
+                .and(ReconciliationExceptionSpec.withFromCreatedAt(toStartOfDay(fromDate)))
+                .and(ReconciliationExceptionSpec.withToCreatedAt(toEndExclusive(toDate)));
     }
 
     private LocalDateTime toStartOfDay(LocalDate date) {

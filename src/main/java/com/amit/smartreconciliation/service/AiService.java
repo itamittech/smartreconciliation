@@ -3,7 +3,9 @@ package com.amit.smartreconciliation.service;
 import com.amit.smartreconciliation.dto.request.AiMappingSuggestionRequest;
 import com.amit.smartreconciliation.dto.response.AiMappingSuggestionResponse;
 import com.amit.smartreconciliation.dto.response.AiRuleSuggestionResponse;
+import com.amit.smartreconciliation.dto.response.DomainDetectionResponse;
 import com.amit.smartreconciliation.dto.response.SchemaResponse;
+import com.amit.smartreconciliation.enums.KnowledgeDomain;
 import com.amit.smartreconciliation.entity.FieldMapping;
 import com.amit.smartreconciliation.exception.AiServiceException;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -103,6 +105,51 @@ public class AiService {
         } catch (Exception e) {
             log.error("Error getting AI exception suggestion: {}", e.getMessage(), e);
             throw new AiServiceException("Failed to get exception suggestion: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Classify a text sample into a KnowledgeDomain using the LLM.
+     * Returns GENERAL with confidence 0.5 if classification fails.
+     */
+    public DomainDetectionResponse detectDomain(String sampleContent) {
+        String truncated = sampleContent != null && sampleContent.length() > 2000
+                ? sampleContent.substring(0, 2000)
+                : sampleContent;
+
+        String prompt = """
+                Classify the following text into exactly one reconciliation domain.
+                Domains: BANKING, TRADING, ACCOUNTS_PAYABLE, INVENTORY, INTERCOMPANY, ECOMMERCE, TECHNICAL, GENERAL
+                Return ONLY valid JSON with no markdown fences: {"domain":"<DOMAIN>","confidence":<0.0-1.0>}
+
+                Text:
+                """ + truncated;
+
+        try {
+            String response = ChatClient.create(chatModel).prompt()
+                    .user(prompt)
+                    .call()
+                    .content();
+
+            String cleaned = response.trim()
+                    .replaceAll("(?s)^```json", "").replaceAll("(?s)^```", "").replaceAll("```$", "").trim();
+
+            JsonNode node = objectMapper.readTree(cleaned);
+            String domainStr = node.has("domain") ? node.get("domain").asText("GENERAL") : "GENERAL";
+            double confidence = node.has("confidence") ? node.get("confidence").asDouble(0.5) : 0.5;
+
+            KnowledgeDomain domain;
+            try {
+                domain = KnowledgeDomain.valueOf(domainStr.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                log.warn("LLM returned unknown domain '{}', defaulting to GENERAL", domainStr);
+                domain = KnowledgeDomain.GENERAL;
+            }
+
+            return new DomainDetectionResponse(domain, confidence);
+        } catch (Exception e) {
+            log.warn("Domain detection failed: {}", e.getMessage());
+            return new DomainDetectionResponse(KnowledgeDomain.GENERAL, 0.5);
         }
     }
 

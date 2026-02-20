@@ -51,6 +51,9 @@ class ChatContextServiceTest {
     @Mock
     private DashboardService dashboardService;
 
+    @Mock
+    private PromptTemplateService promptTemplateService;
+
     private ChatContextService contextService;
 
     private Organization testOrganization;
@@ -67,7 +70,8 @@ class ChatContextServiceTest {
             exceptionRepository,
             ruleSetRepository,
             fileRepository,
-            dashboardService
+            dashboardService,
+            promptTemplateService
         );
 
         // Setup test data

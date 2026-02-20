@@ -3,9 +3,12 @@ package com.amit.smartreconciliation.service;
 import com.amit.smartreconciliation.dto.request.AiMappingSuggestionRequest;
 import com.amit.smartreconciliation.dto.response.AiMappingSuggestionResponse;
 import com.amit.smartreconciliation.dto.response.AiRuleSuggestionResponse;
+import com.amit.smartreconciliation.dto.response.DomainDetectionResponse;
 import com.amit.smartreconciliation.dto.response.SchemaResponse;
+import com.amit.smartreconciliation.enums.KnowledgeDomain;
 import com.amit.smartreconciliation.entity.FieldMapping;
 import com.amit.smartreconciliation.exception.AiServiceException;
+import com.amit.smartreconciliation.security.SecurityUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,18 +35,21 @@ public class AiService {
     private final ObjectMapper objectMapper;
     private final ChatContextService chatContextService;
     private final PromptTemplateService promptTemplateService;
+    private final KnowledgeRetrievalService knowledgeRetrievalService;
     private final ChatClient chatClient;
 
     public AiService(ChatModel chatModel,
                      FileUploadService fileUploadService,
                      ObjectMapper objectMapper,
                      ChatContextService chatContextService,
-                     PromptTemplateService promptTemplateService) {
+                     PromptTemplateService promptTemplateService,
+                     KnowledgeRetrievalService knowledgeRetrievalService) {
         this.chatModel = chatModel;
         this.fileUploadService = fileUploadService;
         this.objectMapper = objectMapper;
         this.chatContextService = chatContextService;
         this.promptTemplateService = promptTemplateService;
+        this.knowledgeRetrievalService = knowledgeRetrievalService;
 
         // Build ChatClient - Spring AI will auto-discover @Tool annotated methods from @Component classes
         this.chatClient = ChatClient.builder(chatModel).build();
@@ -55,6 +61,12 @@ public class AiService {
             SchemaResponse targetSchema = fileUploadService.getSchema(request.getTargetFileId());
 
             String prompt = buildMappingSuggestionPrompt(sourceSchema, targetSchema);
+
+            // RAG: prepend domain knowledge if available
+            String ragQuery = "column mapping field definitions: "
+                    + formatColumnNames(sourceSchema.getColumns())
+                    + " " + formatColumnNames(targetSchema.getColumns());
+            prompt = prependKnowledge(prompt, ragQuery, KnowledgeDomain.GENERAL);
 
             ChatClient chatClient = ChatClient.create(chatModel);
             String response = chatClient.prompt()
@@ -77,6 +89,10 @@ public class AiService {
 
             String prompt = buildRuleSuggestionPrompt(sourceSchema, targetSchema, mappings);
 
+            // RAG: prepend domain knowledge if available
+            String ragQuery = "matching rules tolerances for: " + formatFieldMappings(mappings);
+            prompt = prependKnowledge(prompt, ragQuery, KnowledgeDomain.GENERAL);
+
             ChatClient chatClient = ChatClient.create(chatModel);
             String response = chatClient.prompt()
                     .user(prompt)
@@ -95,6 +111,10 @@ public class AiService {
         try {
             String prompt = buildExceptionSuggestionPrompt(exceptionType, sourceValue, targetValue, fieldName, context);
 
+            // RAG: prepend domain knowledge if available
+            String ragQuery = exceptionType + " " + fieldName + " resolution strategy";
+            prompt = prependKnowledge(prompt, ragQuery, KnowledgeDomain.GENERAL);
+
             ChatClient chatClient = ChatClient.create(chatModel);
             return chatClient.prompt()
                     .user(prompt)
@@ -103,6 +123,51 @@ public class AiService {
         } catch (Exception e) {
             log.error("Error getting AI exception suggestion: {}", e.getMessage(), e);
             throw new AiServiceException("Failed to get exception suggestion: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Classify a text sample into a KnowledgeDomain using the LLM.
+     * Returns GENERAL with confidence 0.5 if classification fails.
+     */
+    public DomainDetectionResponse detectDomain(String sampleContent) {
+        String truncated = sampleContent != null && sampleContent.length() > 2000
+                ? sampleContent.substring(0, 2000)
+                : sampleContent;
+
+        String prompt = """
+                Classify the following text into exactly one reconciliation domain.
+                Domains: BANKING, TRADING, ACCOUNTS_PAYABLE, INVENTORY, INTERCOMPANY, ECOMMERCE, TECHNICAL, GENERAL
+                Return ONLY valid JSON with no markdown fences: {"domain":"<DOMAIN>","confidence":<0.0-1.0>}
+
+                Text:
+                """ + truncated;
+
+        try {
+            String response = ChatClient.create(chatModel).prompt()
+                    .user(prompt)
+                    .call()
+                    .content();
+
+            String cleaned = response.trim()
+                    .replaceAll("(?s)^```json", "").replaceAll("(?s)^```", "").replaceAll("```$", "").trim();
+
+            JsonNode node = objectMapper.readTree(cleaned);
+            String domainStr = node.has("domain") ? node.get("domain").asText("GENERAL") : "GENERAL";
+            double confidence = node.has("confidence") ? node.get("confidence").asDouble(0.5) : 0.5;
+
+            KnowledgeDomain domain;
+            try {
+                domain = KnowledgeDomain.valueOf(domainStr.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                log.warn("LLM returned unknown domain '{}', defaulting to GENERAL", domainStr);
+                domain = KnowledgeDomain.GENERAL;
+            }
+
+            return new DomainDetectionResponse(domain, confidence);
+        } catch (Exception e) {
+            log.warn("Domain detection failed: {}", e.getMessage());
+            return new DomainDetectionResponse(KnowledgeDomain.GENERAL, 0.5);
         }
     }
 
@@ -140,6 +205,34 @@ public class AiService {
             log.error("Error in AI chat: {}", e.getMessage(), e);
             throw new AiServiceException("Chat error: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Fetches relevant knowledge snippets and prepends them to the prompt under
+     * a "## DOMAIN KNOWLEDGE" heading. No-ops silently if the knowledge base is
+     * empty or the vector store call fails.
+     */
+    private String prependKnowledge(String prompt, String query, KnowledgeDomain domain) {
+        try {
+            Long orgId = SecurityUtils.getCurrentOrgId();
+            List<String> snippets = knowledgeRetrievalService.search(query, domain, orgId);
+            if (snippets.isEmpty()) {
+                return prompt;
+            }
+            String knowledgeBlock = "\n\n## DOMAIN KNOWLEDGE\n"
+                    + snippets.stream().map(s -> "- " + s).collect(Collectors.joining("\n"))
+                    + "\n\n";
+            log.debug("RAG: injecting {} knowledge snippets for query='{}'", snippets.size(), query);
+            return knowledgeBlock + prompt;
+        } catch (Exception e) {
+            log.debug("RAG knowledge lookup skipped: {}", e.getMessage());
+            return prompt;
+        }
+    }
+
+    private String formatColumnNames(List<SchemaResponse.ColumnSchema> columns) {
+        if (columns == null || columns.isEmpty()) return "";
+        return columns.stream().map(SchemaResponse.ColumnSchema::getName).collect(Collectors.joining(", "));
     }
 
     private String buildMappingSuggestionPrompt(SchemaResponse sourceSchema, SchemaResponse targetSchema) {

@@ -33,7 +33,7 @@ function getStore() {
 let isRefreshing = false
 
 // Base fetch wrapper with auth header + 401 refresh handling
-async function fetchApi<T>(
+export async function fetchApi<T>(
   endpoint: string,
   options: RequestInit = {},
   skipAuthRetry = false

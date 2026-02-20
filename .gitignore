@@ -141,3 +141,4 @@ serviceAccountKey.json
 
 ### Maven Wrapper Downloaded ###
 .mvn/wrapper/maven-wrapper.jar
+.worktrees/

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { AlertCircle, AlertTriangle, Check, ChevronDown, ChevronRight, Info, Sparkles, X } from 'lucide-react'
 import { Badge, Button, Card, CardContent } from '@/components/ui'
 import type { ExceptionSeverity, ExceptionStatus, ExceptionType } from '@/types'
+import type { KnowledgeDomain } from '@/services/types'
 import { cn } from '@/lib/utils'
 
 export interface ConsolidatedExceptionItem {
@@ -23,6 +24,7 @@ export interface ConsolidatedExceptionGroup {
   id: string
   reconciliationId: string
   reconciliationName: string
+  domain?: KnowledgeDomain
   sourceRecordId?: string
   targetRecordId?: string
   sourceData?: Record<string, unknown>
@@ -57,6 +59,17 @@ const statusLabelMap: Record<ExceptionStatus, string> = {
   in_review: 'In Review',
   resolved: 'Resolved',
   ignored: 'Ignored',
+}
+
+const DOMAIN_LABELS: Record<KnowledgeDomain, string> = {
+  BANKING: 'Banking',
+  TRADING: 'Trading',
+  ACCOUNTS_PAYABLE: 'Accounts Payable',
+  INVENTORY: 'Inventory',
+  INTERCOMPANY: 'Intercompany',
+  ECOMMERCE: 'E-Commerce',
+  TECHNICAL: 'Technical',
+  GENERAL: 'General',
 }
 
 const severityBadge = (severity: ExceptionSeverity) => {
@@ -162,6 +175,9 @@ const ConsolidatedExceptionCard = ({ group, onResolve }: ConsolidatedExceptionCa
           <div className="flex items-center gap-2">
             <Badge variant={highestSeverity.variant}>{highestSeverity.label}</Badge>
             <Badge variant="outline">{group.reconciliationName}</Badge>
+            {group.domain && (
+              <Badge variant="secondary">{DOMAIN_LABELS[group.domain] ?? group.domain}</Badge>
+            )}
             <Badge variant={group.status === 'open' ? 'outline' : 'secondary'}>
               {statusLabel}
             </Badge>
@@ -348,4 +364,3 @@ const ConsolidatedExceptionCard = ({ group, onResolve }: ConsolidatedExceptionCa
 }
 
 export { ConsolidatedExceptionCard }
-

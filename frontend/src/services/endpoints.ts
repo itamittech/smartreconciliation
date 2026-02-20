@@ -82,6 +82,11 @@ export const reconciliationsApi = {
     return get<Reconciliation[]>('/reconciliations')
   },
   getById: (id: number) => get<Reconciliation>(`/reconciliations/${id}`),
+  detectDomain: (sourceFileId: number, targetFileId: number) =>
+    post<DomainDetectionResult>('/reconciliations/detect-domain', {
+      sourceFileId,
+      targetFileId,
+    }),
   create: (data: CreateReconciliationRequest) =>
     post<Reconciliation>('/reconciliations', data),
   start: (id: number) => post<Reconciliation>(`/reconciliations/${id}/start`),
@@ -201,16 +206,23 @@ export const chatApi = {
 // AI
 // ============================================
 export const aiApi = {
-  suggestMappings: (sourceFileId: number, targetFileId: number) =>
+  suggestMappings: (sourceFileId: number, targetFileId: number, domain?: KnowledgeDomain) =>
     post<AiMappingSuggestionResult>('/ai/suggest-mappings', {
       sourceFileId,
       targetFileId,
+      domain,
     }),
-  suggestRules: (sourceFileId: number, targetFileId: number, mappings: AiSuggestedMapping[]) =>
+  suggestRules: (
+    sourceFileId: number,
+    targetFileId: number,
+    mappings: AiSuggestedMapping[],
+    domain?: KnowledgeDomain
+  ) =>
     post<AiRuleSuggestionResult>('/ai/suggest-rules', {
       sourceFileId,
       targetFileId,
       mappings,
+      domain,
     }),
   suggestResolution: (exceptionId: number) =>
     post<{ suggestion: string }>(`/ai/suggest-resolution/${exceptionId}`),

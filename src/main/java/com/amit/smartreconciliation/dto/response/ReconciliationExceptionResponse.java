@@ -4,6 +4,7 @@ import com.amit.smartreconciliation.entity.ReconciliationException;
 import com.amit.smartreconciliation.enums.ExceptionSeverity;
 import com.amit.smartreconciliation.enums.ExceptionStatus;
 import com.amit.smartreconciliation.enums.ExceptionType;
+import com.amit.smartreconciliation.enums.KnowledgeDomain;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -12,6 +13,7 @@ public class ReconciliationExceptionResponse {
     private ExceptionType type;
     private ExceptionSeverity severity;
     private ExceptionStatus status;
+    private KnowledgeDomain domain;
     private String description;
     private String fieldName;
     private String sourceValue;
@@ -38,6 +40,7 @@ public class ReconciliationExceptionResponse {
         r.type = entity.getType();
         r.severity = entity.getSeverity();
         r.status = entity.getStatus();
+        r.domain = entity.getDomain();
         r.description = entity.getDescription();
         r.fieldName = entity.getFieldName();
         r.sourceValue = entity.getSourceValue();
@@ -62,6 +65,7 @@ public class ReconciliationExceptionResponse {
     public ExceptionType getType() { return type; }
     public ExceptionSeverity getSeverity() { return severity; }
     public ExceptionStatus getStatus() { return status; }
+    public KnowledgeDomain getDomain() { return domain; }
     public String getDescription() { return description; }
     public String getFieldName() { return fieldName; }
     public String getSourceValue() { return sourceValue; }

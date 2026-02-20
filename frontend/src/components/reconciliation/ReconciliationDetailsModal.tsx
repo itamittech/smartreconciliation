@@ -2,6 +2,7 @@ import { X, CheckCircle2, Clock, XCircle, FileText, GitBranch } from 'lucide-rea
 import { Button, Card, Badge } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import type { Reconciliation } from '@/services/types'
+import type { KnowledgeDomain } from '@/services/types'
 
 const statusConfig: Record<
   string,
@@ -16,6 +17,17 @@ const statusConfig: Record<
 interface ReconciliationDetailsModalProps {
   reconciliation: Reconciliation
   onClose: () => void
+}
+
+const DOMAIN_LABELS: Record<KnowledgeDomain, string> = {
+  BANKING: 'Banking',
+  TRADING: 'Trading',
+  ACCOUNTS_PAYABLE: 'Accounts Payable',
+  INVENTORY: 'Inventory',
+  INTERCOMPANY: 'Intercompany',
+  ECOMMERCE: 'E-Commerce',
+  TECHNICAL: 'Technical',
+  GENERAL: 'General',
 }
 
 export function ReconciliationDetailsModal({ reconciliation, onClose }: ReconciliationDetailsModalProps) {
@@ -60,6 +72,12 @@ export function ReconciliationDetailsModal({ reconciliation, onClose }: Reconcil
               <Badge variant={config.variant} pulse={reconciliation.status === 'IN_PROGRESS'}>
                 <StatusIcon className="mr-1 h-3 w-3" />
                 {config.label}
+              </Badge>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 mb-1">Domain</p>
+              <Badge variant="secondary">
+                {DOMAIN_LABELS[reconciliation.domain] ?? reconciliation.domain}
               </Badge>
             </div>
             <div>

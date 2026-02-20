@@ -26,8 +26,14 @@ import {
   useAddFieldMapping,
   useAddMatchingRule,
   useUploadFile,
+  useDetectReconciliationDomain,
 } from '@/services/hooks'
-import type { AiSuggestedMapping, AiSuggestedRule } from '@/services/types'
+import type {
+  AiSuggestedMapping,
+  AiSuggestedRule,
+  DomainDetectionResult,
+  KnowledgeDomain,
+} from '@/services/types'
 
 type RulesStepMode = 'choose' | 'analyzing-mappings' | 'review-mappings' | 'analyzing-rules' | 'review-rules' | 'manual'
 
@@ -45,6 +51,29 @@ interface WizardState {
   sourceFileId: number | null
   targetFileId: number | null
   ruleSetId: number | null
+  domain: KnowledgeDomain | null
+}
+
+const RECONCILIATION_DOMAINS: KnowledgeDomain[] = [
+  'BANKING',
+  'TRADING',
+  'ACCOUNTS_PAYABLE',
+  'INVENTORY',
+  'INTERCOMPANY',
+  'ECOMMERCE',
+  'TECHNICAL',
+  'GENERAL',
+]
+
+const DOMAIN_LABELS: Record<KnowledgeDomain, string> = {
+  BANKING: 'Banking',
+  TRADING: 'Trading',
+  ACCOUNTS_PAYABLE: 'Accounts Payable',
+  INVENTORY: 'Inventory',
+  INTERCOMPANY: 'Intercompany',
+  ECOMMERCE: 'E-Commerce',
+  TECHNICAL: 'Technical',
+  GENERAL: 'General',
 }
 
 interface CreateReconciliationWizardProps {
@@ -84,6 +113,7 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
     sourceFileId: null,
     targetFileId: null,
     ruleSetId: null,
+    domain: null,
   })
 
   // AI Analysis state
@@ -92,6 +122,7 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
   const [acceptedRules, setAcceptedRules] = useState<AcceptedRule[]>([])
   const [aiExplanation, setAiExplanation] = useState<string>('')
   const [aiError, setAiError] = useState<string | null>(null)
+  const [detectedDomain, setDetectedDomain] = useState<DomainDetectionResult | null>(null)
   const [isCreatingRuleSet, setIsCreatingRuleSet] = useState(false)
 
   const { data: filesResponse, isLoading: filesLoading } = useFiles()
@@ -99,6 +130,7 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
   const createReconciliation = useCreateReconciliation()
   const suggestMappings = useSuggestMappings()
   const suggestRules = useSuggestRules()
+  const detectReconciliationDomain = useDetectReconciliationDomain()
   const createRuleSet = useCreateRuleSet()
   const addFieldMapping = useAddFieldMapping()
   const addMatchingRule = useAddMatchingRule()
@@ -125,7 +157,7 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
         )
       }
       case 3:
-        return wizardState.ruleSetId !== null
+        return wizardState.ruleSetId !== null && wizardState.domain !== null
       default:
         return false
     }
@@ -140,7 +172,7 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
   }
 
   const handleCreate = () => {
-    if (!wizardState.sourceFileId || !wizardState.targetFileId || !wizardState.ruleSetId) return
+    if (!wizardState.sourceFileId || !wizardState.targetFileId || !wizardState.ruleSetId || !wizardState.domain) return
     createReconciliation.mutate(
       {
         name: wizardState.name,
@@ -148,6 +180,7 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
         sourceFileId: wizardState.sourceFileId,
         targetFileId: wizardState.targetFileId,
         ruleSetId: wizardState.ruleSetId,
+        domain: wizardState.domain,
       },
       {
         onSuccess: () => {
@@ -159,11 +192,15 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
   }
 
   const handleAnalyzeMappings = () => {
-    if (!wizardState.sourceFileId || !wizardState.targetFileId) return
+    if (!wizardState.sourceFileId || !wizardState.targetFileId || !wizardState.domain) return
     setAiError(null)
     setRulesMode('analyzing-mappings')
     suggestMappings.mutate(
-      { sourceFileId: wizardState.sourceFileId, targetFileId: wizardState.targetFileId },
+      {
+        sourceFileId: wizardState.sourceFileId,
+        targetFileId: wizardState.targetFileId,
+        domain: wizardState.domain,
+      },
       {
         onSuccess: (res) => {
           const data = res.data
@@ -180,12 +217,17 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
   }
 
   const handleAnalyzeRules = () => {
-    if (!wizardState.sourceFileId || !wizardState.targetFileId) return
+    if (!wizardState.sourceFileId || !wizardState.targetFileId || !wizardState.domain) return
     const acceptedOnly = acceptedMappings.filter((m) => m.accepted)
     setAiError(null)
     setRulesMode('analyzing-rules')
     suggestRules.mutate(
-      { sourceFileId: wizardState.sourceFileId, targetFileId: wizardState.targetFileId, mappings: acceptedOnly },
+      {
+        sourceFileId: wizardState.sourceFileId,
+        targetFileId: wizardState.targetFileId,
+        mappings: acceptedOnly,
+        domain: wizardState.domain,
+      },
       {
         onSuccess: (res) => {
           const data = res.data
@@ -255,9 +297,11 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
         onSuccess: (res) => {
           const newId = res.data?.id
           if (newId) {
+            setDetectedDomain(null)
             setWizardState((prev) => ({
               ...prev,
               [role === 'source' ? 'sourceFileId' : 'targetFileId']: newId,
+              domain: null,
             }))
           }
         },
@@ -270,10 +314,89 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
     e.target.value = ''
   }
 
+  const handleDetectDomain = () => {
+    if (!wizardState.sourceFileId || !wizardState.targetFileId) return
+    setAiError(null)
+    detectReconciliationDomain.mutate(
+      {
+        sourceFileId: wizardState.sourceFileId,
+        targetFileId: wizardState.targetFileId,
+      },
+      {
+        onSuccess: (res) => {
+          const detected = res.data
+          setDetectedDomain(detected)
+          setWizardState((prev) => ({ ...prev, domain: detected?.domain ?? prev.domain }))
+        },
+        onError: (err) => {
+          setAiError(err instanceof Error ? err.message : 'Domain detection failed')
+        },
+      }
+    )
+  }
+
+  const renderDomainSelector = () => (
+    <div className="rounded-md border bg-muted/20 p-3 space-y-2">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium">
+            Reconciliation Domain <span className="text-destructive">*</span>
+          </p>
+          <p className="text-xs text-muted-foreground">
+            AI suggestions and knowledge retrieval will use this domain.
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="gap-1"
+          onClick={handleDetectDomain}
+          disabled={!wizardState.sourceFileId || !wizardState.targetFileId || detectReconciliationDomain.isPending}
+        >
+          {detectReconciliationDomain.isPending ? (
+            <>
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              Detecting...
+            </>
+          ) : (
+            <>
+              <Sparkles className="h-3.5 w-3.5" />
+              Suggest with AI
+            </>
+          )}
+        </Button>
+      </div>
+      <select
+        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+        value={wizardState.domain ?? ''}
+        onChange={(e) =>
+          setWizardState((prev) => ({ ...prev, domain: e.target.value as KnowledgeDomain }))
+        }
+      >
+        <option value="" disabled>
+          Select domain
+        </option>
+        {RECONCILIATION_DOMAINS.map((domain) => (
+          <option key={domain} value={domain}>
+            {DOMAIN_LABELS[domain]}
+          </option>
+        ))}
+      </select>
+      {detectedDomain && (
+        <p className="text-xs text-muted-foreground">
+          AI suggested <span className="font-medium text-foreground">{DOMAIN_LABELS[detectedDomain.domain]}</span>{' '}
+          ({Math.round(detectedDomain.confidence * 100)}% confidence).
+        </p>
+      )}
+    </div>
+  )
+
   const renderRulesStep = () => {
     if (rulesMode === 'choose') {
       return (
         <div className="space-y-4">
+          {renderDomainSelector()}
           {aiError && (
             <div className="flex items-center gap-2 rounded-md border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
               <AlertCircle className="h-4 w-4 shrink-0" />
@@ -289,7 +412,7 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
               AI will examine both files, suggest field mappings with confidence scores, and generate
               optimized matching rules automatically.
             </p>
-            <Button onClick={handleAnalyzeMappings} className="w-full gap-2">
+            <Button onClick={handleAnalyzeMappings} className="w-full gap-2" disabled={!wizardState.domain}>
               <Sparkles className="h-4 w-4" />
               Analyze with AI
             </Button>
@@ -338,12 +461,15 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
 
     if (rulesMode === 'analyzing-mappings' || rulesMode === 'analyzing-rules') {
       return (
-        <div className="flex flex-col items-center justify-center py-10 gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm font-medium">
-            {rulesMode === 'analyzing-mappings' ? 'AI is analyzing file schemas…' : 'AI is generating matching rules…'}
-          </p>
-          <p className="text-xs text-muted-foreground">This may take a few seconds</p>
+        <div className="space-y-4">
+          {renderDomainSelector()}
+          <div className="flex flex-col items-center justify-center py-10 gap-3">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm font-medium">
+              {rulesMode === 'analyzing-mappings' ? 'AI is analyzing file schemas...' : 'AI is generating matching rules...'}
+            </p>
+            <p className="text-xs text-muted-foreground">This may take a few seconds</p>
+          </div>
         </div>
       )
     }
@@ -352,6 +478,7 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
       const allAccepted = acceptedMappings.every((m) => m.accepted)
       return (
         <div className="space-y-3">
+          {renderDomainSelector()}
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium">Review AI-suggested field mappings</p>
             <button
@@ -399,7 +526,7 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
           </div>
           <Button
             className="w-full gap-2"
-            disabled={!acceptedMappings.some((m) => m.accepted)}
+            disabled={!acceptedMappings.some((m) => m.accepted) || !wizardState.domain}
             onClick={handleAnalyzeRules}
           >
             <Sparkles className="h-4 w-4" />
@@ -414,6 +541,7 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
       const ruleSetCreated = wizardState.ruleSetId !== null
       return (
         <div className="space-y-3">
+          {renderDomainSelector()}
           {ruleSetCreated ? (
             <div className="flex items-center gap-2 rounded-md border border-green-300 bg-green-50 p-3 text-sm text-green-700">
               <Check className="h-4 w-4 shrink-0" />
@@ -491,7 +619,8 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
 
     // manual mode — existing rule set selected
     return (
-      <div className="space-y-2">
+      <div className="space-y-3">
+        {renderDomainSelector()}
         <p className="text-sm text-muted-foreground">Selected rule set:</p>
         {ruleSets
           .filter((rs) => rs.id === wizardState.ruleSetId)
@@ -616,7 +745,10 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
                       file.missing && 'opacity-70',
                       file.missing && wizardState.sourceFileId === file.id && 'border-destructive bg-destructive/5'
                     )}
-                    onClick={() => setWizardState({ ...wizardState, sourceFileId: file.id })}
+                    onClick={() => {
+                      setDetectedDomain(null)
+                      setWizardState({ ...wizardState, sourceFileId: file.id, domain: null })
+                    }}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -673,7 +805,10 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
                         file.missing && 'opacity-70',
                         file.missing && wizardState.targetFileId === file.id && 'border-destructive bg-destructive/5'
                       )}
-                      onClick={() => setWizardState({ ...wizardState, targetFileId: file.id })}
+                      onClick={() => {
+                        setDetectedDomain(null)
+                        setWizardState({ ...wizardState, targetFileId: file.id, domain: null })
+                      }}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -777,3 +912,4 @@ const CreateReconciliationWizard = ({ onClose, onSuccess }: CreateReconciliation
 }
 
 export { CreateReconciliationWizard }
+

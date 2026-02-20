@@ -455,8 +455,15 @@ export function useQuickChat() {
 // ============================================
 export function useSuggestMappings() {
   return useMutation({
-    mutationFn: ({ sourceFileId, targetFileId }: { sourceFileId: number; targetFileId: number }) =>
-      aiApi.suggestMappings(sourceFileId, targetFileId),
+    mutationFn: ({
+      sourceFileId,
+      targetFileId,
+      domain,
+    }: {
+      sourceFileId: number
+      targetFileId: number
+      domain?: KnowledgeDomain
+    }) => aiApi.suggestMappings(sourceFileId, targetFileId, domain),
   })
 }
 
@@ -466,11 +473,13 @@ export function useSuggestRules() {
       sourceFileId,
       targetFileId,
       mappings,
+      domain,
     }: {
       sourceFileId: number
       targetFileId: number
       mappings: AiSuggestedMapping[]
-    }) => aiApi.suggestRules(sourceFileId, targetFileId, mappings),
+      domain?: KnowledgeDomain
+    }) => aiApi.suggestRules(sourceFileId, targetFileId, mappings, domain),
   })
 }
 
@@ -487,6 +496,13 @@ export function useKnowledgeDocuments() {
   return useQuery({
     queryKey: queryKeys.knowledgeDocs,
     queryFn: () => knowledgeApi.list(),
+  })
+}
+
+export function useDetectReconciliationDomain() {
+  return useMutation({
+    mutationFn: ({ sourceFileId, targetFileId }: { sourceFileId: number; targetFileId: number }) =>
+      reconciliationsApi.detectDomain(sourceFileId, targetFileId),
   })
 }
 

@@ -1,21 +1,18 @@
 package com.amit.smartreconciliation.dto.request;
 
-import com.amit.smartreconciliation.enums.KnowledgeDomain;
 import jakarta.validation.constraints.NotNull;
 
-public class AiMappingSuggestionRequest {
+public class ReconciliationDomainDetectionRequest {
+
     @NotNull(message = "Source file ID is required")
     private Long sourceFileId;
+
     @NotNull(message = "Target file ID is required")
     private Long targetFileId;
-    private KnowledgeDomain domain;
-
-    public AiMappingSuggestionRequest() {}
 
     public Long getSourceFileId() { return sourceFileId; }
     public void setSourceFileId(Long sourceFileId) { this.sourceFileId = sourceFileId; }
+
     public Long getTargetFileId() { return targetFileId; }
     public void setTargetFileId(Long targetFileId) { this.targetFileId = targetFileId; }
-    public KnowledgeDomain getDomain() { return domain; }
-    public void setDomain(KnowledgeDomain domain) { this.domain = domain; }
 }

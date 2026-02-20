@@ -139,6 +139,7 @@ public class ExceptionService {
                     ExceptionRunSummaryResponse response = new ExceptionRunSummaryResponse();
                     response.setReconciliationId(first.getReconciliation().getId());
                     response.setReconciliationName(first.getReconciliation().getName());
+                    response.setDomain(first.getReconciliation().getDomain());
                     response.setCreatedAt(first.getReconciliation().getCreatedAt());
                     response.setOpenCount(group.stream()
                             .filter(e -> e.getStatus() == ExceptionStatus.OPEN).count());
@@ -317,7 +318,8 @@ public class ExceptionService {
                 exception.getSourceValue(),
                 exception.getTargetValue(),
                 exception.getFieldName(),
-                exception.getDescription()
+                exception.getDescription(),
+                exception.getDomain()
         );
 
         exception.setAiSuggestion(suggestion);

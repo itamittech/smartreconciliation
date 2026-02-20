@@ -3,6 +3,7 @@ package com.amit.smartreconciliation.entity;
 import com.amit.smartreconciliation.enums.ExceptionSeverity;
 import com.amit.smartreconciliation.enums.ExceptionStatus;
 import com.amit.smartreconciliation.enums.ExceptionType;
+import com.amit.smartreconciliation.enums.KnowledgeDomain;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -31,6 +32,10 @@ public class ReconciliationException {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ExceptionStatus status = ExceptionStatus.OPEN;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private KnowledgeDomain domain = KnowledgeDomain.GENERAL;
 
     @Column(columnDefinition = "TEXT")
     private String description;
@@ -89,6 +94,9 @@ public class ReconciliationException {
     public ExceptionStatus getStatus() { return status; }
     public void setStatus(ExceptionStatus status) { this.status = status; }
 
+    public KnowledgeDomain getDomain() { return domain; }
+    public void setDomain(KnowledgeDomain domain) { this.domain = domain; }
+
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
@@ -141,6 +149,7 @@ public class ReconciliationException {
         public Builder type(ExceptionType v) { e.type = v; return this; }
         public Builder severity(ExceptionSeverity v) { e.severity = v; return this; }
         public Builder status(ExceptionStatus v) { e.status = v; return this; }
+        public Builder domain(KnowledgeDomain v) { e.domain = v; return this; }
         public Builder description(String v) { e.description = v; return this; }
         public Builder fieldName(String v) { e.fieldName = v; return this; }
         public Builder sourceValue(String v) { e.sourceValue = v; return this; }

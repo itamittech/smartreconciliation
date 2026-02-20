@@ -28,11 +28,21 @@ export type ExceptionType = 'MISSING_SOURCE' | 'MISSING_TARGET' | 'VALUE_MISMATC
 export type ExceptionSeverity = 'critical' | 'warning' | 'info'
 
 export type ExceptionStatus = 'open' | 'acknowledged' | 'in_review' | 'resolved' | 'ignored'
+export type KnowledgeDomain =
+  | 'BANKING'
+  | 'TRADING'
+  | 'ACCOUNTS_PAYABLE'
+  | 'INVENTORY'
+  | 'INTERCOMPANY'
+  | 'ECOMMERCE'
+  | 'TECHNICAL'
+  | 'GENERAL'
 
 export interface Reconciliation {
   id: string
   name: string
   status: ReconciliationStatus
+  domain?: KnowledgeDomain
   sourceAName: string
   sourceBName: string
   totalRecords: number
@@ -46,6 +56,7 @@ export interface ReconciliationException {
   id: string
   reconciliationId: string
   reconciliationName: string
+  domain?: KnowledgeDomain
   type: ExceptionType
   severity: ExceptionSeverity
   status: ExceptionStatus

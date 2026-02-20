@@ -22,6 +22,7 @@ import type { ReconciliationStatus } from '@/types'
 import { cn } from '@/lib/utils'
 import { useReconciliations, useDeleteReconciliation, useStartReconciliation, useBulkDeleteReconciliations } from '@/services/hooks'
 import type { Reconciliation as ApiReconciliation } from '@/services/types'
+import type { KnowledgeDomain } from '@/services/types'
 import { useAppStore } from '@/store'
 
 const statusConfig: Record<
@@ -35,6 +36,17 @@ const statusConfig: Record<
 }
 
 const ITEMS_PER_PAGE = 20
+
+const DOMAIN_LABELS: Record<KnowledgeDomain, string> = {
+  BANKING: 'Banking',
+  TRADING: 'Trading',
+  ACCOUNTS_PAYABLE: 'Accounts Payable',
+  INVENTORY: 'Inventory',
+  INTERCOMPANY: 'Intercompany',
+  ECOMMERCE: 'E-Commerce',
+  TECHNICAL: 'Technical',
+  GENERAL: 'General',
+}
 
 type SortField = 'name' | 'status' | 'matchRate' | 'createdAt' | 'completedAt'
 type SortDirection = 'asc' | 'desc'
@@ -418,6 +430,11 @@ const ReconciliationsPage = () => {
                           </div>
                           <div>
                             <span className="font-medium text-foreground">{recon.name}</span>
+                            <div className="mt-1">
+                              <Badge variant="secondary" className="text-[10px]">
+                                {DOMAIN_LABELS[recon.domain] ?? recon.domain}
+                              </Badge>
+                            </div>
                             {recon.description && (
                               <p className="text-xs text-muted-foreground mt-0.5">{recon.description}</p>
                             )}

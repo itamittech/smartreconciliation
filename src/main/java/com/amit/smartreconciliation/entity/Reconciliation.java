@@ -1,6 +1,7 @@
 package com.amit.smartreconciliation.entity;
 
 import com.amit.smartreconciliation.enums.ReconciliationStatus;
+import com.amit.smartreconciliation.enums.KnowledgeDomain;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -29,6 +30,10 @@ public class Reconciliation {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ReconciliationStatus status = ReconciliationStatus.PENDING;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private KnowledgeDomain domain = KnowledgeDomain.GENERAL;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "source_file_id")
@@ -94,6 +99,9 @@ public class Reconciliation {
     public ReconciliationStatus getStatus() { return status; }
     public void setStatus(ReconciliationStatus status) { this.status = status; }
 
+    public KnowledgeDomain getDomain() { return domain; }
+    public void setDomain(KnowledgeDomain domain) { this.domain = domain; }
+
     public UploadedFile getSourceFile() { return sourceFile; }
     public void setSourceFile(UploadedFile sourceFile) { this.sourceFile = sourceFile; }
 
@@ -158,6 +166,7 @@ public class Reconciliation {
         public Builder name(String v) { r.name = v; return this; }
         public Builder description(String v) { r.description = v; return this; }
         public Builder status(ReconciliationStatus v) { r.status = v; return this; }
+        public Builder domain(KnowledgeDomain v) { r.domain = v; return this; }
         public Builder sourceFile(UploadedFile v) { r.sourceFile = v; return this; }
         public Builder targetFile(UploadedFile v) { r.targetFile = v; return this; }
         public Builder ruleSet(RuleSet v) { r.ruleSet = v; return this; }

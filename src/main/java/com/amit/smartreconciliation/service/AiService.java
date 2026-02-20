@@ -59,6 +59,7 @@ public class AiService {
         try {
             SchemaResponse sourceSchema = fileUploadService.getSchema(request.getSourceFileId());
             SchemaResponse targetSchema = fileUploadService.getSchema(request.getTargetFileId());
+            KnowledgeDomain domain = request.getDomain() != null ? request.getDomain() : KnowledgeDomain.GENERAL;
 
             String prompt = buildMappingSuggestionPrompt(sourceSchema, targetSchema);
 
@@ -66,7 +67,7 @@ public class AiService {
             String ragQuery = "column mapping field definitions: "
                     + formatColumnNames(sourceSchema.getColumns())
                     + " " + formatColumnNames(targetSchema.getColumns());
-            prompt = prependKnowledge(prompt, ragQuery, KnowledgeDomain.GENERAL);
+            prompt = prependKnowledge(prompt, ragQuery, domain);
 
             ChatClient chatClient = ChatClient.create(chatModel);
             String response = chatClient.prompt()
@@ -83,6 +84,12 @@ public class AiService {
 
     public AiRuleSuggestionResponse suggestRules(Long sourceFileId, Long targetFileId,
                                                  List<AiMappingSuggestionResponse.SuggestedMapping> mappings) {
+        return suggestRules(sourceFileId, targetFileId, mappings, KnowledgeDomain.GENERAL);
+    }
+
+    public AiRuleSuggestionResponse suggestRules(Long sourceFileId, Long targetFileId,
+                                                 List<AiMappingSuggestionResponse.SuggestedMapping> mappings,
+                                                 KnowledgeDomain domain) {
         try {
             SchemaResponse sourceSchema = fileUploadService.getSchema(sourceFileId);
             SchemaResponse targetSchema = fileUploadService.getSchema(targetFileId);
@@ -91,7 +98,7 @@ public class AiService {
 
             // RAG: prepend domain knowledge if available
             String ragQuery = "matching rules tolerances for: " + formatFieldMappings(mappings);
-            prompt = prependKnowledge(prompt, ragQuery, KnowledgeDomain.GENERAL);
+            prompt = prependKnowledge(prompt, ragQuery, domain != null ? domain : KnowledgeDomain.GENERAL);
 
             ChatClient chatClient = ChatClient.create(chatModel);
             String response = chatClient.prompt()
@@ -108,12 +115,17 @@ public class AiService {
 
     public String getExceptionSuggestion(String exceptionType, String sourceValue, String targetValue,
                                          String fieldName, String context) {
+        return getExceptionSuggestion(exceptionType, sourceValue, targetValue, fieldName, context, KnowledgeDomain.GENERAL);
+    }
+
+    public String getExceptionSuggestion(String exceptionType, String sourceValue, String targetValue,
+                                         String fieldName, String context, KnowledgeDomain domain) {
         try {
             String prompt = buildExceptionSuggestionPrompt(exceptionType, sourceValue, targetValue, fieldName, context);
 
             // RAG: prepend domain knowledge if available
             String ragQuery = exceptionType + " " + fieldName + " resolution strategy";
-            prompt = prependKnowledge(prompt, ragQuery, KnowledgeDomain.GENERAL);
+            prompt = prependKnowledge(prompt, ragQuery, domain != null ? domain : KnowledgeDomain.GENERAL);
 
             ChatClient chatClient = ChatClient.create(chatModel);
             return chatClient.prompt()

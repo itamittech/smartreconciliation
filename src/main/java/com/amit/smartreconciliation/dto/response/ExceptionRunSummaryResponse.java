@@ -1,10 +1,13 @@
 package com.amit.smartreconciliation.dto.response;
 
+import com.amit.smartreconciliation.enums.KnowledgeDomain;
+
 import java.time.LocalDateTime;
 
 public class ExceptionRunSummaryResponse {
     private Long reconciliationId;
     private String reconciliationName;
+    private KnowledgeDomain domain;
     private LocalDateTime createdAt;
     private Long openCount;
     private Long inReviewCount;
@@ -18,6 +21,8 @@ public class ExceptionRunSummaryResponse {
     public void setReconciliationId(Long reconciliationId) { this.reconciliationId = reconciliationId; }
     public String getReconciliationName() { return reconciliationName; }
     public void setReconciliationName(String reconciliationName) { this.reconciliationName = reconciliationName; }
+    public KnowledgeDomain getDomain() { return domain; }
+    public void setDomain(KnowledgeDomain domain) { this.domain = domain; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public Long getOpenCount() { return openCount; }

@@ -51,9 +51,26 @@ public class KnowledgeRetrievalService {
         if (query == null || query.isBlank()) {
             return List.of();
         }
+        if (orgId == null) {
+            log.debug("Knowledge search skipped: orgId is null (domain={})", domain);
+            return List.of();
+        }
+
+        FilterExpressionBuilder b = new FilterExpressionBuilder();
+
+        // GENERAL should search org-wide, not only domain=GENERAL docs.
+        if (domain == KnowledgeDomain.GENERAL) {
+            Filter.Expression orgOnlyFilter = b.eq("organizationId", orgId.toString()).build();
+            List<String> results = doSearch(query, orgOnlyFilter, topK);
+            if (!results.isEmpty()) {
+                log.debug("Knowledge search found {} results (domain=GENERAL, org={})", results.size(), orgId);
+                return results;
+            }
+            log.debug("Knowledge search returned no results for query='{}' domain={} org={}", query, domain, orgId);
+            return List.of();
+        }
 
         // Primary search: domain + org scoped
-        FilterExpressionBuilder b = new FilterExpressionBuilder();
         Filter.Expression domainOrgFilter = b.and(
                 b.eq("domain", domain.name()),
                 b.eq("organizationId", orgId.toString())

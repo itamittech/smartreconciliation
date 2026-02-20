@@ -13,6 +13,7 @@ import type {
   ExceptionStatus as ApiExceptionStatus,
   ExceptionSeverity as ApiExceptionSeverity,
   ExceptionType as ApiExceptionType,
+  KnowledgeDomain,
 } from '@/services/types'
 
 type ExceptionViewModel = FrontendException & {
@@ -45,6 +46,17 @@ interface ActionDialogState {
   action: ExceptionActionType | null
   remarks: string
   error: string | null
+}
+
+const DOMAIN_LABELS: Record<KnowledgeDomain, string> = {
+  BANKING: 'Banking',
+  TRADING: 'Trading',
+  ACCOUNTS_PAYABLE: 'Accounts Payable',
+  INVENTORY: 'Inventory',
+  INTERCOMPANY: 'Intercompany',
+  ECOMMERCE: 'E-Commerce',
+  TECHNICAL: 'Technical',
+  GENERAL: 'General',
 }
 
 function getTodayDateString(): string {
@@ -108,6 +120,7 @@ function transformException(apiException: ApiException): ExceptionViewModel {
     id: apiException.id.toString(),
     reconciliationId: apiException.reconciliationId.toString(),
     reconciliationName: apiException.reconciliationName,
+    domain: apiException.domain,
     type: mapType(apiException.type),
     severity: mapSeverity(apiException.severity),
     status: mapStatus(apiException.status),
@@ -178,6 +191,7 @@ function consolidateExceptions(exceptions: ExceptionViewModel[]): ConsolidatedEx
         id: key,
         reconciliationId: exception.reconciliationId,
         reconciliationName: exception.reconciliationName,
+        domain: exception.domain,
         sourceRecordId: exception.sourceRecordId,
         targetRecordId: exception.targetRecordId,
         sourceData: exception.sourceData,
@@ -655,6 +669,7 @@ const ExceptionsPage = () => {
           <div className="mt-3 flex items-center gap-2">
             <Badge variant="outline">
               Scoped to {selectedRunSummary?.reconciliationName || `Reconciliation #${selectedReconciliationId}`}
+              {selectedRunSummary?.domain ? ` (${DOMAIN_LABELS[selectedRunSummary.domain]})` : ''}
             </Badge>
             <Button
               variant="ghost"
@@ -698,6 +713,9 @@ const ExceptionsPage = () => {
                       className={`w-full rounded-md border px-3 py-2 text-left ${selected ? 'border-primary bg-primary/5' : 'border-border bg-background hover:bg-muted/40'}`}
                     >
                       <p className="text-sm font-medium truncate">{run.reconciliationName}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Domain: {DOMAIN_LABELS[run.domain] ?? run.domain}
+                      </p>
                       <p className="mt-1 text-xs text-muted-foreground">Open: {run.openCount} | Critical: {run.criticalOpenCount}</p>
                       <p className="text-xs text-muted-foreground">AI: {run.aiActionableCount} | Total: {run.totalInScope}</p>
                     </button>

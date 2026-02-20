@@ -1,5 +1,6 @@
 package com.amit.smartreconciliation.dto.request;
 
+import com.amit.smartreconciliation.enums.KnowledgeDomain;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -13,6 +14,7 @@ public class ReconciliationRequest {
     private Long targetFileId;
     @NotNull(message = "Rule set ID is required")
     private Long ruleSetId;
+    private KnowledgeDomain domain;
 
     public ReconciliationRequest() {}
 
@@ -26,4 +28,6 @@ public class ReconciliationRequest {
     public void setTargetFileId(Long targetFileId) { this.targetFileId = targetFileId; }
     public Long getRuleSetId() { return ruleSetId; }
     public void setRuleSetId(Long ruleSetId) { this.ruleSetId = ruleSetId; }
+    public KnowledgeDomain getDomain() { return domain; }
+    public void setDomain(KnowledgeDomain domain) { this.domain = domain; }
 }

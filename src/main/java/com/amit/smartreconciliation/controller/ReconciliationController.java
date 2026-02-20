@@ -1,7 +1,9 @@
 package com.amit.smartreconciliation.controller;
 
 import com.amit.smartreconciliation.dto.request.ReconciliationRequest;
+import com.amit.smartreconciliation.dto.request.ReconciliationDomainDetectionRequest;
 import com.amit.smartreconciliation.dto.response.ApiResponse;
+import com.amit.smartreconciliation.dto.response.DomainDetectionResponse;
 import com.amit.smartreconciliation.dto.response.ReconciliationExceptionResponse;
 import com.amit.smartreconciliation.dto.response.ReconciliationResponse;
 import com.amit.smartreconciliation.enums.ExceptionSeverity;
@@ -34,6 +36,14 @@ public class ReconciliationController {
                                     ExceptionService exceptionService) {
         this.reconciliationService = reconciliationService;
         this.exceptionService = exceptionService;
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN','ANALYST','FINANCE','IT_ADMIN','OPERATIONS','COMPLIANCE')")
+    @PostMapping("/detect-domain")
+    public ResponseEntity<ApiResponse<DomainDetectionResponse>> detectDomain(
+            @Valid @RequestBody ReconciliationDomainDetectionRequest request) {
+        DomainDetectionResponse response = reconciliationService.detectDomain(request);
+        return ResponseEntity.ok(ApiResponse.success("Reconciliation domain detected", response));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN','ANALYST','FINANCE','IT_ADMIN','OPERATIONS','COMPLIANCE')")

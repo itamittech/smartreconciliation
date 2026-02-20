@@ -1,7 +1,10 @@
 package com.amit.smartreconciliation.service;
 
 import com.amit.smartreconciliation.dto.request.ReconciliationRequest;
+import com.amit.smartreconciliation.dto.request.ReconciliationDomainDetectionRequest;
+import com.amit.smartreconciliation.dto.response.DomainDetectionResponse;
 import com.amit.smartreconciliation.dto.response.ReconciliationResponse;
+import com.amit.smartreconciliation.dto.response.SchemaResponse;
 import com.amit.smartreconciliation.entity.*;
 import com.amit.smartreconciliation.enums.*;
 import com.amit.smartreconciliation.exception.ResourceNotFoundException;
@@ -66,11 +69,13 @@ public class ReconciliationService {
         if (!fileUploadService.existsOnDisk(targetFile)) {
             throw new FileProcessingException("Target file missing from disk: " + targetFile.getOriginalFilename());
         }
+        KnowledgeDomain domain = resolveDomain(request, sourceFile, targetFile);
 
         Reconciliation reconciliation = Reconciliation.builder()
                 .name(request.getName())
                 .description(request.getDescription())
                 .status(ReconciliationStatus.PENDING)
+                .domain(domain)
                 .sourceFile(sourceFile)
                 .targetFile(targetFile)
                 .ruleSet(ruleSet)
@@ -82,6 +87,12 @@ public class ReconciliationService {
         log.info("Created reconciliation: {} (id: {})", saved.getName(), saved.getId());
 
         return ReconciliationResponse.fromEntity(saved);
+    }
+
+    public DomainDetectionResponse detectDomain(ReconciliationDomainDetectionRequest request) {
+        UploadedFile sourceFile = fileUploadService.getEntityById(request.getSourceFileId());
+        UploadedFile targetFile = fileUploadService.getEntityById(request.getTargetFileId());
+        return detectDomainFromFiles(sourceFile, targetFile);
     }
 
     @Transactional
@@ -144,6 +155,9 @@ public class ReconciliationService {
             List<ReconciliationException> savedExceptions = new ArrayList<>();
             for (ReconciliationException exception : result.exceptions) {
                 exception.setReconciliation(reconciliation);
+                if (exception.getDomain() == null) {
+                    exception.setDomain(reconciliation.getDomain());
+                }
                 savedExceptions.add(exceptionRepository.save(exception));
             }
 
@@ -206,6 +220,7 @@ public class ReconciliationService {
                             .type(ExceptionType.MISSING_TARGET)
                             .severity(ExceptionSeverity.HIGH)
                             .status(ExceptionStatus.OPEN)
+                            .domain(reconciliation.getDomain())
                             .description("No matching record found in target")
                             .sourceData(sourceRecord)
                             .build();
@@ -221,7 +236,7 @@ public class ReconciliationService {
                     if (i < targetRecords.size()) {
                         Map<String, Object> targetRecord = targetRecords.get(i);
                         List<ReconciliationException> fieldExceptions =
-                                compareRecords(sourceRecord, targetRecord, ruleSet);
+                                compareRecords(sourceRecord, targetRecord, ruleSet, reconciliation.getDomain());
 
                         // A record pair found by key is always "matched" — field discrepancies
                         // are reported as VALUE_MISMATCH exceptions but do not make the record unmatched
@@ -232,6 +247,7 @@ public class ReconciliationService {
                                 .type(ExceptionType.DUPLICATE)
                                 .severity(ExceptionSeverity.HIGH)
                                 .status(ExceptionStatus.OPEN)
+                                .domain(reconciliation.getDomain())
                                 .description("Duplicate key in source with no matching target record")
                                 .sourceData(sourceRecord)
                                 .build();
@@ -251,6 +267,7 @@ public class ReconciliationService {
                                 .type(ExceptionType.DUPLICATE)
                                 .severity(ExceptionSeverity.HIGH)
                                 .status(ExceptionStatus.OPEN)
+                                .domain(reconciliation.getDomain())
                                 .description("Duplicate key in target with no matching source record")
                                 .targetData(targetRecords.get(i))
                                 .build();
@@ -264,6 +281,7 @@ public class ReconciliationService {
                             .type(ExceptionType.MISSING_SOURCE)
                             .severity(ExceptionSeverity.HIGH)
                             .status(ExceptionStatus.OPEN)
+                            .domain(reconciliation.getDomain())
                             .description("No matching record found in source")
                             .targetData(targetRecord)
                             .build();
@@ -317,7 +335,8 @@ public class ReconciliationService {
     private List<ReconciliationException> compareRecords(
             Map<String, Object> sourceRecord,
             Map<String, Object> targetRecord,
-            RuleSet ruleSet) {
+            RuleSet ruleSet,
+            KnowledgeDomain domain) {
 
         List<ReconciliationException> exceptions = new ArrayList<>();
 
@@ -333,6 +352,7 @@ public class ReconciliationService {
                         .type(type)
                         .severity(ExceptionSeverity.CRITICAL)
                         .status(ExceptionStatus.OPEN)
+                        .domain(domain)
                         .description(String.format("Key field '%s' is null", mapping.getSourceField()))
                         .fieldName(mapping.getSourceField())
                         .sourceValue(sourceValue != null ? sourceValue.toString() : null)
@@ -359,6 +379,7 @@ public class ReconciliationService {
                         .type(ExceptionType.VALUE_MISMATCH)
                         .severity(severity)
                         .status(ExceptionStatus.OPEN)
+                        .domain(domain)
                         .description(String.format("Value mismatch for field %s", mapping.getSourceField()))
                         .fieldName(mapping.getSourceField())
                         .sourceValue(sourceValue != null ? sourceValue.toString() : null)
@@ -552,6 +573,7 @@ public class ReconciliationService {
                     .type(ExceptionType.POTENTIAL_MATCH)
                     .severity(ExceptionSeverity.MEDIUM)
                     .status(ExceptionStatus.OPEN)
+                    .domain(reconciliation.getDomain())
                     .description("AI identified a potential match missed by key-based matching")
                     .sourceData(suggestion.sourceRecord())
                     .targetData(suggestion.targetRecord())
@@ -581,7 +603,8 @@ public class ReconciliationService {
                             exception.getSourceValue() != null ? exception.getSourceValue() : "N/A",
                             exception.getTargetValue() != null ? exception.getTargetValue() : "N/A",
                             exception.getFieldName() != null ? exception.getFieldName() : "N/A",
-                            reconciliationName
+                            reconciliationName,
+                            exception.getDomain()
                     );
                     exception.setAiSuggestion(suggestion);
                     exceptionRepository.save(exception);
@@ -590,6 +613,48 @@ public class ReconciliationService {
                 }
             }
         }
+    }
+
+    private KnowledgeDomain resolveDomain(ReconciliationRequest request, UploadedFile sourceFile, UploadedFile targetFile) {
+        if (request.getDomain() != null) {
+            return request.getDomain();
+        }
+
+        DomainDetectionResponse detected = detectDomainFromFiles(sourceFile, targetFile);
+        if (detected != null && detected.getDomain() != null) {
+            return detected.getDomain();
+        }
+        return KnowledgeDomain.GENERAL;
+    }
+
+    private DomainDetectionResponse detectDomainFromFiles(UploadedFile sourceFile, UploadedFile targetFile) {
+        try {
+            SchemaResponse sourceSchema = fileUploadService.getSchema(sourceFile.getId());
+            SchemaResponse targetSchema = fileUploadService.getSchema(targetFile.getId());
+            String sample = buildDomainSample(sourceSchema, targetSchema);
+            return aiService.detectDomain(sample);
+        } catch (Exception e) {
+            log.warn("Domain detection failed for reconciliation files sourceId={} targetId={}: {}",
+                    sourceFile.getId(), targetFile.getId(), e.getMessage());
+            return new DomainDetectionResponse(KnowledgeDomain.GENERAL, 0.5);
+        }
+    }
+
+    private String buildDomainSample(SchemaResponse sourceSchema, SchemaResponse targetSchema) {
+        String sourceColumns = sourceSchema.getColumns() == null ? "" : sourceSchema.getColumns().stream()
+                .map(col -> col.getName() + " (" + col.getDetectedType() + ") samples: "
+                        + String.join(", ", col.getSampleValues() == null ? List.of() : col.getSampleValues()))
+                .collect(Collectors.joining("\n"));
+
+        String targetColumns = targetSchema.getColumns() == null ? "" : targetSchema.getColumns().stream()
+                .map(col -> col.getName() + " (" + col.getDetectedType() + ") samples: "
+                        + String.join(", ", col.getSampleValues() == null ? List.of() : col.getSampleValues()))
+                .collect(Collectors.joining("\n"));
+
+        return "Source file: " + sourceSchema.getFilename() + "\n"
+                + sourceColumns + "\n\n"
+                + "Target file: " + targetSchema.getFilename() + "\n"
+                + targetColumns;
     }
 
     private record ReconciliationResult(

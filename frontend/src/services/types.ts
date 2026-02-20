@@ -47,6 +47,7 @@ export interface Reconciliation {
   name: string
   description: string | null
   status: ReconciliationStatus
+  domain: KnowledgeDomain
   sourceFileId: number | null
   sourceFileName: string | null
   targetFileId: number | null
@@ -76,6 +77,7 @@ export interface ReconciliationException {
   type: ExceptionType
   severity: ExceptionSeverity
   status: ExceptionStatus
+  domain: KnowledgeDomain
   description: string | null
   fieldName: string | null
   sourceValue: string | null
@@ -116,6 +118,7 @@ export interface ExceptionQueryParams {
 export interface ExceptionRunSummary {
   reconciliationId: number
   reconciliationName: string
+  domain: KnowledgeDomain
   createdAt: string
   openCount: number
   inReviewCount: number
@@ -228,6 +231,7 @@ export interface CreateReconciliationRequest {
   sourceFileId: number
   targetFileId: number
   ruleSetId: number
+  domain?: KnowledgeDomain
 }
 
 export interface CreateRuleSetRequest {

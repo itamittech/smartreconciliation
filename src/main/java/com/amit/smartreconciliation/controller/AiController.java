@@ -37,7 +37,7 @@ public class AiController {
     public ResponseEntity<ApiResponse<AiRuleSuggestionResponse>> suggestRules(
             @Valid @RequestBody AiRuleSuggestionRequest request) {
         AiRuleSuggestionResponse response = aiService.suggestRules(
-                request.getSourceFileId(), request.getTargetFileId(), request.getMappings());
+                request.getSourceFileId(), request.getTargetFileId(), request.getMappings(), request.getDomain());
         return ResponseEntity.ok(ApiResponse.success("Rule suggestions generated", response));
     }
 

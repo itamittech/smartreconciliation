@@ -1,6 +1,7 @@
 package com.amit.smartreconciliation.dto.response;
 
 import com.amit.smartreconciliation.entity.Reconciliation;
+import com.amit.smartreconciliation.enums.KnowledgeDomain;
 import com.amit.smartreconciliation.enums.ReconciliationStatus;
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -10,6 +11,7 @@ public class ReconciliationResponse {
     private String name;
     private String description;
     private ReconciliationStatus status;
+    private KnowledgeDomain domain;
     private Long sourceFileId;
     private String sourceFileName;
     private Long targetFileId;
@@ -40,6 +42,7 @@ public class ReconciliationResponse {
         r.name = entity.getName();
         r.description = entity.getDescription();
         r.status = entity.getStatus();
+        r.domain = entity.getDomain();
         r.sourceFileId = entity.getSourceFile() != null ? entity.getSourceFile().getId() : null;
         r.sourceFileName = entity.getSourceFile() != null ? entity.getSourceFile().getOriginalFilename() : null;
         r.targetFileId = entity.getTargetFile() != null ? entity.getTargetFile().getId() : null;
@@ -68,6 +71,7 @@ public class ReconciliationResponse {
     public String getName() { return name; }
     public String getDescription() { return description; }
     public ReconciliationStatus getStatus() { return status; }
+    public KnowledgeDomain getDomain() { return domain; }
     public Long getSourceFileId() { return sourceFileId; }
     public String getSourceFileName() { return sourceFileName; }
     public Long getTargetFileId() { return targetFileId; }

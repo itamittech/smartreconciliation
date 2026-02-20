@@ -7,11 +7,9 @@ Smart Reconciliation is an AI-native, enterprise-grade platform designed for hig
 ### What is Reconciliation?
 Reconciliation is the critical process of ensuring two sets of records (often from different systems or entities) are in agreement. It is the bedrock of financial integrity, operational consistency, and regulatory compliance.
 
-<div align="center">
-  <video src="docs/01-product/Financial_Reconciliation.mp4" width="800" controls>
-    Your browser does not support the video tag.
-  </video>
-</div>
+[**▶ Watch the Financial Reconciliation Overview**](docs/01-product/Financial_Reconciliation.mp4)
+
+<video src="https://github.com/itamittech/smartreconciliation/raw/master/docs/01-product/Financial_Reconciliation.mp4" width="100%" controls></video>
 
 ---
 

@@ -13,6 +13,7 @@ import type {
   ChatResponse,
   CreateReconciliationRequest,
   CreateRuleSetRequest,
+  UpdateRuleSetRequest,
   CreateFieldMappingRequest,
   CreateMatchingRuleRequest,
   ResolveExceptionRequest,
@@ -119,7 +120,7 @@ export const rulesApi = {
   getAllRuleSets: () => get<RuleSet[]>('/rules'),
   getRuleSetById: (id: number) => get<RuleSet>(`/rules/${id}`),
   createRuleSet: (data: CreateRuleSetRequest) => post<RuleSet>('/rules', data),
-  updateRuleSet: (id: number, data: Partial<CreateRuleSetRequest>) =>
+  updateRuleSet: (id: number, data: UpdateRuleSetRequest) =>
     put<RuleSet>(`/rules/${id}`, data),
   deleteRuleSet: (id: number) => del<void>(`/rules/${id}`),
   duplicateRuleSet: (id: number) => post<RuleSet>(`/rules/${id}/duplicate`, {}),

@@ -188,6 +188,13 @@ export interface CreateRuleSetRequest {
   isAiGenerated?: boolean
 }
 
+export interface UpdateRuleSetRequest {
+  name: string
+  description?: string
+  fieldMappings?: CreateFieldMappingRequest[]
+  matchingRules?: CreateMatchingRuleRequest[]
+}
+
 export interface CreateFieldMappingRequest {
   sourceField: string
   targetField: string

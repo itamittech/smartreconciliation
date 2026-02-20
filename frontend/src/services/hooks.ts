@@ -13,6 +13,7 @@ import {
 import type {
   CreateReconciliationRequest,
   CreateRuleSetRequest,
+  UpdateRuleSetRequest,
   CreateFieldMappingRequest,
   CreateMatchingRuleRequest,
   ResolveExceptionRequest,
@@ -308,7 +309,7 @@ export function useCreateRuleSet() {
 export function useUpdateRuleSet() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<CreateRuleSetRequest> }) =>
+    mutationFn: ({ id, data }: { id: number; data: UpdateRuleSetRequest }) =>
       rulesApi.updateRuleSet(id, data),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.ruleSet(id) })

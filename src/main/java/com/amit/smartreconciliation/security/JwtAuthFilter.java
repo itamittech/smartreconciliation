@@ -1,9 +1,14 @@
 package com.amit.smartreconciliation.security;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,6 +21,8 @@ import java.io.IOException;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthFilter.class);
 
     private final JwtService jwtService;
     private final UserDetailsServiceImpl userDetailsService;
@@ -55,9 +62,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
             }
+        } catch (ExpiredJwtException e) {
+            log.warn("Expired JWT token from {}: {}", request.getRemoteAddr(), e.getMessage());
+        } catch (SignatureException e) {
+            log.warn("Invalid JWT signature from {} — possible tampering", request.getRemoteAddr());
+        } catch (MalformedJwtException e) {
+            log.warn("Malformed JWT token from {}: {}", request.getRemoteAddr(), e.getMessage());
         } catch (Exception e) {
-            // Invalid token — leave SecurityContext empty; Spring Security will return 401
-            logger.debug("JWT validation failed: " + e.getMessage());
+            log.warn("JWT validation error from {}: {}", request.getRemoteAddr(), e.getClass().getSimpleName());
         }
 
         filterChain.doFilter(request, response);

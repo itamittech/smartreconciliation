@@ -10,10 +10,13 @@ System architecture documentation covering:
 - **C4 Model Diagrams** - Context, container, and component views
 - **Technology Stack** - Java 21, Spring Boot 3.5.10, Spring AI 1.1.2
 - **Component Design** - Layer responsibilities and interactions
-- **Data Flow** - Request/response sequences
-- **Integration Points** - External systems and APIs
-- **Scalability** - Performance and scaling considerations
-- **Security Architecture** - Authentication and authorization
+
+### [Reconciliation Pipelines](reconciliation-pipelines.md)
+
+Detailed architecture for N-way/chained matching:
+- **Pipeline Data Flow** - Materialized intermediate artifacts
+- **Input Resolver Pattern** - Decoupling engine from file storage
+- **Stream Entities** - Managing complex multi-source workflows
 
 ### [Database Schema](database-schema.md)
 

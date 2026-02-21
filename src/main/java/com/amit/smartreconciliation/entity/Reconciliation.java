@@ -77,6 +77,15 @@ public class Reconciliation {
     @JoinColumn(name = "organization_id", nullable = false)
     private Organization organization;
 
+    // Compatibility links — nullable, set only when this reconciliation is part of a stream run
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "stream_run_id")
+    private ReconciliationRun streamRun;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "step_run_id")
+    private ReconciliationStepRun stepRun;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
@@ -156,6 +165,12 @@ public class Reconciliation {
     public Organization getOrganization() { return organization; }
     public void setOrganization(Organization v) { this.organization = v; }
 
+    public ReconciliationRun getStreamRun() { return streamRun; }
+    public void setStreamRun(ReconciliationRun v) { this.streamRun = v; }
+
+    public ReconciliationStepRun getStepRun() { return stepRun; }
+    public void setStepRun(ReconciliationStepRun v) { this.stepRun = v; }
+
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
 
@@ -172,6 +187,8 @@ public class Reconciliation {
         public Builder ruleSet(RuleSet v) { r.ruleSet = v; return this; }
         public Builder organization(Organization v) { r.organization = v; return this; }
         public Builder progress(Integer v) { r.progress = v; return this; }
+        public Builder streamRun(ReconciliationRun v) { r.streamRun = v; return this; }
+        public Builder stepRun(ReconciliationStepRun v) { r.stepRun = v; return this; }
         public Reconciliation build() { return r; }
     }
 }

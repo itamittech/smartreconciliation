@@ -2,6 +2,20 @@ import { useState, useRef } from 'react'
 import { Send, Paperclip } from 'lucide-react'
 import { Button, Input } from '@/components/ui'
 
+const ALLOWED_EXTENSIONS = new Set(['csv', 'xlsx', 'xls', 'json', 'xml', 'txt'])
+const MAX_FILE_SIZE = 100 * 1024 * 1024 // 100 MB
+
+function validateFile(file: File): string | null {
+  if (file.size > MAX_FILE_SIZE) {
+    return `File "${file.name}" exceeds the 100MB size limit.`
+  }
+  const ext = file.name.split('.').pop()?.toLowerCase()
+  if (!ext || !ALLOWED_EXTENSIONS.has(ext)) {
+    return `File type ".${ext ?? 'unknown'}" is not allowed. Please upload CSV, Excel, JSON, XML, or TXT files.`
+  }
+  return null
+}
+
 interface ChatInputProps {
   onSendMessage: (message: string) => void
   onFileUpload?: (files: FileList) => void
@@ -33,6 +47,13 @@ const ChatInput = ({ onSendMessage, onFileUpload, isLoading }: ChatInputProps) =
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0 && onFileUpload) {
+      const file = e.target.files[0]
+      const validationError = validateFile(file)
+      if (validationError) {
+        alert(validationError)
+        e.target.value = ''
+        return
+      }
       onFileUpload(e.target.files)
       e.target.value = ''
     }

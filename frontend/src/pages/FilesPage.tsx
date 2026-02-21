@@ -17,6 +17,20 @@ import { useFiles, useDeleteFile, useUploadFile, useFilePreview } from '@/servic
 import { getSafeErrorMessage } from '@/utils/errors'
 import type { UploadedFile } from '@/services/types'
 
+const ALLOWED_EXTENSIONS = new Set(['csv', 'xlsx', 'xls', 'json', 'xml', 'txt'])
+const MAX_FILE_SIZE = 100 * 1024 * 1024 // 100 MB
+
+function validateFile(file: File): string | null {
+  if (file.size > MAX_FILE_SIZE) {
+    return `File "${file.name}" exceeds the 100MB size limit.`
+  }
+  const ext = file.name.split('.').pop()?.toLowerCase()
+  if (!ext || !ALLOWED_EXTENSIONS.has(ext)) {
+    return `File type ".${ext ?? 'unknown'}" is not allowed. Please upload CSV, Excel, JSON, XML, or TXT files.`
+  }
+  return null
+}
+
 const FilesPage = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [previewFileId, setPreviewFileId] = useState<number | null>(null)
@@ -41,9 +55,16 @@ const FilesPage = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      uploadFile.mutate({ file })
+    if (!file) return
+
+    const validationError = validateFile(file)
+    if (validationError) {
+      alert(validationError)
+      e.target.value = ''
+      return
     }
+
+    uploadFile.mutate({ file })
     // Reset input so same file can be uploaded again
     if (fileInputRef.current) {
       fileInputRef.current.value = ''

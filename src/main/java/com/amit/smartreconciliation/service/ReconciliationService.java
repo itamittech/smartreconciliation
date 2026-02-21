@@ -41,6 +41,7 @@ public class ReconciliationService {
     private final RuleService ruleService;
     private final FileParserService fileParserService;
     private final AiService aiService;
+    private final LegacyReconciliationAdapterService legacyAdapter;
 
     public ReconciliationService(ReconciliationRepository reconciliationRepository,
                                 ReconciliationExceptionRepository exceptionRepository,
@@ -48,7 +49,8 @@ public class ReconciliationService {
                                 FileUploadService fileUploadService,
                                 RuleService ruleService,
                                 FileParserService fileParserService,
-                                AiService aiService) {
+                                AiService aiService,
+                                LegacyReconciliationAdapterService legacyAdapter) {
         this.reconciliationRepository = reconciliationRepository;
         this.exceptionRepository = exceptionRepository;
         this.organizationService = organizationService;
@@ -56,6 +58,7 @@ public class ReconciliationService {
         this.ruleService = ruleService;
         this.fileParserService = fileParserService;
         this.aiService = aiService;
+        this.legacyAdapter = legacyAdapter;
     }
 
     @Transactional
@@ -87,6 +90,13 @@ public class ReconciliationService {
 
         Reconciliation saved = reconciliationRepository.save(reconciliation);
         log.info("Created reconciliation: {} (id: {})", saved.getName(), saved.getId());
+
+        try {
+            legacyAdapter.attachStreamContext(saved);
+        } catch (Exception e) {
+            log.warn("Legacy adapter: failed to attach stream context to reconciliation {}: {}",
+                    saved.getId(), e.getMessage());
+        }
 
         return ReconciliationResponse.fromEntity(saved);
     }
@@ -120,6 +130,13 @@ public class ReconciliationService {
             reconciliation.setStartedAt(LocalDateTime.now());
             reconciliation.setProgress(5);
             reconciliationRepository.save(reconciliation);
+
+            try {
+                legacyAdapter.notifyExecutionStarted(reconciliation);
+            } catch (Exception adapterEx) {
+                log.warn("Legacy adapter: notifyExecutionStarted failed for reconciliation {}: {}",
+                        reconciliationId, adapterEx.getMessage());
+            }
 
             FileParserService.ParseResult sourceData = fileParserService.parseFile(
                     Paths.get(reconciliation.getSourceFile().getFilePath()));
@@ -182,12 +199,26 @@ public class ReconciliationService {
             log.info("Reconciliation completed: {} (matched: {}, exceptions: {})",
                     reconciliationId, result.matchedCount, result.exceptions.size());
 
+            try {
+                legacyAdapter.notifyExecutionCompleted(reconciliationId);
+            } catch (Exception adapterEx) {
+                log.warn("Legacy adapter: notifyExecutionCompleted failed for reconciliation {}: {}",
+                        reconciliationId, adapterEx.getMessage());
+            }
+
         } catch (Exception e) {
             log.error("Reconciliation failed: {} - {}", reconciliationId, e.getMessage(), e);
             reconciliation.setStatus(ReconciliationStatus.FAILED);
             reconciliation.setErrorMessage(e.getMessage());
             reconciliation.setCompletedAt(LocalDateTime.now());
             reconciliationRepository.save(reconciliation);
+
+            try {
+                legacyAdapter.notifyExecutionFailed(reconciliationId, e.getMessage());
+            } catch (Exception adapterEx) {
+                log.warn("Legacy adapter: notifyExecutionFailed failed for reconciliation {}: {}",
+                        reconciliationId, adapterEx.getMessage());
+            }
         }
     }
 

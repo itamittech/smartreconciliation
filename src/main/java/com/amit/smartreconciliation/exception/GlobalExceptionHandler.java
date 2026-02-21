@@ -33,14 +33,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleFileProcessing(FileProcessingException ex) {
         log.error("File processing error: {}", ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error(ex.getMessage()));
+                .body(ApiResponse.error("File processing failed. Please check your file and try again."));
     }
 
     @ExceptionHandler(ReconciliationException.class)
     public ResponseEntity<ApiResponse<Void>> handleReconciliation(ReconciliationException ex) {
         log.error("Reconciliation error: {}", ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error(ex.getMessage()));
+                .body(ApiResponse.error("Reconciliation processing failed. Please try again or contact support."));
     }
 
     @ExceptionHandler(AiServiceException.class)
@@ -92,8 +92,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGeneral(Exception ex) {
-        log.error("Unexpected error: {}", ex.getMessage(), ex);
+        String errorRef = java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        log.error("[{}] Unexpected error: {}", errorRef, ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("An unexpected error occurred: " + ex.getMessage()));
+                .body(ApiResponse.error("An unexpected error occurred. Reference: " + errorRef));
     }
 }

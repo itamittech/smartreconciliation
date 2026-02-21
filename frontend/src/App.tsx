@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Sidebar, Header, Footer } from '@/components/layout'
 import {
   LoginPage,
@@ -14,6 +14,12 @@ import { useAppStore } from '@/store'
 
 const App = () => {
   const { activeView, token, setActiveView, theme, accentColor, compactMode } = useAppStore()
+  const initializeAuth = useAppStore(state => state.initializeAuth)
+  const [authInitialized, setAuthInitialized] = useState(false)
+
+  useEffect(() => {
+    initializeAuth().finally(() => setAuthInitialized(true))
+  }, [initializeAuth])
 
   useEffect(() => {
     const root = window.document.documentElement
@@ -61,6 +67,15 @@ const App = () => {
     window.addEventListener('popstate', syncViewFromUrl)
     return () => window.removeEventListener('popstate', syncViewFromUrl)
   }, [setActiveView])
+
+  // Show loading spinner while restoring auth session
+  if (!authInitialized) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+      </div>
+    )
+  }
 
   // Auth guard — show login if no token
   if (!token) {

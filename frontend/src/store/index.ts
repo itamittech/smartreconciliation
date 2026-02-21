@@ -8,6 +8,7 @@ interface AppState {
   refreshToken: string | null
   setAuth: (user: CurrentUser, token: string, refreshToken: string) => void
   clearAuth: () => void
+  initializeAuth: () => Promise<void>
 
   // Sidebar
   sidebarOpen: boolean
@@ -44,24 +45,23 @@ interface AppState {
   toggleCompactMode: () => void
 }
 
-// Rehydrate token + refreshToken from localStorage on startup
-const storedToken = localStorage.getItem('auth_token')
+// Only refreshToken persists to localStorage — never accessToken or user PII
 const storedRefreshToken = localStorage.getItem('auth_refresh_token')
-const storedUser = localStorage.getItem('auth_user')
-const initialUser: CurrentUser | null = storedUser ? JSON.parse(storedUser) : null
 const storedTheme = (localStorage.getItem('theme') as AppState['theme']) || 'system'
 const storedAccentColor = (localStorage.getItem('accentColor') as AppState['accentColor']) || 'indigo'
 const storedCompactMode = localStorage.getItem('compactMode') === 'true'
 
 export const useAppStore = create<AppState>((set) => ({
   // Auth
-  currentUser: initialUser,
-  token: storedToken,
+  currentUser: null,        // Will be restored via initializeAuth() on app load
+  token: null,              // Access token is memory-only
   refreshToken: storedRefreshToken,
   setAuth: (user, token, refreshToken) => {
-    localStorage.setItem('auth_token', token)
+    // Only persist the refresh token — access token and user PII stay in memory only
     localStorage.setItem('auth_refresh_token', refreshToken)
-    localStorage.setItem('auth_user', JSON.stringify(user))
+    // Clean up any legacy values from previous sessions
+    localStorage.removeItem('auth_token')
+    localStorage.removeItem('auth_user')
     set({ currentUser: user, token, refreshToken })
   },
   clearAuth: () => {
@@ -69,6 +69,40 @@ export const useAppStore = create<AppState>((set) => ({
     localStorage.removeItem('auth_refresh_token')
     localStorage.removeItem('auth_user')
     set({ currentUser: null, token: null, refreshToken: null })
+  },
+  initializeAuth: async () => {
+    const { refreshToken } = useAppStore.getState()
+    if (!refreshToken) return
+
+    try {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1'
+      const refreshRes = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      })
+      if (!refreshRes.ok) {
+        useAppStore.getState().clearAuth()
+        return
+      }
+      const refreshData = await refreshRes.json()
+      const newToken = refreshData.data?.token || refreshData.data?.accessToken
+      const newRefreshToken = refreshData.data?.refreshToken
+
+      const meRes = await fetch(`${API_BASE_URL}/auth/me`, {
+        headers: { 'Authorization': `Bearer ${newToken}` },
+      })
+      if (!meRes.ok) {
+        useAppStore.getState().clearAuth()
+        return
+      }
+      const meData = await meRes.json()
+      const user = meData.data
+
+      useAppStore.getState().setAuth(user, newToken, newRefreshToken || refreshToken)
+    } catch {
+      useAppStore.getState().clearAuth()
+    }
   },
 
   // Sidebar

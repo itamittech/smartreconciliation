@@ -73,6 +73,9 @@ class ReconciliationServiceTest {
     @Mock
     private AiService aiService;
 
+    @Mock
+    private LegacyReconciliationAdapterService legacyAdapter;
+
     private ReconciliationService reconciliationService;
 
     @BeforeEach
@@ -84,7 +87,8 @@ class ReconciliationServiceTest {
                 fileUploadService,
                 ruleService,
                 fileParserService,
-                aiService
+                aiService,
+                legacyAdapter
         ));
 
         // Default: files exist on disk for all tests unless overridden

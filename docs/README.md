@@ -12,13 +12,14 @@ Documentation is organized into numbered folders by purpose:
 
 ```
 docs/
-├── 01-product/          # Product strategy & requirements
-├── 02-architecture/     # System design & database
-├── 03-development/      # Developer guides & API reference
-├── 04-ai-integration/   # AI capabilities & implementation
-├── 05-deployment/       # Deployment, configuration & operations
-├── 06-testing/          # Test documentation & test cases
-└── 99-archive/          # Completed implementation docs
+|- 01-product/          # Product strategy and requirements
+|- 02-architecture/     # System design and database
+|- 03-development/      # Developer guides and API reference
+|- 04-ai-integration/   # AI capabilities and implementation
+|- 05-deployment/       # Deployment, configuration and operations
+|- 06-testing/          # Test documentation and test cases
+|- 07-strategy/         # Strategic roadmaps and major pivots
+`- 99-archive/          # Completed implementation docs
 ```
 
 **Benefits:**
@@ -40,6 +41,7 @@ docs/
 | [Configuration Reference](05-deployment/configuration-reference.md) | All configuration options | Administrators, DevOps |
 | [AI Integration Guide](04-ai-integration/ai-integration-guide.md) | AI features and Spring AI usage | Developers, ML Engineers |
 | [Operations Guide](05-deployment/operations-guide.md) | Day-to-day operations and troubleshooting | Operations, Support |
+| [Reconciliation Pivot Plan](07-strategy/2026-02-21-reconciliation-platform-pivot-plan.md) | Architecture and phase-wise execution plan for multi-step reconciliation | Product, Architecture, Engineering |
 
 ---
 
@@ -301,7 +303,7 @@ All code examples include:
 
 Documentation is versioned with the application:
 - **Current Version:** 0.0.1-SNAPSHOT
-- **Last Updated:** 2026-01-31
+- **Last Updated:** 2026-02-21
 
 ---
 
@@ -329,6 +331,7 @@ Always place new documentation in the appropriate subfolder:
 | AI features, specifications, prompts | `04-ai-integration/` |
 | Deployment, configuration, operations | `05-deployment/` |
 | Test plans, test cases, test data | `06-testing/` |
+| Strategy, pivots, and phased roadmaps | `07-strategy/` |
 | Completed implementation summaries | `99-archive/` |
 
 **Before creating a new document:**
@@ -524,3 +527,4 @@ Based on your role, here's where to start:
 ---
 
 Happy learning! If you have questions or need clarification, please refer to the relevant detailed documentation or contact the development team.
+

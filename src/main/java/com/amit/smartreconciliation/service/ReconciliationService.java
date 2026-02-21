@@ -11,10 +11,12 @@ import com.amit.smartreconciliation.exception.ResourceNotFoundException;
 import com.amit.smartreconciliation.exception.FileProcessingException;
 import com.amit.smartreconciliation.repository.ReconciliationExceptionRepository;
 import com.amit.smartreconciliation.repository.ReconciliationRepository;
+import com.amit.smartreconciliation.security.SecurityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -470,23 +472,41 @@ public class ReconciliationService {
         return (result.matchedCount * 100.0) / totalSource;
     }
 
-    public ReconciliationResponse getById(Long id) {
+    private Long resolveCurrentOrgId() {
+        try {
+            return SecurityUtils.getCurrentOrgId();
+        } catch (RuntimeException ex) {
+            return organizationService.getDefaultOrganization().getId();
+        }
+    }
+
+    private Reconciliation getOrgScopedReconciliation(Long id) {
         Reconciliation reconciliation = reconciliationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Reconciliation", id));
+        Long currentOrgId = resolveCurrentOrgId();
+        Long reconciliationOrgId = reconciliation.getOrganization() != null
+                ? reconciliation.getOrganization().getId()
+                : null;
+        if (reconciliationOrgId != null && !reconciliationOrgId.equals(currentOrgId)) {
+            throw new AccessDeniedException("You do not have access to this reconciliation.");
+        }
+        return reconciliation;
+    }
+
+    public ReconciliationResponse getById(Long id) {
+        Reconciliation reconciliation = getOrgScopedReconciliation(id);
         return ReconciliationResponse.fromEntity(reconciliation);
     }
 
     public List<ReconciliationResponse> getAll() {
-        Organization org = organizationService.getDefaultOrganization();
-        return reconciliationRepository.findByOrganizationIdOrderByCreatedAtDesc(org.getId())
+        return reconciliationRepository.findByOrganizationIdOrderByCreatedAtDesc(resolveCurrentOrgId())
                 .stream()
                 .map(ReconciliationResponse::fromEntity)
                 .collect(Collectors.toList());
     }
 
     public Page<ReconciliationResponse> getAll(Pageable pageable) {
-        Organization org = organizationService.getDefaultOrganization();
-        return reconciliationRepository.findByOrganizationId(org.getId(), pageable)
+        return reconciliationRepository.findByOrganizationId(resolveCurrentOrgId(), pageable)
                 .map(ReconciliationResponse::fromEntity);
     }
 

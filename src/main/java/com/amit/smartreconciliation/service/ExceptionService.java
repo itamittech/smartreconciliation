@@ -14,6 +14,7 @@ import com.amit.smartreconciliation.enums.UserRole;
 import com.amit.smartreconciliation.exception.ResourceNotFoundException;
 import com.amit.smartreconciliation.repository.ReconciliationExceptionRepository;
 import com.amit.smartreconciliation.repository.ReconciliationExceptionSpec;
+import com.amit.smartreconciliation.security.SecurityUtils;
 import com.amit.smartreconciliation.security.CustomUserDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +59,27 @@ public class ExceptionService {
         }
         // Default to VIEWER (most restrictive) when no auth context
         return UserRole.VIEWER;
+    }
+
+    private Long getCurrentOrgIdOrNull() {
+        try {
+            return SecurityUtils.getCurrentOrgId();
+        } catch (RuntimeException ex) {
+            return null;
+        }
+    }
+
+    private void assertCurrentOrgAccess(ReconciliationException exception) {
+        Long currentOrgId = getCurrentOrgIdOrNull();
+        if (currentOrgId == null || exception.getReconciliation() == null
+                || exception.getReconciliation().getOrganization() == null
+                || exception.getReconciliation().getOrganization().getId() == null) {
+            return;
+        }
+        Long exceptionOrgId = exception.getReconciliation().getOrganization().getId();
+        if (!currentOrgId.equals(exceptionOrgId)) {
+            throw new AccessDeniedException("You do not have access to this exception.");
+        }
     }
 
     public Page<ReconciliationExceptionResponse> getByReconciliationId(
@@ -113,7 +135,9 @@ public class ExceptionService {
     }
 
     public List<ReconciliationExceptionResponse> getAllByReconciliationId(Long reconciliationId) {
-        return exceptionRepository.findByReconciliationId(reconciliationId)
+        Specification<ReconciliationException> spec = buildSpec(
+                reconciliationId, null, null, null, null, null);
+        return exceptionRepository.findAll(spec)
                 .stream()
                 .map(ReconciliationExceptionResponse::fromEntity)
                 .collect(Collectors.toList());
@@ -163,6 +187,7 @@ public class ExceptionService {
     public ReconciliationExceptionResponse getById(Long id) {
         ReconciliationException exception = exceptionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ReconciliationException", id));
+        assertCurrentOrgAccess(exception);
         return ReconciliationExceptionResponse.fromEntity(exception);
     }
 
@@ -170,6 +195,7 @@ public class ExceptionService {
     public ReconciliationExceptionResponse update(Long id, ExceptionUpdateRequest request) {
         ReconciliationException exception = exceptionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ReconciliationException", id));
+        assertCurrentOrgAccess(exception);
 
         UserRole role = getCurrentUserRole();
         if (!permissionService.canAction(role, exception.getType())) {
@@ -221,6 +247,7 @@ public class ExceptionService {
 
         UserRole role = getCurrentUserRole();
         for (ReconciliationException exception : exceptions) {
+            assertCurrentOrgAccess(exception);
             if (!permissionService.canAction(role, exception.getType())) {
                 throw new AccessDeniedException(
                         "You do not have permission to action exception type: " + exception.getType());
@@ -308,6 +335,7 @@ public class ExceptionService {
     public String getSuggestion(Long id) {
         ReconciliationException exception = exceptionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ReconciliationException", id));
+        assertCurrentOrgAccess(exception);
 
         if (exception.getAiSuggestion() != null) {
             return exception.getAiSuggestion();
@@ -351,8 +379,10 @@ public class ExceptionService {
             ExceptionStatus status,
             LocalDate fromDate,
             LocalDate toDate) {
+        Long currentOrgId = getCurrentOrgIdOrNull();
         return Specification
-                .where(ReconciliationExceptionSpec.withReconciliationId(reconciliationId))
+                .where(ReconciliationExceptionSpec.withOrganizationId(currentOrgId))
+                .and(ReconciliationExceptionSpec.withReconciliationId(reconciliationId))
                 .and(ReconciliationExceptionSpec.withType(type))
                 .and(ReconciliationExceptionSpec.withSeverity(severity))
                 .and(ReconciliationExceptionSpec.withStatus(status))

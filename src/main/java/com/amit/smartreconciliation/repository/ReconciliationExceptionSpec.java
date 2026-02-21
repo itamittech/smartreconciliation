@@ -41,4 +41,9 @@ public class ReconciliationExceptionSpec {
         return (root, query, cb) -> toCreatedAt == null ? null :
                 cb.lessThan(root.get("reconciliation").get("createdAt"), toCreatedAt);
     }
+
+    public static Specification<ReconciliationException> withOrganizationId(Long organizationId) {
+        return (root, query, cb) -> organizationId == null ? null :
+                cb.equal(root.get("reconciliation").get("organization").get("id"), organizationId);
+    }
 }

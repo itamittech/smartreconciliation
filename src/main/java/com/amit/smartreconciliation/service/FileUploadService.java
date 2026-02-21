@@ -10,8 +10,10 @@ import com.amit.smartreconciliation.enums.FileStatus;
 import com.amit.smartreconciliation.exception.FileProcessingException;
 import com.amit.smartreconciliation.exception.ResourceNotFoundException;
 import com.amit.smartreconciliation.repository.UploadedFileRepository;
+import com.amit.smartreconciliation.security.SecurityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -96,6 +98,25 @@ public class FileUploadService {
         return Files.exists(Paths.get(file.getFilePath()));
     }
 
+    private Long resolveCurrentOrgId() {
+        try {
+            return SecurityUtils.getCurrentOrgId();
+        } catch (RuntimeException ex) {
+            return organizationService.getDefaultOrganization().getId();
+        }
+    }
+
+    private UploadedFile getOrgScopedFile(Long id) {
+        UploadedFile file = uploadedFileRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("UploadedFile", id));
+        Long currentOrgId = resolveCurrentOrgId();
+        Long fileOrgId = file.getOrganization() != null ? file.getOrganization().getId() : null;
+        if (fileOrgId != null && !fileOrgId.equals(currentOrgId)) {
+            throw new AccessDeniedException("You do not have access to this file.");
+        }
+        return file;
+    }
+
     @Async
     @Transactional
     public void processFileAsync(Long fileId) {
@@ -135,27 +156,23 @@ public class FileUploadService {
     }
 
     public UploadedFileResponse getById(Long id) {
-        UploadedFile file = uploadedFileRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("UploadedFile", id));
+        UploadedFile file = getOrgScopedFile(id);
         return UploadedFileResponse.fromEntity(file, !existsOnDisk(file));
     }
 
     public UploadedFile getEntityById(Long id) {
-        return uploadedFileRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("UploadedFile", id));
+        return getOrgScopedFile(id);
     }
 
     public List<UploadedFileResponse> getAll() {
-        Organization org = organizationService.getDefaultOrganization();
-        return uploadedFileRepository.findByOrganizationId(org.getId())
+        return uploadedFileRepository.findByOrganizationId(resolveCurrentOrgId())
                 .stream()
                 .map(file -> UploadedFileResponse.fromEntity(file, !existsOnDisk(file)))
                 .collect(Collectors.toList());
     }
 
     public FilePreviewResponse getPreview(Long id, int rows) {
-        UploadedFile file = uploadedFileRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("UploadedFile", id));
+        UploadedFile file = getOrgScopedFile(id);
 
         if (file.getStatus() != FileStatus.PROCESSED) {
             throw new FileProcessingException("File is not yet processed. Current status: " + file.getStatus());
@@ -184,8 +201,7 @@ public class FileUploadService {
     }
 
     public SchemaResponse getSchema(Long id) {
-        UploadedFile file = uploadedFileRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("UploadedFile", id));
+        UploadedFile file = getOrgScopedFile(id);
 
         if (file.getStatus() != FileStatus.PROCESSED) {
             throw new FileProcessingException("File is not yet processed. Current status: " + file.getStatus());
@@ -216,8 +232,7 @@ public class FileUploadService {
 
     @Transactional
     public void deleteFile(Long id) {
-        UploadedFile file = uploadedFileRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("UploadedFile", id));
+        UploadedFile file = getOrgScopedFile(id);
 
         if (file.getFilePath() != null) {
             try {

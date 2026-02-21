@@ -5,6 +5,7 @@ import { ConsolidatedExceptionCard } from '@/components/exceptions'
 import type { ConsolidatedExceptionGroup, ConsolidatedExceptionItem } from '@/components/exceptions/ConsolidatedExceptionCard'
 import type { ReconciliationException as FrontendException, ExceptionSeverity, ExceptionStatus, ExceptionType } from '@/types'
 import { useBulkAutoResolveExceptions, useExceptionRunSummaries, useExceptions, useUpdateException } from '@/services/hooks'
+import { getSafeErrorMessage } from '@/utils/errors'
 import type {
   ReconciliationException as ApiException,
   ExceptionRunSummary,
@@ -448,7 +449,7 @@ const ExceptionsPage = () => {
           onError: (err) => {
             setActionDialog((prev) => ({
               ...prev,
-              error: err instanceof Error ? err.message : 'Failed to accept exception.',
+              error: getSafeErrorMessage(err),
             }))
           },
         }
@@ -471,7 +472,7 @@ const ExceptionsPage = () => {
           onError: (err) => {
             setActionDialog((prev) => ({
               ...prev,
-              error: err instanceof Error ? err.message : 'Failed to reject exception.',
+              error: getSafeErrorMessage(err),
             }))
           },
         }
@@ -493,7 +494,7 @@ const ExceptionsPage = () => {
         onError: (err) => {
           setActionDialog((prev) => ({
             ...prev,
-            error: err instanceof Error ? err.message : 'Failed to move exception to in-review.',
+            error: getSafeErrorMessage(err),
           }))
         },
       }
@@ -533,7 +534,7 @@ const ExceptionsPage = () => {
           <div>
             <p className="font-semibold text-lg">Failed to load exceptions</p>
             <p className="text-muted-foreground text-sm">
-              {error instanceof Error ? error.message : 'Unable to connect to backend API'}
+              {getSafeErrorMessage(error)}
             </p>
           </div>
         </div>

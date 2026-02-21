@@ -14,6 +14,7 @@ import {
 import { Button, Input, Card, Badge } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import { useFiles, useDeleteFile, useUploadFile, useFilePreview } from '@/services/hooks'
+import { getSafeErrorMessage } from '@/utils/errors'
 import type { UploadedFile } from '@/services/types'
 
 const FilesPage = () => {
@@ -101,7 +102,7 @@ const FilesPage = () => {
           <div>
             <p className="font-semibold text-lg">Failed to load files</p>
             <p className="text-muted-foreground text-sm">
-              {error instanceof Error ? error.message : 'Unable to connect to backend API'}
+              {getSafeErrorMessage(error)}
             </p>
           </div>
         </div>
@@ -334,7 +335,7 @@ const FilePreviewModal = ({ fileId, onClose }: FilePreviewModalProps) => {
             <div className="flex flex-col items-center gap-2 py-12 text-center">
               <AlertCircle className="h-8 w-8 text-destructive" />
               <p className="text-muted-foreground">
-                {error instanceof Error ? error.message : 'Failed to load preview'}
+                {getSafeErrorMessage(error)}
               </p>
             </div>
           )}
@@ -466,7 +467,7 @@ const FilePreviewPane = ({
           <div className="flex flex-col items-center gap-2 py-12 text-center">
             <AlertCircle className="h-8 w-8 text-destructive" />
             <p className="text-muted-foreground">
-              {error instanceof Error ? error.message : 'Failed to load preview'}
+              {getSafeErrorMessage(error)}
             </p>
           </div>
         )}

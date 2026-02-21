@@ -88,8 +88,12 @@ export async function fetchApi<T>(
       }
     }
 
-    // Refresh failed or no refresh token — clear auth
+    // Refresh failed or no refresh token — clear auth and redirect to login
     store.clearAuth()
+    // Use replace() so user can't navigate back to the authenticated page
+    if (typeof window !== 'undefined') {
+      window.location.replace('/')
+    }
     throw new ApiError('Session expired. Please log in again.', 401)
   }
 

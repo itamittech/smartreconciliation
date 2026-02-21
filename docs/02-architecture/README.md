@@ -18,6 +18,14 @@ Detailed architecture for N-way/chained matching:
 - **Input Resolver Pattern** - Decoupling engine from file storage
 - **Stream Entities** - Managing complex multi-source workflows
 
+### [Reconciliation Stream Runtime Architecture](reconciliation-stream-runtime-architecture.md)
+
+Implementation-ready architecture contract for the pivot runtime:
+- **Final ERD** - Stream/run/step/artifact/lineage entities
+- **Runtime State Model** - Stream and step execution state transitions
+- **Service Ownership** - Controller/service/repository boundary map
+- **Compatibility Contract** - Legacy reconciliation API behavior guarantees
+
 ### [Database Schema](database-schema.md)
 
 Complete database documentation:

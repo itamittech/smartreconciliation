@@ -27,6 +27,14 @@ Complete REST API documentation:
 - **Pagination** - List endpoint pagination
 - **File Upload** - Multipart form data handling
 
+### [Reconciliation Streams API Contract](reconciliation-streams-api-contract.md)
+
+Implementation contract for additive stream APIs and compatibility:
+- **New Endpoints** - `/api/v1/streams`, `/api/v1/stream-runs`, `/api/v1/step-runs`
+- **Payload Schemas** - Request/response examples for stream lifecycle
+- **Compatibility Matrix** - Legacy reconciliation endpoint mapping
+- **Frontend Impact** - Migration and type update guidance
+
 ## Audience
 
 - Software Developers

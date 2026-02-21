@@ -17,6 +17,14 @@ Comprehensive PRD covering:
 - **Frontend Architecture** - React 19 + TypeScript implementation
 - **API Inventory** - Complete endpoint catalog
 
+### [E-commerce Settlement Template v1 Specification](ecommerce-template-v1-spec.md)
+
+Implementation-ready template contract for pivot beachhead domain:
+- **Canonical 3-Step Flow** - OMS -> Marketplace -> Gateway -> Bank
+- **Default Rule Baseline** - Keys, mapping, tolerance, severity
+- **Acceptance Dataset** - Deterministic dataset and edge-case requirements
+- **Pilot Checklist** - Business validation criteria and handoff readiness
+
 ## Audience
 
 - Product Managers

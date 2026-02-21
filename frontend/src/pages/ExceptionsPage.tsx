@@ -245,13 +245,26 @@ function consolidateExceptions(exceptions: ExceptionViewModel[]): ConsolidatedEx
 }
 
 const ExceptionsPage = () => {
-  const urlParams = new URLSearchParams(window.location.search)
+  // Read URL params once on initial render, then clear them from URL
+  const [initialParams] = useState(() => {
+    const params = new URLSearchParams(window.location.search)
+    const values = {
+      businessDate: params.get('businessDate'),
+      reconciliationId: params.get('reconciliationId'),
+      status: params.get('status'),
+    }
+    // Immediately clear sensitive data from URL
+    if (values.businessDate || values.reconciliationId || values.status) {
+      window.history.replaceState(null, '', window.location.pathname)
+    }
+    return values
+  })
 
   const [searchQuery, setSearchQuery] = useState('')
-  const [businessDate, setBusinessDate] = useState(urlParams.get('businessDate') || getTodayDateString())
-  const [selectedReconciliationId, setSelectedReconciliationId] = useState<string>(urlParams.get('reconciliationId') || 'all')
+  const [businessDate, setBusinessDate] = useState(initialParams.businessDate || getTodayDateString())
+  const [selectedReconciliationId, setSelectedReconciliationId] = useState<string>(initialParams.reconciliationId || 'all')
   const [selectedSeverity, setSelectedSeverity] = useState<ExceptionSeverity | 'all'>('all')
-  const [selectedStatus, setSelectedStatus] = useState<ExceptionStatus | 'all'>(parseStatusParam(urlParams.get('status')))
+  const [selectedStatus, setSelectedStatus] = useState<ExceptionStatus | 'all'>(parseStatusParam(initialParams.status))
   const [selectedType, setSelectedType] = useState<ExceptionType | 'all'>('all')
   const [currentPage, setCurrentPage] = useState(0)
   const [actionDialog, setActionDialog] = useState<ActionDialogState>({
@@ -265,17 +278,6 @@ const ExceptionsPage = () => {
   useEffect(() => {
     setCurrentPage(0)
   }, [businessDate, selectedReconciliationId, selectedSeverity, selectedStatus, selectedType])
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    params.set('view', 'exceptions')
-    params.set('businessDate', businessDate)
-    if (selectedReconciliationId !== 'all') params.set('reconciliationId', selectedReconciliationId)
-    else params.delete('reconciliationId')
-    if (selectedStatus !== 'all') params.set('status', selectedStatus)
-    else params.delete('status')
-    window.history.replaceState(window.history.state, '', `${window.location.pathname}?${params.toString()}`)
-  }, [businessDate, selectedReconciliationId, selectedStatus])
 
   const baseApiFilters = {
     status: selectedStatus !== 'all' ? selectedStatus.toUpperCase() : undefined,

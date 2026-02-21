@@ -47,18 +47,21 @@ public class FileController {
                 .body(ApiResponse.success("File uploaded successfully", response));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','ANALYST','FINANCE','IT_ADMIN','OPERATIONS','COMPLIANCE')")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<UploadedFileResponse>> getById(@PathVariable Long id) {
         UploadedFileResponse response = fileUploadService.getById(id);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','ANALYST','FINANCE','IT_ADMIN','OPERATIONS','COMPLIANCE')")
     @GetMapping
     public ResponseEntity<ApiResponse<List<UploadedFileResponse>>> getAll() {
         List<UploadedFileResponse> response = fileUploadService.getAll();
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','ANALYST','FINANCE','IT_ADMIN','OPERATIONS','COMPLIANCE')")
     @GetMapping("/{id}/preview")
     public ResponseEntity<ApiResponse<FilePreviewResponse>> getPreview(
             @PathVariable Long id,
@@ -67,6 +70,7 @@ public class FileController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','ANALYST','FINANCE','IT_ADMIN','OPERATIONS','COMPLIANCE')")
     @GetMapping("/{id}/schema")
     public ResponseEntity<ApiResponse<SchemaResponse>> getSchema(@PathVariable Long id) {
         SchemaResponse response = fileUploadService.getSchema(id);

@@ -55,12 +55,14 @@ public class ReconciliationController {
                 .body(ApiResponse.success("Reconciliation started", response));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','ANALYST','FINANCE','IT_ADMIN','OPERATIONS','COMPLIANCE')")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<ReconciliationResponse>> getById(@PathVariable Long id) {
         ReconciliationResponse response = reconciliationService.getById(id);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','ANALYST','FINANCE','IT_ADMIN','OPERATIONS','COMPLIANCE')")
     @GetMapping
     public ResponseEntity<ApiResponse<?>> getAll(
             @RequestParam(required = false) Integer page,
@@ -94,18 +96,21 @@ public class ReconciliationController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','ANALYST','FINANCE','IT_ADMIN','OPERATIONS','COMPLIANCE')")
     @GetMapping("/{id}/status")
     public ResponseEntity<ApiResponse<ReconciliationResponse>> getStatus(@PathVariable Long id) {
         ReconciliationResponse response = reconciliationService.getStatus(id);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','ANALYST','FINANCE','IT_ADMIN','OPERATIONS','COMPLIANCE')")
     @GetMapping("/{id}/results")
     public ResponseEntity<ApiResponse<ReconciliationResponse>> getResults(@PathVariable Long id) {
         ReconciliationResponse response = reconciliationService.getById(id);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','ANALYST','FINANCE','IT_ADMIN','OPERATIONS','COMPLIANCE')")
     @GetMapping("/{id}/exceptions")
     public ResponseEntity<ApiResponse<Page<ReconciliationExceptionResponse>>> getExceptions(
             @PathVariable Long id,
@@ -141,6 +146,7 @@ public class ReconciliationController {
         return ResponseEntity.ok(ApiResponse.success("Reconciliation deleted successfully", null));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','ANALYST')")
     @DeleteMapping("/bulk")
     public ResponseEntity<ApiResponse<Map<String, Object>>> bulkDelete(@RequestBody List<Long> ids) {
         Map<String, Object> result = reconciliationService.deleteAll(ids);
